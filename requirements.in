@@ -1,0 +1,22 @@
+git+git://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
+#-e git+ssh://git@github.com/Ensembl/ensembl-prodinf-datacheck.git@features/refact_base_v1#egg=ensembl-prodinf-datacheck
+#-e git+ssh://git@github.com/Ensembl/ensembl-prodinf-event.git@features/refact_base_v1#egg=ensembl-prodinf-event
+Bootstrap-Flask
+celery
+Click
+elasticsearch>=6.8.1,<7.0.0
+email_validator
+Flask
+flasgger
+Flask-Cors
+pytest
+pytest-docker
+gunicorn
+radical.saga
+radical.utils
+requests
+SQLAlchemy
+sqlalchemy_utils
+wtforms
+Jinja2
+mysqlclient
