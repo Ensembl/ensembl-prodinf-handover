@@ -3,11 +3,12 @@
 import logging
 import re
 import os
+import datetime
 
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
 from sqlalchemy.exc import OperationalError
 from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, url_for, redirect
+from flask import Flask, request, jsonify, render_template, url_for, redirect, json
 from flask_cors import CORS
 from flask_bootstrap import Bootstrap
 
@@ -155,6 +156,39 @@ def handovers():
     ticket = handover_database(spec)
     app.logger.info('Ticket: %s', ticket)
     return jsonify(ticket)
+    
+@app.route('/handovers/status', methods=['PUT'])
+def handover_status_update():
+    "update handover status to success"
+    try:
+      if json_pattern.match(request.headers['Content-Type']):   
+
+        handover_token = request.json.get('handover_token')
+      else:
+        raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
+
+      es = Elasticsearch([{'host': es_host, 'port': es_port}])
+      res_error = es.search(index=es_index, body={"query": {"bool": {
+        "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
+                 {"term": {"report_type.keyword": "INFO"}},
+                 {"query_string": {"fields": ["message"],"query": "*Metadata load failed*"}}],
+                  "must_not": [], "should": []}}, "from": 0, "size": 1,
+        "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
+
+      if len(res_error['hits']['hits']) == 0:
+        raise HTTPRequestError('No Hits Found for Handover Token : %s' % handover_token)
+      
+      #set handover message to success
+      result = res_error['hits']['hits'][0]['_source']
+      h_id = res_error['hits']['hits'][0]['_id']
+      result['report_time'] = str(datetime.datetime.now().isoformat())[:-3]
+      result['message'] = 'Metadata load complete, Handover successful'
+      result['report_type'] = 'INFO'
+      res = es.update(index=es_index, id=h_id, doc_type='report' , body={ "doc": result })
+    except Exception as e:
+      raise HTTPRequestError('%s' % str(e))
+
+    return res 
     
 
 @app.route('/handovers/job', methods=['GET'])

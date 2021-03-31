@@ -35,17 +35,18 @@ function detailFormatter(index, row) {
 }
 
 function HandoverBaseInfo(handover_details){
-
+ 
   const sucess = new RegExp('^(.+)Handover'+'(.+){1}'+'successful$');
   const failure = new RegExp('^(.+)failed(.+)$');
   const problems = new RegExp('^(.+)problems(.+)$');
+  const meta_data_failed = new RegExp('^Metadata(.+)failed(.+)');
   //for testing 
   /*handover_details = {
     "comment": "Updated Refseq xrefs and MANE_Select attributes", 
     "contact": "jmgonzalez@ebi.ac.uk", 
     "handover_token": "6727f4a6-d663-11ea-afbd-005056ab00f0", 
     "id": "YkG2SngBmi1dIqxAz48N", 
-    "message": "Copying in progress, please see: http://ens-prod-1.ebi.ac.uk:9080/#!/copy_result/17888", 
+    "message": "Metadata load failed, please see http://eg-prod-01.ebi.ac.uk:7003/jobs/5316?format=failures", 
     "progress_complete": 1, 
     "progress_total": 3, 
     "report_time": "2021-03-19T13:39:57.816", 
@@ -53,9 +54,12 @@ function HandoverBaseInfo(handover_details){
     "tgt_uri": "mysql://ensprod:s3cr3t@mysql-ens-sta-1:4519/homo_sapiens_otherfeatures_104_38"
   };*/
 
-  
+    
   let job_status = urlify(handover_details.message);
 
+  if(meta_data_failed.test(handover_details.message)){
+    $('#status').show();
+  }
   if(sucess.test(handover_details.message) ){
     job_status = `<div class="alert alert-success" role="alert">
                     ${job_status}
