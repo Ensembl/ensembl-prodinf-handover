@@ -16,15 +16,15 @@
             <div class="card-body">
                 <form>
                 <div class=" mb-2">
-                    <input id="button-refresh" class="btn btn-{{config['background']}} " type="button" value="Refresh"/>
-                    <input id="rsumbit" class="btn btn-{{config['background']}}" type="button" value="Edit and Re-submit Job">
-                    <input id="delete" class="btn btn-{{config['background']}}" type="button" value="Delete Job">
-                    <input id="status" style="display:none" class="btn btn-{{config['background']}}" type="button" value="Update handover status">
+                    <input id="button-refresh" class="btn h-buttons " type="button" value="Refresh"/>
+                    <input id="rsumbit" class="btn h-buttons" type="button" value="Edit and Re-submit Job">
+                    <input id="delete" class="btn h-buttons" type="button" value="Delete Job">
+                    <input id="status" style="display:none" class="btn h-buttons" type="button" value="Update handover status">
                 </div>  
                 <div class="input-group  ">
                     <input type="text" class="form-control" value="{{handover_token}}" required id="handoverjob" placeholder="Handover Token" aria-label="Recipient's username" aria-describedby="button-addon2">
                     <div class="input-group-append">
-                      <button class="btn btn-outline-secondary bg-{{config['background']}}" type="submit" id="button-view"><span style="color:white">View</span></button>
+                      <button class="btn btn-outline-secondary h-buttons" type="submit" id="button-view"><span style="color:white">View</span></button>
                     </div>
                 </div>
                 </form>

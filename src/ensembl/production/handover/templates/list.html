@@ -14,8 +14,8 @@
         <div id="toolbar" class="buttons-toolbar"> 
         </div>  
         <div class="titles mb-2">
-            <button id="resubmitbutton" class="btn btn-{{config['background']}} ">Resubmit Job</button>
-            <button id="deletebutton" class="btn btn-{{config['background']}}">Delete Job</button>
+            <button id="resubmitbutton" class="btn h-buttons ">Resubmit Job</button>
+            <button id="deletebutton" class="btn h-buttons">Delete Job</button>
         </div>      
     <table id="table"
       class="table table-striped thead-dark table-bordered "
@@ -36,7 +36,7 @@
       data-detail-view-by-click="false"
       data-detail-view-icon="true"
       data-detail-formatter="detailFormatter"
-      data-buttons-class="btn btn-{{config['background']}}"
+      data-buttons-class="btn h-buttons"
       
       data-buttons-toolbar=".buttons-toolbar"
       data-show-columns="true">
@@ -72,7 +72,7 @@
 
     var $table = $('#table');
     $table.bootstrapTable('refreshOptions', {
-      theadClasses: "bg-{{config['background']}}",
+      theadClasses: "h-buttons",
        url: '/handovers?format=json'
     });
 

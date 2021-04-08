@@ -19,6 +19,9 @@ from ensembl.production.core.db_utils import validate_mysql_url, list_databases,
 
 from ensembl.production.handover.forms import HandoverSubmissionForm
 from ensembl.production.handover.config import HandoverConfig as cfg
+import requests
+from requests.exceptions import HTTPError
+
 #set static and template paths
 app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
@@ -43,11 +46,6 @@ es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
-#set handover handover_layout
-
-app.config['handover']=app.config['HANDOVER_LAYOUT'][ app.config['HANDOVER_TYPE'] ][1]
-app.config['background']=app.config['HANDOVER_LAYOUT'][ app.config['HANDOVER_TYPE'] ][0]
-app.config['dropdown_color']=app.config['HANDOVER_LAYOUT'][ app.config['HANDOVER_TYPE'] ][2] 
 
 @app.route('/', methods=['GET'])
 def info():
@@ -57,6 +55,28 @@ def info():
 @app.route('/ping', methods=['GET'])
 def ping():
     return jsonify({"status": "ok"})
+
+@app.route('/handover/dropdown/src_host', methods=['GET'])
+@app.route('/handover/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
+def dropdown(src_host=None, src_port=None):
+  try:
+    src_name = request.args.get('name', None)
+    search = request.args.get('search', None)
+    if src_name :
+      res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/src_host", params={'name': src_name})
+      res.raise_for_status()
+      return jsonify(res.json())
+    elif src_host and src_port and search:
+      res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/databases/{src_host}/{src_port}", params={'search': search})
+      res.raise_for_status()
+      return jsonify(res.json())
+    else:
+      raise Exception('required params not provided')
+  except HTTPError as http_err:
+    raise HTTPRequestError(f'{http_err}', 404)
+  except Exception as e:
+    print(str(e))
+    return jsonify({"count":0,"next":None,"previous":None,"results":[], "error": str(e)})
 
 #UI Submit-form for handover 
 @app.route('/handovers/submit/', methods=['GET', 'POST']) 

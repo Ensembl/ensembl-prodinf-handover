@@ -1,7 +1,7 @@
 /* set nav bar background*/
 /*Base css*/
 .hnav{
-    background-color: #17a2b8;
+    background-color:#28a745;
 }
 .ui-autocomplete { 
     position: absolute; 
@@ -52,23 +52,23 @@ margin: -1px;
     padding: 2px;
     width: 5px;
     margin: 0;
-    background: #d6f3f3  ;
+    background: #a8f0bd  ;
     color: #1a1a19;
     display:block;
-    border:  2px solid #17a2b8!important ;
+    border:  2px solid #28a745!important ;
     float: auto;   
 }
 .ui-menu .ui-menu-item-wrapper:hover {
    color: #303030;
-   background-color: #aee2eb!important;
+   background-color: #aff1d2!important;
    border: rgb(2, 46, 9) 1px solid;
 }
 
 /*set button colors*/
 .h-buttons{
-    background-color: #17a2b8;
+    background-color:#28a745;
     color: white;
 }
 .h-border{
-    border-color:#17a2b8!important;
+    border-color:#28a745!important;
 }

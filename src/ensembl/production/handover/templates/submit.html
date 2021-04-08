@@ -1,29 +1,8 @@
 {% extends "base.html" %}
 {% block styles %}
 {{ super() }}
-<link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
-<style>
-    .ui-menu {
-        list-style: aria;
-        padding: 2px;
-        width: 5px;
-        margin: 0;
-        background: #fdfffc  ;
-        color: #1a1a19;
-        display:block;
-        border:  2px solid {{config['dropdown_color']}} ;
-        float: auto;   
-    }
-    .ui-menu .ui-menu-item-wrapper:hover {
-       color: #303030;
-       background-color: {{config['dropdown_color']}};
-       border: rgb(2, 46, 9) 1px solid;
-    }
-</style>
 
 {% endblock %}
-
-
 {% block content %}
 {{ super() }}
 <div class="container mt-4">
@@ -42,8 +21,8 @@
             <form action="" method="post" enctype="multipart/form-data" >
                 {{ form.csrf }}
             
-                <fieldset class="border border-{{config['background']}} rounded p-4">
-                  <legend class="w-auto fg-purple">&nbsp;{{config['handover'] }}&nbsp;</legend>            
+                <fieldset class="border h-border rounded p-4">
+                  <legend class="w-auto fg-purple h-buttons">&nbsp; Handover {{config['HANDOVER_TYPE']}}&nbsp;</legend>            
                   <div class="form-group row mt-4">
                     {{ form.src_uri.label( class='col-sm-2 col-form-label' ) }}
                     <div class="col-sm-10">{{ form.src_uri( class='form-control' ) }}
@@ -98,8 +77,8 @@
                 </fieldset>            
                 <div class="form-group row">
                   <div class="col-sm-12 mt-2">
-                    <div class="col-sm-12">{{ form.submit( class='btn bg-info', style='float:right;' ) }}</div>
-                      <!--<button style='float:right;'  class="btn btn-primary bg-{{config['background']}}" type="button" >Submit</button> -->
+                    <div class="col-sm-12">{{ form.submit( class='btn h-buttons', style='float:right;' ) }}</div>
+                      <!--<button style='float:right;'  class="btn btn-primary bg-{{config['background']}}" type="button" >Submit</button>-->
                   </div>
                 </div>            
               </form>
@@ -112,6 +91,14 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
 <script type="text/javascript">
   var copy_url = "{{copy_uri}}"; // set copy url for dropdown list 
+  $(function () {
+    $('form').on('submit', function(e){
+        $("#submit").val("please wait..");
+        $("#submit").prop('disabled', true);
+        $("#submit").addClass("fa-spinner fa-spin");
+       
+    });
+  });      
 </script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 

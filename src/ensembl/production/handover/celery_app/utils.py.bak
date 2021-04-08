@@ -94,24 +94,6 @@ def get_tgt_uri(src_url, staging_uri):
     """Create target URI from staging details and name of source database"""
     return '%s%s' % (staging_uri, src_url.database)
 
-def drop_current_databases(current_db_list, spec):
-    """Drop databases on a previous assembly or previous genebuild (e.g: Wormbase) from the staging MySQL server"""
-    tgt_uri = spec['tgt_uri']
-    staging_uri = spec['staging_uri']
-    tgt_url = make_url(tgt_uri)
-    # Check if the new database has the same name as the one on staging. In this case DO NOT drop it
-    # This can happen if the assembly get renamed or genebuild version has changed for Wormbase
-    if tgt_url.database in current_db_list:
-        msg = 'The assembly or genebuild has been updated but the new database %s is the same as old one' % tgt_url.database
-        log_and_publish(make_report('DEBUG', msg, spec, tgt_uri))
-    else:
-        for database in current_db_list:
-            db_uri = staging_uri + database
-            if database_exists(db_uri):
-                msg = 'Dropping %s' % db_uri
-                log_and_publish(make_report('INFO', msg, spec, tgt_uri))
-                drop_database(db_uri)
-
 def process_handover_payload(spec):
     """ """
     src_uri = spec['src_uri']
@@ -173,7 +155,6 @@ def process_handover_payload(spec):
 
     return spec,src_url,db_type
 
-#submit handover jobs to respective clients
 def submit_dc(spec, src_url, db_type):
     """Submit the source database for checking. Returns a celery job identifier"""
     try:
@@ -212,66 +193,3 @@ def submit_dc(spec, src_url, db_type):
     spec['dc_job_id'] = dc_job_id
     
     return dc_job_id, spec, src_uri
-
-def submit_copy(spec):
-    """Submit the source database for copying to the target. Returns a celery job identifier"""
-    src_uri = spec['src_uri']
-    try:
-        src_url = make_url(src_uri)
-        tgt_url = make_url(spec['tgt_uri'])
-        src_host = f"{src_url.host}:{src_url.port}"
-        tgt_host = f"{tgt_url.host}:{tgt_url.port}"
-        src_incl_db = src_url.database
-        tgt_db_name = tgt_url.database
-
-        #submit a copy job                                   
-        copy_job_id=db_copy_client.submit_job(src_host, src_incl_db, None, None, None,
-                                             tgt_host, tgt_db_name, False, False, False, cfg.production_email, cfg.copy_job_user)
-
-    except Exception as e:
-        log_and_publish(make_report('ERROR', 'Handover failed, cannot submit copy job', spec, src_uri))
-        raise ValueError('Handover failed, cannot submit copy job %s' % e) from e
-    spec['copy_job_id'] = copy_job_id
-
-    return copy_job_id
-
-def submit_metadata_update(spec):
-    """Submit the source database for copying to the target. Returns a celery job identifier."""
-    src_uri = spec['src_uri']
-    try:
-        metadata_job_id = metadata_client.submit_job(spec['tgt_uri'], None, None, None,
-                                                     None, spec['contact'], spec['comment'], 'Handover', None)
-    except Exception as e:
-        log_and_publish(make_report('ERROR', 'Handover failed, cannot submit metadata job', spec, src_uri))
-        raise ValueError('Handover failed, cannot submit metadata job %s' % e) from e
-    spec['metadata_job_id'] = metadata_job_id
-    #task_id = process_db_metadata.delay(metadata_job_id, spec)
-    #dbg_msg = 'Submitted DB for metadata loading %s' % task_id
-    #log_and_publish(make_report('DEBUG', dbg_msg, spec, src_uri))
-    return metadata_job_id
-
-def submit_dispatch(spec):
-
-    """ dispatch database to dedicated host """
-    src_uri = spec['src_uri']
-    try:
-        copy_job_id = db_copy_client.submit_job(src_uri, spec['tgt_uri'], None, None,
-                                                False, True, True, None, None)
-    except Exception as e:
-        log_and_publish(make_report('ERROR', 'Handover failed, cannot dispatch database', spec, src_uri))
-        raise ValueError('Handover failed, cannot submit dispatch job %s' % e) from e
-
-    spec['copy_job_id'] = copy_job_id
-    #task_id = process_dispatch_db.delay(copy_job_id, spec)
-    #dbg_msg = 'Submitted DB for dispatch as %s' % task_id
-    #log_and_publish(make_report('DEBUG', dbg_msg, spec, src_uri))
-    return copy_job_id
-
-def submit_event(spec, result):
-    """Submit an event"""
-    tgt_uri = spec['tgt_uri']
-    logger.debug(result['output']['events'])
-    for event in result['output']['events']:
-        logger.debug(event)
-        event_client.submit_job({'type': event['type'], 'genome': event['genome']})
-        log_and_publish(make_report('DEBUG', 'Submitted event to event handler endpoint', spec, tgt_uri))

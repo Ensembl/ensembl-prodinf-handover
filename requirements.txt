@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
-amqp==5.0.5
+amqp==5.0.6
     # via kombu
 apache-libcloud==3.3.1
     # via radical.saga
@@ -15,8 +15,10 @@ attrs==20.3.0
     #   pytest-docker
 bcrypt==3.2.0
     # via paramiko
-billiard==3.6.3.0
+billiard==3.6.4.0
     # via celery
+bootstrap-flask==1.5.1
+    # via -r requirements.in
 cached-property==1.5.2
     # via docker-compose
 celery==5.0.5
@@ -46,13 +48,15 @@ click==7.1.2
     #   flask
 colorama==0.4.4
     # via radical.utils
-cryptography==3.4.6
+cryptography==3.4.7
     # via paramiko
 distro==1.5.0
     # via docker-compose
-docker-compose==1.28.5
+dnspython==2.1.0
+    # via email-validator
+docker-compose==1.29.0
     # via pytest-docker
-docker[ssh]==4.4.4
+docker[ssh]==5.0.0
     # via docker-compose
 dockerpty==0.4.1
     # via docker-compose
@@ -60,10 +64,9 @@ docopt==0.6.2
     # via docker-compose
 elasticsearch==6.8.2
     # via -r requirements.in
+email-validator==1.1.2
+    # via -r requirements.in
 git+git://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
-#-e git+ssh://git@github.com/Ensembl/ensembl-prodinf-tools.git#egg=ensembl-prodinf-tools
--e git+ssh://git@github.com/Ensembl/ensembl-prodinf-datachecks.git@features/refact_base_v1#egg=ensembl-prodinf-datachecks
--e git+ssh://git@github.com/Ensembl/ensembl-prodinf-event.git@features/refact_base_v1#egg=ensembl-prodinf-event
     # via -r requirements.in
 flasgger==0.9.5
     # via -r requirements.in
@@ -72,15 +75,18 @@ flask-cors==3.0.10
 flask==1.1.2
     # via
     #   -r requirements.in
+    #   bootstrap-flask
     #   flasgger
     #   flask-cors
 future==0.18.2
     # via radical.utils
-gunicorn==20.0.4
+gunicorn==20.1.0
     # via -r requirements.in
 idna==2.10
-    # via requests
-importlib-metadata==3.7.2
+    # via
+    #   email-validator
+    #   requests
+importlib-metadata==3.10.0
     # via
     #   jsonschema
     #   kombu
@@ -101,11 +107,15 @@ jsonschema==3.2.0
 kombu==5.0.2
     # via celery
 markupsafe==1.1.1
-    # via jinja2
+    # via
+    #   jinja2
+    #   wtforms
 mistune==0.8.4
     # via flasgger
 msgpack==1.0.2
     # via radical.utils
+mysqlclient==2.0.3
+    # via -r requirements.in
 netifaces==0.10.9
     # via radical.utils
 packaging==20.9
@@ -116,7 +126,7 @@ parse==1.19.0
     # via radical.saga
 pluggy==0.13.1
     # via pytest
-prompt-toolkit==3.0.17
+prompt-toolkit==3.0.18
     # via click-repl
 py==1.10.0
     # via pytest
@@ -132,11 +142,11 @@ pyrsistent==0.17.3
     # via jsonschema
 pytest-docker==0.10.1
     # via -r requirements.in
-pytest==6.2.2
+pytest==6.2.3
     # via
     #   -r requirements.in
     #   pytest-docker
-python-dotenv==0.15.0
+python-dotenv==0.17.0
     # via docker-compose
 pytz==2021.1
     # via celery
@@ -150,11 +160,11 @@ radical.gtod==1.5.0
     # via radical.utils
 radical.saga==1.6.1
     # via -r requirements.in
-radical.utils==1.6.0
+radical.utils==1.6.2
     # via
     #   -r requirements.in
     #   radical.saga
-regex==2020.11.13
+regex==2021.4.4
     # via radical.utils
 requests==2.25.1
     # via
@@ -168,22 +178,26 @@ six==1.15.0
     # via
     #   bcrypt
     #   click-repl
-    #   docker
     #   dockerpty
     #   flasgger
     #   flask-cors
     #   jsonschema
     #   pynacl
+    #   sqlalchemy-utils
     #   websocket-client
-sqlalchemy==1.3.23
+sqlalchemy-utils==0.36.8
     # via -r requirements.in
+sqlalchemy==1.3.24
+    # via
+    #   -r requirements.in
+    #   sqlalchemy-utils
 texttable==1.6.3
     # via docker-compose
 toml==0.10.2
     # via pytest
 typing-extensions==3.7.4.3
     # via importlib-metadata
-urllib3==1.26.3
+urllib3==1.26.4
     # via
     #   elasticsearch
     #   requests
@@ -201,6 +215,8 @@ werkzeug==1.0.1
     # via flask
 wheel==0.36.2
     # via radical.utils
+wtforms==2.3.3
+    # via -r requirements.in
 zipp==3.4.1
     # via importlib-metadata
 

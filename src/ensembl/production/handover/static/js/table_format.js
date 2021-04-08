@@ -53,7 +53,6 @@ function HandoverBaseInfo(handover_details){
     "src_uri": "mysql://ensro@mysql-ens-havana-prod-2:4682/homo_sapiens_otherfeatures_104_38", 
     "tgt_uri": "mysql://ensprod:s3cr3t@mysql-ens-sta-1:4519/homo_sapiens_otherfeatures_104_38"
   };*/
-
     
   let job_status = urlify(handover_details.message);
 

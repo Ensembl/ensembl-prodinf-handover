@@ -1,0 +1,16 @@
+.ui-menu {
+    list-style: aria;
+    padding: 2px;
+    width: 5px;
+    margin: 0;
+    background: #fdfffc  ;
+    color: #1a1a19;
+    display:block;
+    border:  2px solid #17a2b8!important ;
+    float: auto;   
+}
+.ui-menu .ui-menu-item-wrapper:hover {
+   color: #303030;
+   background-color: #17a2b8!important;
+   border: rgb(2, 46, 9) 1px solid;
+}

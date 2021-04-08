@@ -1,6 +1,4 @@
 git+git://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
-#-e git+ssh://git@github.com/Ensembl/ensembl-prodinf-datacheck.git@features/refact_base_v1#egg=ensembl-prodinf-datacheck
-#-e git+ssh://git@github.com/Ensembl/ensembl-prodinf-event.git@features/refact_base_v1#egg=ensembl-prodinf-event
 Bootstrap-Flask
 celery
 Click
@@ -12,11 +10,11 @@ Flask-Cors
 pytest
 pytest-docker
 gunicorn
+mysqlclient
 radical.saga
 radical.utils
 requests
-SQLAlchemy
+SQLAlchemy < 1.4.0
 sqlalchemy_utils
 wtforms
 Jinja2
-mysqlclient

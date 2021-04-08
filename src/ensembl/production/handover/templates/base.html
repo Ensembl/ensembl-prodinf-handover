@@ -11,6 +11,19 @@
         {% block styles %}
             <!-- Bootstrap CSS -->
             {{ bootstrap.load_css() }}
+
+            {% if config['HANDOVER_TYPE'] == 'vertebrates' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/vertebrates.css') }}">
+            {% elif config['HANDOVER_TYPE'] == 'plants' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/plants.css') }}">
+            {% elif config['HANDOVER_TYPE'] == 'metazoa' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/metazoa.css') }}">   
+            {% elif config['HANDOVER_TYPE'] == 'microbes' or  config['HANDOVER_TYPE'] == 'bacteria'%}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/microbes.css') }}">      
+            {% else %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
+            {% endif %}
+            
         {% endblock %}
 
         <title>Production Handover App</title>
@@ -19,8 +32,8 @@
     <body>
        
         {% block content %}
-            <nav class="navbar navbar-icon-top navbar-expand-lg navbar-dark bg-{{config['background']}}">
-                <a class="navbar-brand" href="#"><span class="mb-0 h3">{{config['handover']}} </span>e{{config['RELEASE']}}</a>
+            <nav class="navbar navbar-icon-top navbar-expand-lg navbar-dark hnav ">
+                <a class="navbar-brand" href="#"><span class="mb-0 h3">Handover {{config['HANDOVER_TYPE']}} </span>e{{config['RELEASE']}}</a>
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
