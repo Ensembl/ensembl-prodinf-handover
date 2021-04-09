@@ -82,11 +82,10 @@ def handover_database(spec):
 @app.task(bind=True, default_retry_delay=retry_wait)
 def datacheck_task(self, spec, dc_job_id, src_uri):
     "Submit the source database for data check and wait until DCs pipeline finish"
-    print('running dc................................')
     self.max_retries = None
     src_uri = spec['src_uri']
     progress_msg = 'Datachecks in progress, please see: %sjobs/%s' % (cfg.dc_uri, dc_job_id)
-    #log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
+    log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
     print(progress_msg)
     try:
         result = dc_client.retrieve_job(dc_job_id)
@@ -98,15 +97,13 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
         raise ValueError('Handover failed, cannot retrieve datacheck job %s' % e) from e
     if result['status'] in ['incomplete', 'running', 'submitted']:
         log_and_publish(make_report('DEBUG', 'Datacheck Job incomplete, checking again later', spec, src_uri))
-        print('running....')
         raise self.retry()
     # check results
     elif result['status'] == 'failed':
-        #self.request.chain = None
+        self.request.chain = None
         prob_msg = 'Datachecks found problems, you can download the output here: %sdownload_datacheck_outputs/%s' % (
             cfg.dc_uri, dc_job_id)
         log_and_publish(make_report('INFO', prob_msg, spec, src_uri))
-        print('failed......................')
         msg = """Running datachecks on %s completed but found problems. You can download the output here %s""" % (
             src_uri, cfg.dc_uri + "download_datacheck_outputs/" + str(dc_job_id))
         send_email(to_address=spec['contact'], subject='Datacheck found problems', body=msg,
@@ -119,8 +116,6 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
     else:
         log_and_publish(make_report('INFO', 'Datachecks successful, starting copy', spec, src_uri))
         spec['progress_complete'] = 1
-        print('done.........................................')
-
     return spec
 
 @app.task(bind=True, default_retry_delay=retry_wait)
@@ -130,7 +125,6 @@ def dbcopy_task(self, spec):
     * if failure, flag error using email"""
     # allow infinite retries
     self.max_retries = None
-    print('copy in progress...........')
     try:
         src_uri = spec['src_uri']
         copy_job_id=submit_copy(spec)
@@ -141,7 +135,6 @@ def dbcopy_task(self, spec):
         while db_copy_client.retrieve_job(copy_job_id)['overall_status'] in [ 'Scheduled', 'Running', 'Submitted']:
             incomplete_msg = 'Copying in progress, please see: %s%s' % (cfg.copy_web_uri, copy_job_id)
             log_and_publish(make_report('DEBUG', incomplete_msg, spec, src_uri))
-            print('waiting for job to complete....')
             time.sleep(120)
 
         result = db_copy_client.retrieve_job(copy_job_id)
@@ -170,7 +163,6 @@ def metadata_update_task(self, spec):
     """Wait for metadata update to complete and then respond accordingly:
     * if success, submit event to event handler for further processing
     * if failure, flag error using email"""
-    print('running metadata.....')
     # allow infinite retries
     self.max_retries = None
     try:
@@ -252,7 +244,6 @@ def dispatch_db_task(self, spec):
         while db_copy_client.retrieve_job(copy_job_id)['overall_status'] in [ 'Scheduled', 'Running', 'Submitted']:
             incomplete_msg = 'Database dispatch in progress, please see: %s%s' % (cfg.copy_web_uri, copy_job_id)
             log_and_publish(make_report('DEBUG', incomplete_msg, spec, src_uri))
-            print('waiting for job to complete....')
             time.sleep(120)
 
         result = db_copy_client.retrieve_job(copy_job_id)
