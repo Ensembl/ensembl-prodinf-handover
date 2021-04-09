@@ -1,6 +1,6 @@
 import pytest
 import requests
-
+import unittest
 from requests.exceptions import ConnectionError
 
 
@@ -29,5 +29,4 @@ def http_service(docker_ip, docker_services):
 def test_status_code(http_service):
     status = 200
     response = requests.get(http_service)
-
     assert response.status_code == status
