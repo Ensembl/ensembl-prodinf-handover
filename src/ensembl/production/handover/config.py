@@ -47,7 +47,7 @@ class HandoverConfig():
                              file_config.get('smtp_server', 'smtp.ebi.ac.uk'))
     report_server = os.environ.get("REPORT_SERVER",
                                file_config.get('report_server',
-                                               "amqp://guest:guest@localhost:5672/%2F"))
+                                               "amqp://guest:guest@ensrabbitmq:5672/%2F"))
     report_exchange = os.environ.get("REPORT_EXCHANGE",
                                  file_config.get('report_exchange', 'report_exchange'))
     report_exchange_type = os.environ.get("REPORT_EXCHANGE_TYPE",
@@ -60,7 +60,7 @@ class HandoverConfig():
                                                         'funcgen,compara,ancestral'))
     production_email = os.environ.get("PRODUCTION_EMAIL",
                                   file_config.get('production_email',
-                                                  'vinay@ebi.ac.uk'))
+                                                  'ensprod@ebi.ac.uk'))
     allowed_divisions = os.environ.get("ALLOWED_DIVISIONS",
                                    file_config.get('allowed_divisions',
                                                    'vertebrates'))
@@ -104,9 +104,9 @@ class HandoverCeleryConfig():
     file_config = load_config_yaml(config_file_path)
 
     broker_url = os.environ.get("CELERY_BROKER_URL",
-                            file_config.get('celery_broker_url', 'pyamqp://guest:guest@localhost:5672/'))
+                            file_config.get('celery_broker_url', 'pyamqp://guest:guest@ensrabbitmq:5672/'))
     result_backend = os.environ.get("CELERY_RESULT_BACKEND",
-                                file_config.get('celery_result_backend', 'rpc://guest:guest@localhost:5672/'))
+                                file_config.get('celery_result_backend', 'rpc://guest:guest@ensrabbitmq:5672/'))
     smtp_server = os.environ.get("SMTP_SERVER",
                              file_config.get('smtp_server', 'localhost'))
     from_email_address = os.environ.get("FROM_EMAIL_ADDRESS",
