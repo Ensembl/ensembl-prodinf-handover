@@ -8,7 +8,7 @@ function row_details(id){
  table.bootstrapTable('expandRow', id);
 }
 function FormatHandover(index, row){
-  return `<a href="/handovers/${row.handover_token}">${row.handover_token}</a>`;
+  return `<a target="_blank" rel="noopener noreferrer" href="/handovers/${row.handover_token}">${row.handover_token}</a>`;
 }
 function detailFormatter(index, row) {
   $.ajax({
@@ -84,9 +84,9 @@ function HandoverBaseInfo(handover_details){
                   `;
   }
   let base_html= `
-  <div class="row m-4" >
-  <div class="col-12 m-2">
-  <div class="card m-4" style="justify-content: center;">
+  <div class="row m-2" >
+  <div class="col-12 m-1">
+  <div class="card m-1" style="justify-content: center;">
     <div class="card-header">
       Details
     </div>
@@ -144,7 +144,7 @@ function urlify(text){
 		var urlRegex = /(https?:\/\/[^\s]+)/g;
 		if (url.test(text)){
           return text.replace(urlRegex, function(url) {
-                return '<a href="' + url + '">' + url + '</a>';
+                return '<a target="_blank" rel="noopener noreferrer" href="' + url + '">' + url + '</a>';
 		    });
 		}
 		else {

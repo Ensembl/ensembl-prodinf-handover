@@ -1,5 +1,6 @@
 import unittest
 from ensembl.production.handover.app.main import valid_handover
+from ensembl.production.handover.celery_app.utils import parse_db_infos
 
 
 class TestHandover(unittest.TestCase):
@@ -39,3 +40,11 @@ class TestHandover(unittest.TestCase):
         for uri in invalid_uris:
             doc = {'_source': {'params': {'src_uri': uri}}}
             self.assertFalse(valid_handover(doc, release))
+    
+    def test_valid_core_database(self):
+        expect_db_type='core'
+        dbname='zonotrichia_albicollis_core_96_101'  
+        db_prefix, db_type, assembly = parse_db_infos(dbname)
+        self.assertTrue(expect_db_type, db_type)
+          
+

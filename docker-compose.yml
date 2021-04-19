@@ -1,53 +1,52 @@
 version: '3'
-
 services:
-
   rabbitmq:
-    container_name: 'ensrabbitmq'
-    image: rabbitmq:3-management-alpine
+    container_name: ensrabbitmq
+    image: 'rabbitmq:3-management-alpine'
+    volumes:
+      - './rabbitmq_config/rabbit_handover_definition.json:/opt/definitions.json:rw'
+      - './rabbitmq_config/rabbitmq.config:/etc/rabbitmq/rabbitmq.conf'
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - '5672:5672'
+      - '15672:15672'
     networks:
-      - productionsrv       
-
+      - productionsrv
   handover_app:
-   build: '.'
-   container_name: 'handover_app'
-   command: "/home/appuser/venv/bin/gunicorn --config /home/appuser/gunicorn_config.py -b 0.0.0.0:5000 ensembl.production.handover.app.main:app"
-   depends_on:
-     - "rabbitmq"
-     - "elasticsearch"
-   ports:
-     - "5000:5000"        
-   networks:
-     - productionsrv 
-
-  celery-handover:  
-   build: '.'     
-   container_name: 'celery-handover'
-   depends_on:
-     - "rabbitmq"
-     - "elasticsearch"   
-   command: "celery -A ensembl.production.handover.celery_app.tasks worker -l info -Q handover -n production_handover@%%h"
-   networks:
-     - productionsrv
-    
-  elasticsearch: 
-    image: docker.elastic.co/elasticsearch/elasticsearch:6.2.4
+    build: .
+    container_name: handover_app
+    environment:
+      - NODE_ENV=production
+    command: '/home/appuser/venv/bin/gunicorn --config /home/appuser/gunicorn_config.py -b 0.0.0.0:5000 ensembl.production.handover.app.main:app'
+    depends_on:
+      - rabbitmq
+      - elasticsearch
+    ports:
+      - '5000:5000'
+    networks:
+      - productionsrv
+  celery-handover:
+    build: .
+    container_name: celery-handover
+    depends_on:
+      - rabbitmq
+      - elasticsearch
+    command: celery -A ensembl.production.handover.celery_app.tasks worker -l info -Q handover -n production_handover@%%h
+    networks:
+      - productionsrv
+  elasticsearch:
+    image: 'docker.elastic.co/elasticsearch/elasticsearch:6.2.4'
     container_name: elasticsearch
     environment:
       - http.port=9200
       - node.name=elasticsearch
       - bootstrap.memory_lock=true
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
-      - 9200:9200
-      - 9300:9300
+      - '9200:9200'
+      - '9300:9300'
     networks:
-      - productionsrv 
-
+      - productionsrv
 networks:
   productionsrv:
-    driver: bridge           
+    driver: bridge

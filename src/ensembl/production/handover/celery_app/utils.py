@@ -173,7 +173,7 @@ def process_handover_payload(spec):
 
     return spec,src_url,db_type
 
-#submit handover jobs to respective clients
+#submit handover jobs to respective
 def submit_dc(spec, src_url, db_type):
     """Submit the source database for checking. Returns a celery job identifier"""
     try:
