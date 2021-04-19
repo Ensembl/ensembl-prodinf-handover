@@ -12,7 +12,7 @@ class HandoverConfig():
 
     #core config
     dc_uri = os.environ.get("DC_URI",
-                        file_config.get('dc_uri', "http://ens-prod-1:8006/datacheck"))
+                        file_config.get('dc_uri', "http://ens-prod-1:8006/datacheck/"))
     copy_uri = os.environ.get("COPY_URI",
                           #file_config.get('copy_uri', "http://127.0.0.1:5002/")) production-services.ensembl.org
                           file_config.get('copy_uri', "http://production-services.ensembl.org/api/dbcopy/requestjob"))
