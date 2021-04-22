@@ -8,6 +8,7 @@ email_validator
 Flask
 flasgger
 Flask-Cors
+flask_wtf
 pytest
 pytest-docker
 gunicorn
@@ -15,7 +16,7 @@ mysqlclient
 radical.saga
 radical.utils
 requests
-SQLAlchemy < 1.4.0
-sqlalchemy_utils
+SQLAlchemy
+sqlalchemy_utils==0.37.0
 wtforms
 Jinja2
