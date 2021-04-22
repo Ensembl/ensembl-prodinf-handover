@@ -12,9 +12,9 @@
 
 from wtforms import Form, FormField, StringField, SubmitField, HiddenField
 from wtforms.validators import Email, InputRequired, ValidationError, Regexp
+from flask_wtf import FlaskForm
 
-
-class HandoverSubmissionForm(Form):
+class HandoverSubmissionForm(FlaskForm):
     #handover = FormField(HandoverForm, description='Handover')
     src_uri = StringField('Database server uri: ', validators=[InputRequired(), 
                              Regexp('mysql://[\w]+@[\w-]+:\d{4}', message="Server URI should follow this pattern  mysql://user(:pass)@server:port/ ")], 

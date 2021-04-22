@@ -18,8 +18,9 @@ before_install:
 
 before_script:
   - pip install -r requirements-test.txt
+  - pip install coverage
   - pip install .
 
 script:
-  - coverage run -m pytest tests
+  - coverage run -m pytest src
   - coverage report -m
