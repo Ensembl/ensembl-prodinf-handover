@@ -19,8 +19,12 @@ billiard==3.6.4.0
     # via celery
 bootstrap-flask==1.5.1
     # via -r requirements.in
+cached-property==1.5.2
+    # via docker-compose
 celery==5.0.5
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   flower
 certifi==2020.12.5
     # via
     #   ensembl-prodinf-core
@@ -83,16 +87,27 @@ flask==1.1.2
     #   flasgger
     #   flask-cors
     #   flask-wtf
+git+git://github.com/mher/flower.git#egg=flower
+    # via -r requirements.in
 future==0.18.2
     # via radical.utils
 greenlet==1.0.0
     # via sqlalchemy
 gunicorn==20.1.0
     # via -r requirements.in
+humanize==3.4.1
+    # via flower
 idna==2.10
     # via
     #   email-validator
     #   requests
+importlib-metadata==4.0.1
+    # via
+    #   jsonschema
+    #   kombu
+    #   pluggy
+    #   pytest
+    #   sqlalchemy
 iniconfig==1.1.1
     # via pytest
 itsdangerous==1.1.0
@@ -131,6 +146,8 @@ parse==1.19.0
     # via radical.saga
 pluggy==0.13.1
     # via pytest
+prometheus-client==0.10.1
+    # via flower
 prompt-toolkit==3.0.18
     # via click-repl
 py==1.10.0
@@ -154,7 +171,9 @@ pytest==6.2.3
 python-dotenv==0.17.0
     # via docker-compose
 pytz==2021.1
-    # via celery
+    # via
+    #   celery
+    #   flower
 pyyaml==5.4.1
     # via
     #   docker-compose
@@ -206,6 +225,10 @@ texttable==1.6.3
     # via docker-compose
 toml==0.10.2
     # via pytest
+tornado==6.1
+    # via flower
+typing-extensions==3.7.4.3
+    # via importlib-metadata
 urllib3==1.26.4
     # via
     #   elasticsearch
@@ -228,6 +251,8 @@ wtforms==2.3.3
     # via
     #   -r requirements.in
     #   flask-wtf
+zipp==3.4.1
+    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools

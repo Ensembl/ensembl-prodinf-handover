@@ -19,7 +19,7 @@ import datetime
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
 from sqlalchemy.exc import OperationalError
 from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, url_for, redirect, json
+from flask import Flask, request, jsonify, render_template, url_for, redirect, json, flash
 from flask_cors import CORS
 from flask_bootstrap import Bootstrap
 
@@ -92,28 +92,34 @@ def dropdown(src_host=None, src_port=None):
 #UI Submit-form for handover 
 @app.route('/handovers/submit/', methods=['GET', 'POST']) 
 def handover_form():  
+  try:
 
-    form = HandoverSubmissionForm(request.form)
-    error = ''
-    
+    form = HandoverSubmissionForm(request.form) 
+    print(app.config)
+    print(app.config['SWAGGER'])
+    print('*********************')
+  
     if  request.method == 'POST':
+      
       if  form.validate() and not request.form.get('handover_submit'):
-        try:
-          spec = request.form.to_dict(flat=True)
-          spec['src_uri'] = spec['src_uri'] + spec['database']
-          app.logger.debug('Submitting handover request %s', spec)   
-          ticket = handover_database(spec)
-          app.logger.info('Ticket: %s', ticket)
-          return redirect('/handovers/' + str(ticket))
-        except Exception as e:
-          error = str(e) 
+        spec = request.form.to_dict(flat=True)
+        spec['src_uri'] = spec['src_uri'] + spec['database']
+        app.logger.debug('Submitting handover request %s', spec)   
+        ticket = handover_database(spec)
+        app.logger.info('Ticket: %s', ticket)
+        return redirect('/handovers/' + str(ticket))
+      else :
+        for error_key, error in form.errors.items():
+          flash(f"{error_key}: {error}")
 
-    return render_template(
-        'submit.html',
-        form=form,
-        error=error,
-        copy_uri = cfg.copy_uri_dropdown,
-    )
+  except Exception as e:
+    flash(str(e))
+  
+  return render_template(
+    'submit.html',
+    form=form,
+    copy_uri = cfg.copy_uri_dropdown,
+  )
 
 @app.route('/handovers', methods=['POST'])
 def handovers():
