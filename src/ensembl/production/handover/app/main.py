@@ -95,10 +95,7 @@ def handover_form():
   try:
 
     form = HandoverSubmissionForm(request.form) 
-    print(app.config)
-    print(app.config['SWAGGER'])
-    print('*********************')
-  
+    
     if  request.method == 'POST':
       
       if  form.validate() and not request.form.get('handover_submit'):
