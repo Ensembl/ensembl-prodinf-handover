@@ -29,7 +29,7 @@ class TestHandoverForm(unittest.TestCase):
         def form_submit():
             form = HandoverSubmissionForm(csrf_enabled=False)
 
-            if form.validate_on_submit():
+            if form.validate():
                 return {'valid': True}
 
             return {'Valid': False}
@@ -43,20 +43,18 @@ class TestValidateOnSubmit(TestHandoverForm):
     def test_not_submitted(self):
         with self.request(method='GET', data={}):
             f = HandoverSubmissionForm(request.form, csrf_enabled=False)
-            self.assertEqual(f.is_submitted(), False)
-            self.assertEqual(f.validate_on_submit(), False)
+            self.assertEqual(f.validate(), False)
 
     def test_submitted_not_valid(self):
         with self.request(method='POST', data={}):
             f = HandoverSubmissionForm(request.form, csrf_enabled=False)
-            self.assertEqual(f.is_submitted(), True)
             self.assertEqual(f.validate(), False)
 
     def test_submitted_and_valid(self):
         with self.request(method='POST', data=valid_payload):
             print(request.form)
             f = HandoverSubmissionForm(request.form, csrf_enabled=False)
-            self.assertEqual(f.validate_on_submit(), True)
+            self.assertEqual(f.validate(), True)
 
 
 
@@ -64,19 +62,17 @@ class TestCSRF(TestHandoverForm):
     def test_csrf_token(self):
         with self.request(method='GET'):
             f = HandoverSubmissionForm(request.form)
-            self.assertEqual(hasattr(f, 'csrf_token'), True)
+            self.assertEqual(hasattr(f, 'csrf_token'), False)
             self.assertEqual(f.validate(), False)
 
     def test_invalid_csrf(self):
         with self.request(method='POST', data=valid_payload):
             f = HandoverSubmissionForm()
-            self.assertEqual(f.validate_on_submit(), False)
-            self.assertEqual(f.errors['csrf_token'], [u'The CSRF token is missing.'])
+            self.assertEqual(f.validate(), False)
 
 
     def test_valid(self):
-        csrf_token = HandoverSubmissionForm().csrf_token.current_token
-        builder = EnvironBuilder(method='POST', data={**valid_payload, 'csrf_token': csrf_token })
+        builder = EnvironBuilder(method='POST', data={**valid_payload})
         env = builder.get_environ()
         req = Request(env)
         f = HandoverSubmissionForm(req.form)
