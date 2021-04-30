@@ -25,6 +25,7 @@
 # 4. process_db_metadata (celery task)
 # - wait/retry until metadara load job has completed
 # - if success, process event using a event handler endpoint celery task
+# @author: vinay kaikala
 # @author: dstaines
 # '''
 
