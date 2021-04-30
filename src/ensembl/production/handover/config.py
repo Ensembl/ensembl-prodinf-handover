@@ -1,3 +1,16 @@
+#!/usr/bin/env python
+# .. See the NOTICE file distributed with this work for additional information
+#    regarding copyright ownership.
+#    Licensed under the Apache License, Version 2.0 (the "License");
+#    you may not use this file except in compliance with the License.
+#    You may obtain a copy of the License at
+#        http://www.apache.org/licenses/LICENSE-2.0
+#    Unless required by applicable law or agreed to in writing, software
+#    distributed under the License is distributed on an "AS IS" BASIS,
+#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    See the License for the specific language governing permissions and
+#    limitations under the License.
+
 '''
 @author: dstaines; Vinay
 '''
@@ -11,26 +24,28 @@ class HandoverConfig():
     file_config = load_config_yaml(config_file_path)
 
     #core config
+    SECRET_KEY = os.environ.get('SECRET_KEY',
+                                file_config.get('secret_key', os.urandom(32)))
     dc_uri = os.environ.get("DC_URI",
-                        file_config.get('dc_uri', "http://ens-prod-1:8006/datacheck/"))
+                        file_config.get('dc_uri', "http://localhost:8006/datacheck"))
     copy_uri = os.environ.get("COPY_URI",
                           #file_config.get('copy_uri', "http://127.0.0.1:5002/")) production-services.ensembl.org
-                          file_config.get('copy_uri', "http://production-services.ensembl.org/api/dbcopy/requestjob"))
+                          file_config.get('copy_uri', "http://production-services.ensembl.org:80/api/dbcopy/requestjob"))
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
                           file_config.get('copy_uri_dropdown', "http://production-services.ensembl.org:80/")) 
                                                 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                               file_config.get('copy_web_uri',
-                                              "http://production-services.ensembl.org/admin/ensembl_dbcopy/requestjob/"))
+                                              "http://production-services.ensembl.org:80/admin/ensembl_dbcopy/requestjob/"))
     meta_uri = os.environ.get("META_URI",
                           file_config.get('meta_uri',
-                                          "http://127.0.0.1:5003/"))
+                                          "http://127.0.0.1:8008/"))
     meta_web_uri = os.environ.get("META_WEB_URI",
                               file_config.get('meta_web_uri',
                                               "http://127.0.0.1:9000/#!/metadata_result/"))
     event_uri = os.environ.get("EVENT_URI",
                            file_config.get('event_uri',
-                                           'http://127.0.0.1:5004/'))
+                                           'http://127.0.0.1:8009/'))
     staging_uri = os.environ.get("STAGING_URI",
                              file_config.get('staging_uri',
                                              "mysql://ensro@mysql-ens-general-dev-1:4484/"))
@@ -47,7 +62,7 @@ class HandoverConfig():
                              file_config.get('smtp_server', 'smtp.ebi.ac.uk'))
     report_server = os.environ.get("REPORT_SERVER",
                                file_config.get('report_server',
-                                               "amqp://guest:guest@localhost:5672/%2F"))
+                                               "amqp://guest:guest@ensrabbitmq:5672/%2F"))
     report_exchange = os.environ.get("REPORT_EXCHANGE",
                                  file_config.get('report_exchange', 'report_exchange'))
     report_exchange_type = os.environ.get("REPORT_EXCHANGE_TYPE",
@@ -104,9 +119,9 @@ class HandoverCeleryConfig():
     file_config = load_config_yaml(config_file_path)
 
     broker_url = os.environ.get("CELERY_BROKER_URL",
-                            file_config.get('celery_broker_url', 'pyamqp://guest:guest@localhost:5672/'))
+                            file_config.get('celery_broker_url', 'pyamqp://guest:guest@ensrabbitmq:5672/%2F'))
     result_backend = os.environ.get("CELERY_RESULT_BACKEND",
-                                file_config.get('celery_result_backend', 'rpc://guest:guest@localhost:5672/'))
+                                file_config.get('celery_result_backend', 'rpc://guest:guest@ensrabbitmq:5672/%2F'))
     smtp_server = os.environ.get("SMTP_SERVER",
                              file_config.get('smtp_server', 'localhost'))
     from_email_address = os.environ.get("FROM_EMAIL_ADDRESS",

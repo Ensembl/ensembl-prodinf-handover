@@ -1,5 +1,5 @@
 # README
-Overview
+EnsEMBL - Production Handover Service Application
 ========
 
 The handover app provides a simple endpoint to submit a new database to be checked and copied to the staging server for further automated processing. 
