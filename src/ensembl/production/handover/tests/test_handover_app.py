@@ -10,6 +10,7 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+
 import unittest
 from ensembl.production.handover.app.main import valid_handover
 from ensembl.production.handover.celery_app.utils import parse_db_infos
