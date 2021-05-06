@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block styles %}
+{{ super() }}
+<link type="text/css"  rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table.min.css') }}"/>
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row m-4" >
+    <div class="col-12 m-2">
+        <div class="card shadow p-3 mb-5 bg-white rounded">
+            <div class="card-header">
+                   Handover Job View 
+            </div>
+            <div class="card-body">
+                <form>
+                <div class=" mb-2">
+                    <input id="button-refresh" class="btn h-buttons " type="button" value="Refresh"/>
+                    <input id="rsumbit" class="btn h-buttons" type="button" value="Edit and Re-submit Job">
+                    <input id="delete" class="btn h-buttons" type="button" value="Delete Job">
+                    <input id="status" style="display:none" class="btn h-buttons" type="button" value="Update handover status">
+                </div>  
+                <div class="input-group  ">
+                    <input type="text" class="form-control" value="{{handover_token}}" required id="handoverjob" placeholder="Handover Token" aria-label="Recipient's username" aria-describedby="button-addon2">
+                    <div class="input-group-append">
+                      <button class="btn btn-outline-secondary h-buttons" type="submit" id="button-view"><span style="color:white">View</span></button>
+                    </div>
+                </div>
+                </form>
+                <div id="result" class="row mt-2">
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/table_format.js') }}"></script>
+
+ <script>
+    $(document).ready(function(){
+
+        if($('#handoverjob').val() != ''){
+            getHandoverDetails()
+        }
+        function getHandoverDetails(){
+            $('#status').hide();
+            let handover_token = $('#handoverjob').val();
+            handover_result = detailFormatter('', {'handover_token': handover_token});
+            $('#result').html(handover_result);
+        }
+        $('#button-refresh').click(function(){
+            if($('#handoverjob').val()){
+                getHandoverDetails();      
+            }
+        });
+        $('form').on('submit', function(e){
+            e.preventDefault();
+            getHandoverDetails();
+        });
+        
+    //update handover status 
+    $('#status').click(function () {
+        const handover_token = $('#handoverjob').val();
+        console.log(handover_token);
+        $.ajax({
+            url: '/handovers/status',
+            dataType: 'json',
+            headers: {
+            "Content-Type": "application/json"
+            },
+            data: JSON.stringify({'handover_token': handover_token}),
+            type: 'PUT',
+            success: function(response) {
+                location.reload();
+                console.log(response);
+
+            }  
+        });
+
+    });
+    // delete handover job 
+    $('#delete').click(function () {
+      //delete handover
+      const handovers_token = $('#handoverjob').val();
+      $.ajax({
+        url: `/handovers/${handovers_token}`,
+        type: 'DELETE',
+        success: function(){
+            $(`#result`).html(`<div class="alert alert-success m-4" role="alert">
+              successfully deleted ${handovers_token}
+               </div>`);
+        },
+        error: function(){
+            $(`#result`).html(`<div class="alert alert-DANGER m-4" role="alert">
+              Unable to  deleted ${handovers_token}
+               </div>`);        
+        }
+      });
+    });  
+
+      //resubmit or edit
+      $('#rsumbit').click(function () {
+        //delete handover
+        const handovers_token = $('#handoverjob').val();
+        $.ajax({
+            url: `/handovers/${handovers_token}?format=json`,
+            type: 'GET',
+            success: function(data){
+                data = data[0];
+                let db = data.src_uri.split('/').pop();
+                //get source uri 
+                let src_uri = data.src_uri.split("/");
+                src_uri = src_uri.slice(0, src_uri.length - 1).join("/") + "/";
+
+                const form = $('</div hidden style="display:none"><form hidden action="/handovers/submit/" method="POST">' +
+                `<input type="text" name="src_uri" value="${src_uri}" hidden />
+                <input type="text" name="database" value="${db}" hidden/>
+                <input type="text" name="contact" value="${data.contact}" hidden />
+                <input type="text" name="comment" value="${data.comment}" hidden/>
+                <input type="text" name="source" value="Handover"hidden />
+                <input type="text" name="handover_submit" value="Handover" hidden/>
+                ` +
+                 '</form></div>');
+                $('body').append(form);
+                $(form).submit();
+
+            },
+            error: function(){
+                $(`#result`).html(`<div class="alert alert-danger m-4" role="alert">
+                Unable to  find ${handovers_token}
+                 </div>`);        
+            }
+        });
+      });
+        
+    });
+</script>
+
+{% endblock scripts %}

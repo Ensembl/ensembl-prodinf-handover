@@ -1,0 +1,55 @@
+{% from 'bootstrap/nav.html' import render_nav_item %}
+
+<!doctype html>
+<html lang="en">
+    <head>
+        {% block head %}
+        <!-- Required meta tags -->
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        {% block styles %}
+            <!-- Bootstrap CSS -->
+            {{ bootstrap.load_css() }}
+
+            {% if config['HANDOVER_TYPE'] == 'vertebrates' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/vertebrates.css') }}">
+            {% elif config['HANDOVER_TYPE'] == 'plants' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/plants.css') }}">
+            {% elif config['HANDOVER_TYPE'] == 'metazoa' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/metazoa.css') }}">   
+            {% elif config['HANDOVER_TYPE'] == 'microbes' or  config['HANDOVER_TYPE'] == 'bacteria'%}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/microbes.css') }}">      
+            {% else %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
+            {% endif %}
+            
+        {% endblock %}
+
+        <title>Production Handover App</title>
+        {% endblock %}
+    </head>
+    <body>
+       
+        {% block content %}
+            <nav class="navbar navbar-icon-top navbar-expand-lg navbar-dark hnav ">
+                <a class="navbar-brand" href="#"><span class="mb-0 h3">Handover {{config['HANDOVER_TYPE']}} </span>e{{config['RELEASE']}}</a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">    
+                    <div class="navbar-nav mr-auto">
+                        {{ render_nav_item('handover_form', 'Submit') }}
+                        {{ render_nav_item('handover_results', 'List Jobs') }}
+                        {{ render_nav_item('handover_result', 'Job Status') }}
+                    </div>
+                </div>
+            </nav>
+        {% endblock %}
+
+        {% block scripts %}
+            <!-- Optional JavaScript -->
+            {{ bootstrap.load_js() }}
+        {% endblock %}
+    </body>
+</html>
