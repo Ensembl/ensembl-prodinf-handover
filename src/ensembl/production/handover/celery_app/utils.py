@@ -223,6 +223,9 @@ def submit_dc(spec, src_url, db_type):
         raise ValueError('Handover failed, Cannot submit dc job %s' % e) from e
     spec['dc_job_id'] = dc_job_id
     
+    print('submitdc........................................')
+    print(spec)
+    print('.................................................')
     return dc_job_id, spec, src_uri
 
 def submit_copy(spec):
