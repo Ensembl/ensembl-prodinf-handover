@@ -74,11 +74,11 @@ def dropdown(src_host=None, src_port=None):
     src_name = request.args.get('name', None)
     search = request.args.get('search', None)
     if src_name :
-      res = requests.get(f"{cfg.copy_uri_dropdown}api/src_host", params={'name': src_name})
+      res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/srchost", params={'name': src_name})
       res.raise_for_status()
       return jsonify(res.json())
     elif src_host and src_port and search:
-      res = requests.get(f"{cfg.copy_uri_dropdown}api/databases/{src_host}/{src_port}", params={'search': search})
+      res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/databases/{src_host}/{src_port}", params={'search': search})
       res.raise_for_status()
       return jsonify(res.json())
     else:
