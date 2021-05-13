@@ -19,7 +19,11 @@
             {% elif config['HANDOVER_TYPE'] == 'metazoa' %}
                 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/metazoa.css') }}">   
             {% elif config['HANDOVER_TYPE'] == 'microbes' or  config['HANDOVER_TYPE'] == 'bacteria'%}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/microbes.css') }}">      
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/microbes.css') }}">
+            {% elif config['HANDOVER_TYPE'] == 'viruses' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/viruses.css') }}"> 
+            {% elif config['HANDOVER_TYPE'] == 'rapid' %}
+                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/rapid.css') }}">                                     
             {% else %}
                 <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
             {% endif %}
