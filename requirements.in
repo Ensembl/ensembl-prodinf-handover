@@ -1,4 +1,4 @@
-git+git://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
+ensembl-prodinf-core@git+http://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
 Bootstrap-Flask
 celery
 Click

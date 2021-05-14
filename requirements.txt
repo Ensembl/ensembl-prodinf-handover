@@ -19,8 +19,6 @@ billiard==3.6.4.0
     # via celery
 bootstrap-flask==1.5.1
     # via -r requirements.in
-cached-property==1.5.2
-    # via docker-compose
 celery==5.0.5
     # via
     #   -r requirements.in
@@ -72,7 +70,7 @@ elasticsearch==6.8.2
     # via -r requirements.in
 email-validator==1.1.2
     # via -r requirements.in
-git+git://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
+git+http://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
     # via -r requirements.in
 flasgger==0.9.5
     # via -r requirements.in
@@ -101,13 +99,6 @@ idna==2.10
     # via
     #   email-validator
     #   requests
-importlib-metadata==4.0.1
-    # via
-    #   jsonschema
-    #   kombu
-    #   pluggy
-    #   pytest
-    #   sqlalchemy
 iniconfig==1.1.1
     # via pytest
 itsdangerous==1.1.0
@@ -227,8 +218,6 @@ toml==0.10.2
     # via pytest
 tornado==6.1
     # via flower
-typing-extensions==3.7.4.3
-    # via importlib-metadata
 urllib3==1.26.4
     # via
     #   elasticsearch
@@ -251,8 +240,6 @@ wtforms==2.3.3
     # via
     #   -r requirements.in
     #   flask-wtf
-zipp==3.4.1
-    # via importlib-metadata
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
