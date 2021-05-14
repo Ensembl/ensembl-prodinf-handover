@@ -55,9 +55,4 @@ setup(
         'Operating System :: Unix'
     ],
     keywords='ensembl, handover, production',
-    entry_points={
-        'console_scripts': [
-            'handover_api = ensembl.production.handover.runserver:main'
-        ]
-    }
 )

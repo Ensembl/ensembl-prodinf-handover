@@ -42,7 +42,6 @@ click-repl==0.1.6
     # via celery
 click==7.1.2
     # via
-    #   -r requirements.in
     #   celery
     #   click-didyoumean
     #   click-plugins
