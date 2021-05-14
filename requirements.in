@@ -1,8 +1,6 @@
-git+git://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
+ensembl-prodinf-core@git+https://github.com/Ensembl/ensembl-prodinf-core.git#egg=ensembl-prodinf-core
 Bootstrap-Flask
 celery
-Click
-coverage
 elasticsearch>=6.8.1,<7.0.0
 email_validator
 Flask
@@ -10,12 +8,8 @@ flasgger
 Flask-Cors
 flask_wtf
 git+git://github.com/mher/flower.git#egg=flower
-pytest
-pytest-docker
 gunicorn
 mysqlclient
-radical.saga
-radical.utils
 requests
 SQLAlchemy
 sqlalchemy_utils==0.37.0
