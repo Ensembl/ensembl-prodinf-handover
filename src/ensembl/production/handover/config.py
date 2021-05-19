@@ -94,7 +94,7 @@ class HandoverConfig():
     ES_HOST = os.environ.get('ES_HOST', file_config.get('es_host', 'localhost'))
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
-    RELEASE = os.environ.get('ENS_RELEASE', file_config.get('ens_release', '104'))
+    RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version', '104'))
     BLAT_SPECIES = ['homo_sapiens',
                 'mus_musculus',
                 'danio_rerio',
