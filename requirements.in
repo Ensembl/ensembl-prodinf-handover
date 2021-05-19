@@ -15,3 +15,4 @@ SQLAlchemy
 sqlalchemy_utils==0.37.0
 wtforms
 Jinja2
+python-dotenv==0.17.1

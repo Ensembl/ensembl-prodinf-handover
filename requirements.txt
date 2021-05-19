@@ -96,6 +96,8 @@ prompt-toolkit==3.0.18
     # via click-repl
 pyrsistent==0.17.3
     # via jsonschema
+python-dotenv==0.17.1
+    # via -r requirements.in
 pytz==2021.1
     # via
     #   celery
