@@ -38,7 +38,7 @@ app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
 
-app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path, static_url_path='')
+app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path, static_url_path='/static/handover')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 app.logger.addHandler(app_logging.default_handler())
 app.config['SWAGGER'] = {
@@ -526,3 +526,7 @@ def handle_sqlalchemy_error(e):
 def handle_sqlalchemy_error(e):
      app.logger.error(str(e))
      return jsonify(error=str(e)), 404
+
+
+if __name__ == '__main__':
+    app.run()
