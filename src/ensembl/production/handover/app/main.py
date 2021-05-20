@@ -38,7 +38,8 @@ app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
 
-app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path, static_url_path='')
+app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path,
+            static_url_path='/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 app.logger.addHandler(app_logging.default_handler())
 app.config['SWAGGER'] = {
@@ -60,15 +61,15 @@ es_index = app.config['ES_INDEX']
 
 @app.route('/', methods=['GET'])
 def info():
-    app.config['SWAGGER'] = {'title': 'Handover REST endpoints', 'uiversion': 2}
+    app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(), 'uiversion': 2}
     return jsonify(app.config['SWAGGER'])
 
 @app.route('/ping', methods=['GET'])
 def ping():
     return jsonify({"status": "ok"})
 
-@app.route('/handover/dropdown/src_host', methods=['GET'])
-@app.route('/handover/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
+@app.route('/handovers/dropdown/src_host/', methods=['GET'])
+@app.route('/handovers/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
 def dropdown(src_host=None, src_port=None):
   try:
     src_name = request.args.get('name', None)
@@ -86,7 +87,7 @@ def dropdown(src_host=None, src_port=None):
   except HTTPError as http_err:
     raise HTTPRequestError(f'{http_err}', 404)
   except Exception as e:
-    print(str(e))
+    logging.fatal(str(e))
     return jsonify({"count":0,"next":None,"previous":None,"results":[], "error": str(e)})
 
 #UI Submit-form for handover 
@@ -118,7 +119,7 @@ def handover_form():
     copy_uri = cfg.copy_uri_dropdown,
   )
 
-@app.route('/handovers', methods=['POST'])
+@app.route('/handovers/', methods=['POST'])
 def handovers():
     """
     Endpoint to submit an handover job
@@ -191,9 +192,9 @@ def handovers():
     app.logger.info('Ticket: %s', ticket)
     return jsonify(ticket)
     
-@app.route('/handovers/status', methods=['PUT'])
+@app.route('/handovers/status/', methods=['PUT'])
 def handover_status_update():
-    "update handover status to success"
+    """update handover status to success"""
     try:
       if json_pattern.match(request.headers['Content-Type']):   
 
@@ -225,8 +226,8 @@ def handover_status_update():
     return res 
     
 
-@app.route('/handovers/job', methods=['GET'])
-@app.route('/handovers/<string:handover_token>', methods=['GET'])
+@app.route('/handovers/job/', methods=['GET'])
+@app.route('/handovers/<string:handover_token>/', methods=['GET'])
 def handover_result(handover_token=''):
     """
     Endpoint to get an handover job detail
@@ -323,7 +324,7 @@ def handover_result(handover_token=''):
         return jsonify(handover_detail)
 
 
-@app.route('/handovers', methods=['GET'])
+@app.route('/handovers/', methods=['GET'])
 def handover_results():
     """
     Endpoint to get a list of all the handover by release
@@ -441,7 +442,7 @@ def valid_handover(doc, release):
     return False
 
 
-@app.route('/handovers/<string:handover_token>', methods=['DELETE'])
+@app.route('/handovers/<string:handover_token>/', methods=['DELETE'])
 def delete_handover(handover_token):
     """
     Endpoint to delete all the reports linked to a handover_token
