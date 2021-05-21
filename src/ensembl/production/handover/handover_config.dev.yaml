@@ -4,7 +4,7 @@ service_port: 7004
 service_host: 0.0.0.0
 #es_host: ens-prod-1.ebi.ac.uk
 #es_port: 9200
-#ens_release: 102
+#ens_version: 102
 
 dispatch_targets:
  core: 'localhost'
