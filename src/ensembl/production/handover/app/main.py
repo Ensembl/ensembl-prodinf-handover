@@ -39,7 +39,7 @@ static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
 
 app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path,
-            static_url_path='/handovers/')
+            static_url_path='/static/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 app.logger.addHandler(app_logging.default_handler())
 app.config['SWAGGER'] = {
