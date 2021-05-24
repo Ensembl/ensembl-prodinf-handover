@@ -196,8 +196,7 @@ def handovers():
 def handover_status_update():
     """update handover status to success"""
     try:
-      if json_pattern.match(request.headers['Content-Type']):   
-
+      if json_pattern.match(request.headers['Content-Type']):
         handover_token = request.json.get('handover_token')
       else:
         raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
@@ -277,6 +276,9 @@ def handover_result(handover_token=''):
     """
 
     fmt = request.args.get('format', None)
+    # TODO Move this into core (potential usage on every flask app)
+    if not fmt and json_pattern.match(request.headers['Content-Type']):
+        fmt = 'json'
 
     # renter bootstrap table
     if fmt != 'json':
