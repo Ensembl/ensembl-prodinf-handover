@@ -70,7 +70,7 @@
         const handover_token = $('#handoverjob').val();
         console.log(handover_token);
         $.ajax({
-            url: '/handovers/status',
+            url: '/jobs/status',
             dataType: 'json',
             headers: {
             "Content-Type": "application/json"
@@ -90,7 +90,7 @@
       //delete handover
       const handovers_token = $('#handoverjob').val();
       $.ajax({
-        url: `/handovers/${handovers_token}`,
+        url: `/jobs/${handovers_token}`,
         type: 'DELETE',
         success: function(){
             $(`#result`).html(`<div class="alert alert-success m-4" role="alert">
@@ -110,7 +110,7 @@
         //delete handover
         const handovers_token = $('#handoverjob').val();
         $.ajax({
-            url: `/handovers/${handovers_token}?format=json`,
+            url: `/jobs/${handovers_token}?format=json`,
             type: 'GET',
             success: function(data){
                 data = data[0];
@@ -119,7 +119,7 @@
                 let src_uri = data.src_uri.split("/");
                 src_uri = src_uri.slice(0, src_uri.length - 1).join("/") + "/";
 
-                const form = $('</div hidden style="display:none"><form hidden action="/handovers/submit/" method="POST">' +
+                const form = $('</div hidden style="display:none"><form hidden action="/jobs/submit/" method="POST">' +
                 `<input type="text" name="src_uri" value="${src_uri}" hidden />
                 <input type="text" name="database" value="${db}" hidden/>
                 <input type="text" name="contact" value="${data.contact}" hidden />

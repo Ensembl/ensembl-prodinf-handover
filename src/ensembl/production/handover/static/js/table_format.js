@@ -21,11 +21,11 @@ function row_details(id){
  table.bootstrapTable('expandRow', id);
 }
 function FormatHandover(index, row){
-  return `<a target="_blank" rel="noopener noreferrer" href="/handovers/${row.handover_token}">${row.handover_token}</a>`;
+  return `<a target="_blank" rel="noopener noreferrer" href="/jobs/${row.handover_token}">${row.handover_token}</a>`;
 }
 function detailFormatter(index, row) {
   $.ajax({
-    url: '/handovers/' + row.handover_token + '?format=json',
+    url: '/jobs/' + row.handover_token + '?format=json',
     success: function (result) {
       HandoverBaseInfo(result[0]);
     },

@@ -68,8 +68,8 @@ def info():
 def ping():
     return jsonify({"status": "ok"})
 
-@app.route('/handovers/dropdown/src_host/', methods=['GET'])
-@app.route('/handovers/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
+@app.route('/dropdown/src_host/', methods=['GET'])
+@app.route('/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
 def dropdown(src_host=None, src_port=None):
   try:
     src_name = request.args.get('name', None)
@@ -91,7 +91,7 @@ def dropdown(src_host=None, src_port=None):
     return jsonify({"count":0,"next":None,"previous":None,"results":[], "error": str(e)})
 
 #UI Submit-form for handover 
-@app.route('/handovers/submit/', methods=['GET', 'POST']) 
+@app.route('/jobs/submit/', methods=['GET', 'POST'])
 def handover_form():  
   try:
 
@@ -105,7 +105,7 @@ def handover_form():
         app.logger.debug('Submitting handover request %s', spec)   
         ticket = handover_database(spec)
         app.logger.info('Ticket: %s', ticket)
-        return redirect('/handovers/' + str(ticket))
+        return redirect('/jobs/' + str(ticket))
       else :
         for error_key, error in form.errors.items():
           flash(f"{error_key}: {error}")
@@ -119,7 +119,7 @@ def handover_form():
     copy_uri = cfg.copy_uri_dropdown,
   )
 
-@app.route('/handovers/', methods=['POST'])
+@app.route('/jobs/', methods=['POST'])
 def handovers():
     """
     Endpoint to submit an handover job
@@ -130,10 +130,10 @@ def handovers():
     parameters:
       - in: body
         name: body
-        description: healthcheck object
+        description: DC object
         required: false
         schema:
-          $ref: '#/definitions/handovers'
+          $ref: '#/definitions/jobs'
     operationId: handovers
     consumes:
       - application/json
@@ -141,8 +141,8 @@ def handovers():
       - application/json
     security:
       handovers_auth:
-        - 'write:handovers'
-        - 'read:handovers'
+        - 'write:jobs'
+        - 'read:jobs'
     schemes: ['http', 'https']
     deprecated: false
     externalDocs:
@@ -172,7 +172,7 @@ def handovers():
       200:
         description: submit of an handover job
         schema:
-          $ref: '#/definitions/handovers'
+          $ref: '#/definitions/jobs'
         examples:
           {src_uri: "mysql://user@server:port/saccharomyces_cerevisiae_core_91_4", contact: "joe.blogg@ebi.ac.uk", comment: "handover new Panda OF"}
     """
@@ -192,7 +192,7 @@ def handovers():
     app.logger.info('Ticket: %s', ticket)
     return jsonify(ticket)
     
-@app.route('/handovers/status/', methods=['PUT'])
+@app.route('/jobs/status/', methods=['PUT'])
 def handover_status_update():
     """update handover status to success"""
     try:
@@ -225,8 +225,8 @@ def handover_status_update():
     return res 
     
 
-@app.route('/handovers/job/', methods=['GET'])
-@app.route('/handovers/<string:handover_token>/', methods=['GET'])
+@app.route('/job/', methods=['GET'])
+@app.route('/jobs/<string:handover_token>/', methods=['GET'])
 def handover_result(handover_token=''):
     """
     Endpoint to get an handover job detail
@@ -270,18 +270,16 @@ def handover_result(handover_token=''):
       200:
         description: Retrieve an handover job ticket
         schema:
-          $ref: '#/definitions/handovers'
+          $ref: '#/definitions/jobs'
         examples:
           [{"comment": "handover new Tiger database", "contact": "maurel@ebi.ac.uk", "handover_token": "605f1191-7a13-11e8-aa7e-005056ab00f0", "id": "X1qcQWQBiZ0vMed2vaAt", "message": "Metadata load complete, Handover successful", "progress_total": 3, "report_time": "2018-06-27T15:19:08.459", "src_uri": "mysql://ensro@mysql-ens-general-prod-1:4525/panthera_tigris_altaica_core_93_1", "tgt_uri": "mysql://ensro@mysql-ens-general-dev-1:4484/panthera_tigris_altaica_core_93_1"} ]
     """
 
     fmt = request.args.get('format', None)
     # TODO Move this into core (potential usage on every flask app)
-    if not fmt and json_pattern.match(request.headers['Content-Type']):
-        fmt = 'json'
-
     # renter bootstrap table
-    if fmt != 'json':
+    app.logger.info("Request Headers %s", request.headers)
+    if fmt != 'json' and not request.is_json:
         return render_template('result.html', handover_token=handover_token)
 
 
@@ -326,7 +324,7 @@ def handover_result(handover_token=''):
         return jsonify(handover_detail)
 
 
-@app.route('/handovers/', methods=['GET'])
+@app.route('/jobs/', methods=['GET'])
 def handover_results():
     """
     Endpoint to get a list of all the handover by release
@@ -368,7 +366,7 @@ def handover_results():
       200:
         description: Retrieve all the handover job details
         schema:
-          $ref: '#/definitions/handovers'
+          $ref: '#/definitions/jobs'
         examples:
           [{"comment": "handover new Tiger database", "contact": "maurel@ebi.ac.uk", "handover_token": "605f1191-7a13-11e8-aa7e-005056ab00f0", "id": "QFqRQWQBiZ0vMed2vKDI", "message": "Handling {u'comment': u'handover new Tiger database', 'handover_token': '605f1191-7a13-11e8-aa7e-005056ab00f0', u'contact': u'maurel@ebi.ac.uk', u'src_uri': u'mysql://ensro@mysql-ens-general-prod-1:4525/panthera_tigris_altaica_core_93_1', 'tgt_uri': 'mysql://ensro@mysql-ens-general-dev-1:4484/panthera_tigris_altaica_core_93_1'}", "report_time": "2018-06-27T15:07:07.462", "src_uri": "mysql://ensro@mysql-ens-general-prod-1:4525/panthera_tigris_altaica_core_93_1", "tgt_uri": "mysql://ensro@mysql-ens-general-dev-1:4484/panthera_tigris_altaica_core_93_1"}, {"comment": "handover new Leopard database", "contact": "maurel@ebi.ac.uk", "handover_token": "5dcb1aca-7a13-11e8-b24e-005056ab00f0", "id": "P1qRQWQBiZ0vMed2rqBh", "message": "Handling {u'comment': u'handover new Leopard database', 'handover_token': '5dcb1aca-7a13-11e8-b24e-005056ab00f0', u'contact': u'maurel@ebi.ac.uk', u'src_uri': u'mysql://ensro@mysql-ens-general-prod-1:4525/panthera_pardus_core_93_1', 'tgt_uri': 'mysql://ensro@mysql-ens-general-dev-1:4484/panthera_pardus_core_93_1'}", "report_time": "2018-06-27T15:07:03.145", "src_uri": "mysql://ensro@mysql-ens-general-prod-1:4525/panthera_pardus_core_93_1", "tgt_uri": "mysql://ensro@mysql-ens-general-dev-1:4484/panthera_pardus_core_93_1"} ]
     """
@@ -378,7 +376,7 @@ def handover_results():
     fmt = request.args.get('format', None)
 
     # renter bootstrap table
-    if fmt != 'json':
+    if fmt != 'json' and not request.is_json:
         return render_template('list.html',)
     
 
@@ -444,7 +442,7 @@ def valid_handover(doc, release):
     return False
 
 
-@app.route('/handovers/<string:handover_token>/', methods=['DELETE'])
+@app.route('/jobs/<string:handover_token>/', methods=['DELETE'])
 def delete_handover(handover_token):
     """
     Endpoint to delete all the reports linked to a handover_token

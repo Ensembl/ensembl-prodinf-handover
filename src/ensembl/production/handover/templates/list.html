@@ -73,7 +73,7 @@
     var $table = $('#table');
     $table.bootstrapTable('refreshOptions', {
       theadClasses: "h-buttons",
-       url: '/handovers?format=json'
+       url: '/jobs/?format=json'
     });
 
     $table.bootstrapTable('expandAllRows');
@@ -90,7 +90,7 @@
       } 
       //delete handover
       $.ajax({
-        url: `/handovers/${handovers_token[0]}`,
+        url: `/jobs/${handovers_token[0]}`,
         type: 'DELETE',
         success: function(){
               // delete row
@@ -114,7 +114,7 @@
       } 
       //delete handover
        $.ajax({
-         url: `/handovers`,
+         url: `/jobs/`,
          type: 'POST',
          data: JSON.stringify({'src_uri' : row[0].src_uri, 'contact' : row[0].contact, 
             'source': 'Handover', 'comment' : row[0].comment }),

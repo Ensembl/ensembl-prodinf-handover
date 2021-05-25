@@ -111,6 +111,15 @@ class HandoverConfig():
                 'oreochromis_niloticus',
                 'gadus_morhua']
 
+    SWAGGER = {
+        'title': 'Ensembl %s Handover Service' % HANDOVER_TYPE,
+        'uiversion': 3,
+        'hide_top_bar': True,
+        'ui_params': {
+            'defaultModelsExpandDepth': -1
+        },
+        'favicon': '/img/production.png'
+    }
 
 class HandoverCeleryConfig():
 
