@@ -23,7 +23,7 @@ from flask import Flask, request, jsonify, render_template, url_for, redirect, j
 from flask_cors import CORS
 from flask_bootstrap import Bootstrap
 
-from ensembl.production.core import app_logging 
+from ensembl.production.core import app_logging
 from ensembl.production.handover.celery_app.tasks import handover_database
 from ensembl.production.core.exceptions import HTTPRequestError
 from ensembl.production.core.db_utils import validate_mysql_url, list_databases, get_databases_list
@@ -33,7 +33,7 @@ from ensembl.production.handover.config import HandoverConfig as cfg
 import requests
 from requests.exceptions import HTTPError
 
-#set static and template paths
+# set static and template paths
 app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
@@ -43,8 +43,13 @@ app = Flask(__name__, instance_relative_config=True, static_folder=static_path, 
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 app.logger.addHandler(app_logging.default_handler())
 app.config['SWAGGER'] = {
-    'title': 'Handover App',
-    'uiversion': 2
+    'title': 'Ensembl %s Handover Service' % app.config['HANDOVER_TYPE'],
+    'uiversion': 3,
+    'hide_top_bar': True,
+    'ui_params': {
+        'defaultModelsExpandDepth': -1
+    },
+    'favicon': '/img/production.png'
 }
 
 swagger = Swagger(app)
@@ -61,65 +66,69 @@ es_index = app.config['ES_INDEX']
 
 @app.route('/', methods=['GET'])
 def info():
-    app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(), 'uiversion': 2}
+    app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(),
+                             'uiversion': 2}
     return jsonify(app.config['SWAGGER'])
+
 
 @app.route('/ping', methods=['GET'])
 def ping():
     return jsonify({"status": "ok"})
 
-@app.route('/dropdown/src_host/', methods=['GET'])
+
+@app.route('/dropdown/src_host', methods=['GET'])
 @app.route('/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
 def dropdown(src_host=None, src_port=None):
-  try:
-    src_name = request.args.get('name', None)
-    search = request.args.get('search', None)
-    if src_name :
-      res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/srchost", params={'name': src_name})
-      res.raise_for_status()
-      return jsonify(res.json())
-    elif src_host and src_port and search:
-      res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/databases/{src_host}/{src_port}", params={'search': search})
-      res.raise_for_status()
-      return jsonify(res.json())
-    else:
-      raise Exception('required params not provided')
-  except HTTPError as http_err:
-    raise HTTPRequestError(f'{http_err}', 404)
-  except Exception as e:
-    logging.fatal(str(e))
-    return jsonify({"count":0,"next":None,"previous":None,"results":[], "error": str(e)})
+    try:
+        src_name = request.args.get('name', None)
+        search = request.args.get('search', None)
+        if src_name:
+            res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/srchost", params={'name': src_name})
+            res.raise_for_status()
+            return jsonify(res.json())
+        elif src_host and src_port and search:
+            res = requests.get(f"{cfg.copy_uri_dropdown}api/dbcopy/databases/{src_host}/{src_port}",
+                               params={'search': search})
+            res.raise_for_status()
+            return jsonify(res.json())
+        else:
+            raise Exception('required params not provided')
+    except HTTPError as http_err:
+        raise HTTPRequestError(f'{http_err}', 404)
+    except Exception as e:
+        logging.fatal(str(e))
+        return jsonify({"count": 0, "next": None, "previous": None, "results": [], "error": str(e)})
 
-#UI Submit-form for handover 
-@app.route('/jobs/submit/', methods=['GET', 'POST'])
-def handover_form():  
-  try:
 
-    form = HandoverSubmissionForm(request.form) 
-    
-    if  request.method == 'POST':
-      
-      if  form.validate() and not request.form.get('handover_submit'):
-        spec = request.form.to_dict(flat=True)
-        spec['src_uri'] = spec['src_uri'] + spec['database']
-        app.logger.debug('Submitting handover request %s', spec)   
-        ticket = handover_database(spec)
-        app.logger.info('Ticket: %s', ticket)
-        return redirect('/jobs/' + str(ticket))
-      else :
-        for error_key, error in form.errors.items():
-          flash(f"{error_key}: {error}")
+# UI Submit-form for handover
+@app.route('/jobs/submit', methods=['GET', 'POST'])
+def handover_form():
 
-  except Exception as e:
-    flash(str(e))
-  
-  return render_template(
-    'submit.html',
-    form=form,
-    copy_uri = cfg.copy_uri_dropdown,
-  )
+    form = HandoverSubmissionForm(request.form)
+    try:
 
-@app.route('/jobs/', methods=['POST'])
+        if request.method == 'POST':
+
+            if form.validate() and not request.form.get('handover_submit'):
+                spec = request.form.to_dict(flat=True)
+                spec['src_uri'] = spec['src_uri'] + spec['database']
+                app.logger.debug('Submitting handover request %s', spec)
+                ticket = handover_database(spec)
+                app.logger.info('Ticket: %s', ticket)
+                return redirect('/jobs/' + str(ticket))
+            else:
+                for error_key, error in form.errors.items():
+                    flash(f"{error_key}: {error}")
+    except Exception as e:
+        flash(str(e))
+    return render_template(
+        'submit.html',
+        form=form,
+        copy_uri=cfg.copy_uri_dropdown,
+    )
+
+
+@app.route('/jobs', methods=['POST'])
 def handovers():
     """
     Endpoint to submit an handover job
@@ -176,57 +185,58 @@ def handovers():
         examples:
           {src_uri: "mysql://user@server:port/saccharomyces_cerevisiae_core_91_4", contact: "joe.blogg@ebi.ac.uk", comment: "handover new Panda OF"}
     """
-    #get form data
+    # get form data
     if form_pattern.match(request.headers['Content-Type']):
         spec = request.form.to_dict(flat=True)
-    elif json_pattern.match(request.headers['Content-Type']):    
-        spec = request.json    
+    elif json_pattern.match(request.headers['Content-Type']):
+        spec = request.json
     else:
         raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
 
     if 'src_uri' not in spec or 'contact' not in spec or 'comment' not in spec:
         raise HTTPRequestError("Handover specification incomplete - please specify src_uri, contact and comment")
 
-    app.logger.debug('Submitting handover request %s', spec)    
+    app.logger.debug('Submitting handover request %s', spec)
     ticket = handover_database(spec)
     app.logger.info('Ticket: %s', ticket)
     return jsonify(ticket)
-    
-@app.route('/jobs/status/', methods=['PUT'])
+
+
+@app.route('/jobs/status', methods=['PUT'])
 def handover_status_update():
     """update handover status to success"""
     try:
-      if json_pattern.match(request.headers['Content-Type']):
-        handover_token = request.json.get('handover_token')
-      else:
-        raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
+        if json_pattern.match(request.headers['Content-Type']):
+            handover_token = request.json.get('handover_token')
+        else:
+            raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
 
-      es = Elasticsearch([{'host': es_host, 'port': es_port}])
-      res_error = es.search(index=es_index, body={"query": {"bool": {
-        "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
-                 {"term": {"report_type.keyword": "INFO"}},
-                 {"query_string": {"fields": ["message"],"query": "*Metadata load failed*"}}],
-                  "must_not": [], "should": []}}, "from": 0, "size": 1,
-        "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
+        es = Elasticsearch([{'host': es_host, 'port': es_port}])
+        res_error = es.search(index=es_index, body={"query": {"bool": {
+            "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
+                     {"term": {"report_type.keyword": "INFO"}},
+                     {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
+            "must_not": [], "should": []}}, "from": 0, "size": 1,
+            "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
 
-      if len(res_error['hits']['hits']) == 0:
-        raise HTTPRequestError('No Hits Found for Handover Token : %s' % handover_token)
-      
-      #set handover message to success
-      result = res_error['hits']['hits'][0]['_source']
-      h_id = res_error['hits']['hits'][0]['_id']
-      result['report_time'] = str(datetime.datetime.now().isoformat())[:-3]
-      result['message'] = 'Metadata load complete, Handover successful'
-      result['report_type'] = 'INFO'
-      res = es.update(index=es_index, id=h_id, doc_type='report' , body={ "doc": result })
+        if len(res_error['hits']['hits']) == 0:
+            raise HTTPRequestError('No Hits Found for Handover Token : %s' % handover_token)
+
+        # set handover message to success
+        result = res_error['hits']['hits'][0]['_source']
+        h_id = res_error['hits']['hits'][0]['_id']
+        result['report_time'] = str(datetime.datetime.now().isoformat())[:-3]
+        result['message'] = 'Metadata load complete, Handover successful'
+        result['report_type'] = 'INFO'
+        res = es.update(index=es_index, id=h_id, doc_type='report', body={"doc": result})
     except Exception as e:
-      raise HTTPRequestError('%s' % str(e))
+        raise HTTPRequestError('%s' % str(e))
 
-    return res 
-    
+    return res
 
-@app.route('/job/', methods=['GET'])
-@app.route('/jobs/<string:handover_token>/', methods=['GET'])
+
+@app.route('/job', methods=['GET'])
+@app.route('/jobs/<string:handover_token>', methods=['GET'])
 def handover_result(handover_token=''):
     """
     Endpoint to get an handover job detail
@@ -282,7 +292,6 @@ def handover_result(handover_token=''):
     if fmt != 'json' and not request.is_json:
         return render_template('result.html', handover_token=handover_token)
 
-
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     handover_detail = []
     res_error = es.search(index=es_index, body={"query": {"bool": {
@@ -324,7 +333,7 @@ def handover_result(handover_token=''):
         return jsonify(handover_detail)
 
 
-@app.route('/jobs/', methods=['GET'])
+@app.route('/jobs', methods=['GET'])
 def handover_results():
     """
     Endpoint to get a list of all the handover by release
@@ -377,8 +386,7 @@ def handover_results():
 
     # renter bootstrap table
     if fmt != 'json' and not request.is_json:
-        return render_template('list.html',)
-    
+        return render_template('list.html', )
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     res = es.search(index=es_index, body={
@@ -390,11 +398,11 @@ def handover_results():
                         "query": "Handling*",
                         "analyze_wildcard": "true"}
                 },
-                {
-                    "query_string": {
-                        "fields": ["params.tgt_uri"],
-                        "query": "/.*_{}(_[0-9]+)?/".format(release)}
-                }]
+                    {
+                        "query_string": {
+                            "fields": ["params.tgt_uri"],
+                            "query": "/.*_{}(_[0-9]+)?/".format(release)}
+                    }]
             }
         },
         "size": 1000,
@@ -520,10 +528,11 @@ def handle_bad_request_error(e):
 
 @app.errorhandler(OperationalError)
 def handle_sqlalchemy_error(e):
-     app.logger.error(str(e))
-     return jsonify(error=str(e)), 500
+    app.logger.error(str(e))
+    return jsonify(error=str(e)), 500
+
 
 @app.errorhandler(404)
 def handle_sqlalchemy_error(e):
-     app.logger.error(str(e))
-     return jsonify(error=str(e)), 404
+    app.logger.error(str(e))
+    return jsonify(error=str(e)), 404
