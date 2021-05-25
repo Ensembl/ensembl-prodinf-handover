@@ -216,16 +216,13 @@ def submit_dc(spec, src_url, db_type):
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             db_type, None, db_type, 'critical', None, handover_token)
+                                             db_type, None, db_type, 'critical', None, handover_token, tgt_uri)
     except Exception as e:
         err_msg = 'Handover failed, Cannot submit dc job'
         log_and_publish(make_report('ERROR', err_msg, spec, src_uri))
         raise ValueError('Handover failed, Cannot submit dc job %s' % e) from e
     spec['dc_job_id'] = dc_job_id
     
-    print('submitdc........................................')
-    print(spec)
-    print('.................................................')
     return dc_job_id, spec, src_uri
 
 def submit_copy(spec):
