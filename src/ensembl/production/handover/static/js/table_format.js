@@ -21,7 +21,7 @@ function row_details(id){
  table.bootstrapTable('expandRow', id);
 }
 function FormatHandover(index, row){
-  return `<a target="_blank" rel="noopener noreferrer" href="/jobs/${row.handover_token}">${row.handover_token}</a>`;
+  return `<a rel="noopener noreferrer" href="/jobs/${row.handover_token}">${row.handover_token}</a>`;
 }
 function detailFormatter(index, row) {
   $.ajax({
