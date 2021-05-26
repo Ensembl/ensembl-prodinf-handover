@@ -93,19 +93,17 @@ def handover_database(spec):
 
 @app.task(bind=True, default_retry_delay=retry_wait)
 def datacheck_task(self, spec, dc_job_id, src_uri):
-    "Submit the source database for data check and wait until DCs pipeline finish"
+    """Submit the source database for data check and wait until DCs pipeline finish"""
     self.max_retries = None
     src_uri = spec['src_uri']
     progress_msg = 'Datachecks in progress, please see: %sjobs/%s' % (cfg.dc_uri, dc_job_id)
     log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
-    print(progress_msg)
     try:
         result = dc_client.retrieve_job(dc_job_id)
     except Exception as e:
         self.request.chain = None
         err_msg = 'Handover failed, cannot retrieve datacheck job'
         log_and_publish(make_report('ERROR', err_msg, spec, src_uri))
-        print(err_msg)
         raise ValueError('Handover failed, cannot retrieve datacheck job %s' % e) from e
     if result['status'] in ['incomplete', 'running', 'submitted']:
         log_and_publish(make_report('DEBUG', 'Datacheck Job incomplete, checking again later', spec, src_uri))
