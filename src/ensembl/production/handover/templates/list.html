@@ -19,12 +19,10 @@
         </div>      
     <table id="table"
       class="table table-striped thead-dark table-bordered "
-      id="table"
       data-toggle="table"
       data-row-style="rowStyle"
       data-search="true"
       data-show-refresh="true"
-      data-show-columns="true"
       data-sortable="true"
       data-sort-class="table-active"
       data-pagination="true"
@@ -37,7 +35,6 @@
       data-detail-view-icon="true"
       data-detail-formatter="detailFormatter"
       data-buttons-class="btn h-buttons"
-      
       data-buttons-toolbar=".buttons-toolbar"
       data-show-columns="true">
       <thead>
@@ -73,7 +70,7 @@
     var $table = $('#table');
     $table.bootstrapTable('refreshOptions', {
       theadClasses: "h-buttons",
-       url: '/handovers?format=json'
+       url: '/jobs?format=json'
     });
 
     $table.bootstrapTable('expandAllRows');
@@ -90,7 +87,7 @@
       } 
       //delete handover
       $.ajax({
-        url: `/handovers/${handovers_token[0]}`,
+        url: `/jobs/${handovers_token[0]}`,
         type: 'DELETE',
         success: function(){
               // delete row
@@ -114,7 +111,7 @@
       } 
       //delete handover
        $.ajax({
-         url: `/handovers`,
+         url: `/jobs`,
          type: 'POST',
          data: JSON.stringify({'src_uri' : row[0].src_uri, 'contact' : row[0].contact, 
             'source': 'Handover', 'comment' : row[0].comment }),
