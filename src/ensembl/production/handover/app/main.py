@@ -37,11 +37,14 @@ from requests.exceptions import HTTPError
 app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
-
 app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path,
             static_url_path='/static/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
-app.logger.addHandler(app_logging.default_handler())
+formatter = logging.Formatter(
+    "[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
+handler = app_logging.default_handler()
+handler.setFormatter(formatter)
+app.logger.addHandler(handler)
 app.config['SWAGGER'] = {
     'title': 'Ensembl %s Handover Service' % app.config['HANDOVER_TYPE'],
     'uiversion': 3,
@@ -62,6 +65,10 @@ form_pattern = re.compile("multipart/form-data")
 es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
+
+# app.logger.warn("Config %s", app.config)
+app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
+app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
 
 
 @app.route('/', methods=['GET'])
@@ -103,7 +110,6 @@ def dropdown(src_host=None, src_port=None):
 # UI Submit-form for handover
 @app.route('/jobs/submit', methods=['GET', 'POST'])
 def handover_form():
-
     form = HandoverSubmissionForm(request.form)
     try:
 
@@ -533,6 +539,7 @@ def handle_sqlalchemy_error(e):
 
 
 @app.errorhandler(404)
-def handle_sqlalchemy_error(e):
+def handle_notfound_error(e):
     app.logger.error(str(e))
+    app.logger.error()
     return jsonify(error=str(e)), 404
