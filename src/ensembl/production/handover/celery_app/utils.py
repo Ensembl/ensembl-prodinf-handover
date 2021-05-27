@@ -198,17 +198,17 @@ def submit_dc(spec, src_url, db_type):
         if db_type == 'compara':
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             db_type, None, db_type, 'critical', None, handover_token)
+                                             db_type, None, db_type, 'critical', None, handover_token, tgt_uri)
         elif db_type == 'ancestral':
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             'core', None, 'ancestral', 'critical', None, handover_token)
+                                             'core', None, 'ancestral', 'critical', None, handover_token, tgt_uri)
         elif db_type in ['rnaseq', 'cdna', 'otherfeatures']:
             division_msg = 'division: %s' % get_division(src_uri, tgt_uri, db_type)
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             db_type, None, 'corelike', 'critical', None, handover_token)
+                                             db_type, None, 'corelike', 'critical', None, handover_token, tgt_uri)
         else:
             db_msg = 'src_uri: %s dbtype %s server_url %s' % (src_uri, db_type, server_url)
             log_and_publish(make_report('DEBUG', db_msg, spec, src_uri))
