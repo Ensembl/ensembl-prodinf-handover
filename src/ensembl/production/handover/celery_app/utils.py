@@ -17,7 +17,6 @@ import uuid
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
 
-
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.celery_app.celery import app
 from ensembl.production.core.reporting import make_report, ReportFormatter
@@ -25,7 +24,7 @@ from ensembl.production.core.amqp_publishing import AMQPPublisher
 from ensembl.production.core.models.compara import check_grch37, get_release_compara
 from ensembl.production.core.models.core import get_division, get_release
 
-#clients
+# clients
 from ensembl.production.core.clients.dbcopy import DbCopyRestClient
 from ensembl.production.core.clients.event import EventClient
 from ensembl.production.core.clients.metadata import MetadataClient
@@ -46,12 +45,17 @@ ancestral_pattern = re.compile(r'^ensembl_ancestral(_(?P<division>[a-z]+))?(_(\d
 db_types_list = [i for i in cfg.allowed_database_types.split(",")]
 allowed_divisions_list = [i for i in cfg.allowed_divisions.split(",")]
 
-
-#app clients
+# app clients
 dc_client = DatacheckClient(cfg.dc_uri)
 db_copy_client = DbCopyRestClient(cfg.copy_uri)
 metadata_client = MetadataClient(cfg.meta_uri)
 event_client = EventClient(cfg.event_uri)
+
+# logger.info(cfg.copy_uri)
+# logger.info(cfg.dc_uri)
+# logger.info(cfg.meta_uri)
+# logger.info(cfg.event_uri)
+
 
 def log_and_publish(report):
     """Handy function to mimick the logger/publisher behaviour.
@@ -60,6 +64,7 @@ def log_and_publish(report):
     routing_key = 'report.%s' % level.lower()
     logger.log(getattr(logging, level), report['msg'])
     publisher.publish(report, routing_key)
+
 
 def parse_db_infos(database):
     """Parse database name and extract db_prefix and db_type. Also extract release and assembly for species databases"""
@@ -82,6 +87,7 @@ def parse_db_infos(database):
     else:
         raise ValueError("Database type for %s is not expected. Please contact the Production team" % database)
 
+
 def check_staging_server(spec, db_type, db_prefix, assembly):
     """Find which staging server should be use. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
     if 'bacteria' in db_prefix:
@@ -102,9 +108,11 @@ def check_staging_server(spec, db_type, db_prefix, assembly):
         live_uri = cfg.live_uri
     return spec, staging_uri, live_uri
 
+
 def get_tgt_uri(src_url, staging_uri):
     """Create target URI from staging details and name of source database"""
     return '%s%s' % (staging_uri, src_url.database)
+
 
 def drop_current_databases(current_db_list, spec):
     """Drop databases on a previous assembly or previous genebuild (e.g: Wormbase) from the staging MySQL server"""
@@ -123,6 +131,7 @@ def drop_current_databases(current_db_list, spec):
                 msg = 'Dropping %s' % db_uri
                 log_and_publish(make_report('INFO', msg, spec, tgt_uri))
                 drop_database(db_uri)
+
 
 def process_handover_payload(spec):
     """ """
@@ -183,9 +192,10 @@ def process_handover_payload(spec):
     msg = "Handling %s" % spec
     log_and_publish(make_report('INFO', msg, spec, src_uri))
 
-    return spec,src_url,db_type
+    return spec, src_url, db_type
 
-#submit handover jobs to respective
+
+# submit handover jobs to respective
 def submit_dc(spec, src_url, db_type):
     """Submit the source database for checking. Returns a celery job identifier"""
     try:
@@ -222,8 +232,9 @@ def submit_dc(spec, src_url, db_type):
         log_and_publish(make_report('ERROR', err_msg, spec, src_uri))
         raise ValueError('Handover failed, Cannot submit dc job %s' % e) from e
     spec['dc_job_id'] = dc_job_id
-    
+
     return dc_job_id, spec, src_uri
+
 
 def submit_copy(spec):
     """Submit the source database for copying to the target. Returns a celery job identifier"""
@@ -236,9 +247,10 @@ def submit_copy(spec):
         src_incl_db = src_url.database
         tgt_db_name = tgt_url.database
 
-        #submit a copy job                                   
-        copy_job_id=db_copy_client.submit_job(src_host, src_incl_db, None, None, None,
-                                             tgt_host, tgt_db_name, False, False, False, cfg.production_email, cfg.copy_job_user)
+        # submit a copy job
+        copy_job_id = db_copy_client.submit_job(src_host, src_incl_db, None, None, None,
+                                                tgt_host, tgt_db_name, False, False, False, cfg.production_email,
+                                                cfg.copy_job_user)
 
     except Exception as e:
         log_and_publish(make_report('ERROR', 'Handover failed, cannot submit copy job', spec, src_uri))
@@ -247,23 +259,27 @@ def submit_copy(spec):
 
     return copy_job_id
 
+
 def submit_metadata_update(spec):
     """Submit the source database for copying to the target. Returns a celery job identifier."""
     src_uri = spec['src_uri']
     try:
+        logger.error("Submit metadata %s", spec['tgt_uri'])
+        # self, database_uri, e_release, eg_release, release_date, current_release, email, comment, source
         metadata_job_id = metadata_client.submit_job(spec['tgt_uri'], None, None, None,
-                                                     None, spec['contact'], spec['comment'], 'Handover', None)
+                                                     None, spec['contact'], spec['comment'], 'Handover')
     except Exception as e:
+        logger.error("Unable to submit metadata %s", e)
         log_and_publish(make_report('ERROR', 'Handover failed, cannot submit metadata job', spec, src_uri))
         raise ValueError('Handover failed, cannot submit metadata job %s' % e) from e
     spec['metadata_job_id'] = metadata_job_id
-    #task_id = process_db_metadata.delay(metadata_job_id, spec)
-    #dbg_msg = 'Submitted DB for metadata loading %s' % task_id
-    #log_and_publish(make_report('DEBUG', dbg_msg, spec, src_uri))
+    # task_id = process_db_metadata.delay(metadata_job_id, spec)
+    # dbg_msg = 'Submitted DB for metadata loading %s' % task_id
+    # log_and_publish(make_report('DEBUG', dbg_msg, spec, src_uri))
     return metadata_job_id
 
-def submit_dispatch(spec):
 
+def submit_dispatch(spec):
     """ dispatch database to dedicated host """
     src_uri = spec['src_uri']
     try:
@@ -274,10 +290,11 @@ def submit_dispatch(spec):
         raise ValueError('Handover failed, cannot submit dispatch job %s' % e) from e
 
     spec['copy_job_id'] = copy_job_id
-    #task_id = process_dispatch_db.delay(copy_job_id, spec)
-    #dbg_msg = 'Submitted DB for dispatch as %s' % task_id
-    #log_and_publish(make_report('DEBUG', dbg_msg, spec, src_uri))
+    # task_id = process_dispatch_db.delay(copy_job_id, spec)
+    # dbg_msg = 'Submitted DB for dispatch as %s' % task_id
+    # log_and_publish(make_report('DEBUG', dbg_msg, spec, src_uri))
     return copy_job_id
+
 
 def submit_event(spec, result):
     """Submit an event"""

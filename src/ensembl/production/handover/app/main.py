@@ -67,8 +67,8 @@ es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
 # app.logger.warn("Config %s", app.config)
-app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
-app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
+# app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
+# app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
 
 
 @app.route('/', methods=['GET'])
@@ -541,5 +541,4 @@ def handle_sqlalchemy_error(e):
 @app.errorhandler(404)
 def handle_notfound_error(e):
     app.logger.error(str(e))
-    app.logger.error()
     return jsonify(error=str(e)), 404
