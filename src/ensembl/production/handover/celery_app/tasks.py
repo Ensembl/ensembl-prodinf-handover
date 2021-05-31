@@ -272,7 +272,7 @@ def dispatch_db_task(self, spec):
             send_email(to_address=spec['contact'], subject='Database dispatch failed', body=msg, smtp_server=cfg.smtp_server)            
         else:
             spec['progress_complete'] = 4 
-            log_and_publish(make_report('INFO', 'Database dispatch complete, handover complete', spec, src_uri))  
+            log_and_publish(make_report('INFO', 'Database dispatch complete, Handover successful', spec, src_uri))  
 
     except Exception as e:
         self.request.chain = None
