@@ -87,7 +87,7 @@ def handover_database(spec):
                  datacheck_task.s(spec, dc_job_id, src_uri), 
                  dbcopy_task.s(), 
                  metadata_update_task.s(),
-                 #dispatch_db_task.s(), 
+                 dispatch_db_task.s(), 
                  )()
     return spec['handover_token']
 
@@ -217,22 +217,29 @@ def metadata_update_task(self, spec):
                         send_email(to_address=cfg.production_email,
                                 subject='BLAT species list needs updating in FTP Dumps config',
                                 body=msg)
+
             spec['progress_complete'] = 3
-            log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
+            log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
+
             dispatch_to = cfg.dispatch_targets.get(spec['db_type'], None)
-            if dispatch_to is not None:
-                # if core db
-                log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
-                # retrieve species list from genome division
-                if spec['genome'] in cfg.compara_species[spec['db_division']]:
-                    # if species in species_list trigger a supplementary copy to vertannot-staging
-                    spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
-                    #submit_dispatch(spec)        
+            if dispatch_to is not None and \
+               len(result['output']['events']) > 0 and \
+               result['output']['events'][0].get('genome', None) and \
+               result['output']['events'][0]['genome']in cfg.compara_species[spec['db_division']]:
+               
+               spec['genome'] = result['output']['events'][0]['genome'] 
+               spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
+               log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
+            else :
+                log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
+                self.request.chain = None
+      
     except Exception as e:
         self.request.chain = None
         err_msg = 'Handover failed, Cannot retrieve metadata job'
         log_and_publish(make_report('ERROR', err_msg, spec, tgt_uri))
         raise ValueError('Handover failed, Cannot retrieve metadata job %s' % e) from e
+
     return spec
 
 @app.task(bind=True, default_retry_delay=retry_wait)
@@ -246,7 +253,7 @@ def dispatch_db_task(self, spec):
     """
     self.max_retries = None
 
-    try:
+    try:    
         src_uri = spec['src_uri']
         copy_job_id = submit_copy(spec)
         copy_in_progress_msg = 'Dispatching in progress, please see: %s%s' % (cfg.copy_web_uri, copy_job_id)
@@ -264,8 +271,8 @@ def dispatch_db_task(self, spec):
             msg = """Dispatch %s to %s failed. Please see %s""" % (src_uri, spec['tgt_uri'], cfg.copy_web_uri + str(copy_job_id))
             send_email(to_address=spec['contact'], subject='Database dispatch failed', body=msg, smtp_server=cfg.smtp_server)            
         else:
-            log_and_publish(make_report('INFO', 'Database dispatch complete, handover complete', spec, src_uri))
-            spec['progress_complete'] = 4  
+            spec['progress_complete'] = 4 
+            log_and_publish(make_report('INFO', 'Database dispatch complete, handover complete', spec, src_uri))  
 
     except Exception as e:
         self.request.chain = None

@@ -252,7 +252,7 @@ def submit_metadata_update(spec):
     src_uri = spec['src_uri']
     try:
         metadata_job_id = metadata_client.submit_job(spec['tgt_uri'], None, None, None,
-                                                     None, spec['contact'], spec['comment'], 'Handover', None)
+                                                     None, spec['contact'], spec['comment'], 'Handover')
     except Exception as e:
         log_and_publish(make_report('ERROR', 'Handover failed, cannot submit metadata job', spec, src_uri))
         raise ValueError('Handover failed, cannot submit metadata job %s' % e) from e
