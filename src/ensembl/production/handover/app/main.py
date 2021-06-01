@@ -66,7 +66,9 @@ es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
-# app.logger.warn("Config %s", app.config)
+# app.logger.info("Config %s", app.config)
+# app.logger.info("ALLOWED DB %s", os.getenv("ALLOWED_DIVISIONS", "Undefined"))
+# app.logger.info("STAGING_URI DB %s", os.getenv("STAGING_URI", "Undefined"))
 # app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
 # app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
 

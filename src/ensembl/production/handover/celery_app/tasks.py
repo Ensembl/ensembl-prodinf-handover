@@ -89,7 +89,7 @@ def handover_database(spec):
         datacheck_task.s(spec, dc_job_id, src_uri),
         dbcopy_task.s(),
         metadata_update_task.s(),
-        # dispatch_db_task.s(),
+        dispatch_db_task.s(),
     )()
     return spec['handover_token']
 
@@ -182,11 +182,9 @@ def metadata_update_task(self, spec):
     * if failure, flag error using email"""
     # allow infinite retries
     self.max_retries = None
-    tgt_uri = spec['tgt_uri']
     try:
-        logger.info("Submitting Metadata update to %s", cfg.meta_uri)
-        metadata_job_id = submit_metadata_update(spec)
-
+        metadata_job_id=submit_metadata_update(spec)
+        tgt_uri = spec['tgt_uri']
         loading_msg = 'Loading into metadata database, please see: %sjobs/%s' % (cfg.meta_uri, metadata_job_id)
         log_and_publish(make_report('INFO', loading_msg, spec, tgt_uri))
 
@@ -210,7 +208,7 @@ def metadata_update_task(self, spec):
             """ % (tgt_uri, cfg.meta_uri + 'jobs/' + str(metadata_job_id) + '?format=failures')
             send_email(to_address=spec['contact'],
                        subject='Metadata load failed, please see: ' + cfg.meta_uri + 'jobs/' + str(
-                           metadata_job_id) + '?format=failures', body=msg, smtp_server=cfg.smtp_server)
+                       metadata_job_id) + '?format=failures', body=msg, smtp_server=cfg.smtp_server)
         else:
             # Cleaning up old assembly or old genebuild databases for Wormbase when database suffix has changed
             if 'events' in result['output'] and result['output']['events']:
@@ -220,28 +218,35 @@ def metadata_update_task(self, spec):
                         drop_current_databases(details['current_database_list'], spec)
                     if event['genome'] in blat_species and event['type'] == 'new_assembly':
                         msg = 'The following species %s has a new assembly, please update the port number for this ' \
-                              'species here and communicate to Web: https://github.com/Ensembl/ensembl-production/blob/' \
-                              'master/modules/Bio/EnsEMBL/Production/Pipeline/PipeConfig/DumpCore_conf.pm#L107' % \
-                              event['genome']
+                            'species here and communicate to Web: https://github.com/Ensembl/ensembl-production/blob/' \
+                            'master/modules/Bio/EnsEMBL/Production/Pipeline/PipeConfig/DumpCore_conf.pm#L107' % \
+                            event['genome']
                         send_email(to_address=cfg.production_email,
-                                   subject='BLAT species list needs updating in FTP Dumps config',
-                                   body=msg)
+                                subject='BLAT species list needs updating in FTP Dumps config',
+                                body=msg)
+
             spec['progress_complete'] = 3
-            log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
+            log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
+
             dispatch_to = cfg.dispatch_targets.get(spec['db_type'], None)
-            if dispatch_to is not None:
-                # if core db
-                log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
-                # retrieve species list from genome division
-                if spec['genome'] in cfg.compara_species[spec['db_division']]:
-                    # if species in species_list trigger a supplementary copy to vertannot-staging
-                    spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
-                    # submit_dispatch(spec)
+            if dispatch_to is not None and \
+               len(result['output']['events']) > 0 and \
+               result['output']['events'][0].get('genome', None) and \
+               result['output']['events'][0]['genome']in cfg.compara_species[spec['db_division']]:
+               
+               spec['genome'] = result['output']['events'][0]['genome'] 
+               spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
+               log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
+            else :
+                log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
+                self.request.chain = None
+      
     except Exception as e:
         self.request.chain = None
         err_msg = 'Handover failed, Cannot retrieve metadata job'
         log_and_publish(make_report('ERROR', err_msg, spec, tgt_uri))
         raise ValueError('Handover failed, Cannot retrieve metadata job %s' % e) from e
+
     return spec
 
 
@@ -256,12 +261,12 @@ def dispatch_db_task(self, spec):
     """
     self.max_retries = None
 
-    try:
+    try:    
         src_uri = spec['src_uri']
         copy_job_id = submit_copy(spec)
         copy_in_progress_msg = 'Dispatching in progress, please see: %s%s' % (cfg.copy_web_uri, copy_job_id)
         log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
-        while db_copy_client.retrieve_job(copy_job_id)['overall_status'] in ['Scheduled', 'Running', 'Submitted']:
+        while db_copy_client.retrieve_job(copy_job_id)['overall_status'] in [ 'Scheduled', 'Running', 'Submitted']:
             incomplete_msg = 'Database dispatch in progress, please see: %s%s' % (cfg.copy_web_uri, copy_job_id)
             log_and_publish(make_report('DEBUG', incomplete_msg, spec, src_uri))
             time.sleep(120)
@@ -271,13 +276,11 @@ def dispatch_db_task(self, spec):
             self.request.chain = None
             copy_failed_msg = 'Database dispatch failed, please see: %s%s' % (cfg.copy_web_uri, copy_job_id)
             log_and_publish(make_report('INFO', copy_failed_msg, spec, src_uri))
-            msg = """Dispatch %s to %s failed. Please see %s""" % (
-            src_uri, spec['tgt_uri'], cfg.copy_web_uri + str(copy_job_id))
-            send_email(to_address=spec['contact'], subject='Database dispatch failed', body=msg,
-                       smtp_server=cfg.smtp_server)
+            msg = """Dispatch %s to %s failed. Please see %s""" % (src_uri, spec['tgt_uri'], cfg.copy_web_uri + str(copy_job_id))
+            send_email(to_address=spec['contact'], subject='Database dispatch failed', body=msg, smtp_server=cfg.smtp_server)            
         else:
-            log_and_publish(make_report('INFO', 'Database dispatch complete, handover complete', spec, src_uri))
-            spec['progress_complete'] = 4
+            spec['progress_complete'] = 4 
+            log_and_publish(make_report('INFO', 'Database dispatch complete, Handover successful', spec, src_uri))  
 
     except Exception as e:
         self.request.chain = None
