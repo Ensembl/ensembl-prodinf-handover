@@ -51,7 +51,6 @@ db_copy_client = DbCopyRestClient(cfg.copy_uri)
 metadata_client = MetadataClient(cfg.meta_uri)
 event_client = EventClient(cfg.event_uri)
 
-logger.info('****************************************')
 logger.info(cfg.copy_uri)
 logger.info(cfg.dc_uri)
 logger.info(cfg.meta_uri)
