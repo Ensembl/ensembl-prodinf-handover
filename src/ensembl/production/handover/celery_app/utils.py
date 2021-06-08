@@ -187,16 +187,6 @@ def process_handover_payload(spec):
     msg = "Handling %s" % spec
     logger.info("Testing handover publish......... %s", msg)
     log_and_publish(make_report('INFO', msg, spec, src_uri))
-    logger.info('****************************************')
-    logger.info(cfg.copy_uri)
-    logger.info(cfg.dc_uri)
-    logger.info(cfg.meta_uri)
-    logger.info(cfg.event_uri)
-    logger.info(cfg.report_server)
-    logger.info(cfg.report_exchange)
-    logger.info(cfg.report_exchange_type)
-    logger.info('****************************************')
-    logger.info("Testing handover messaged pushed to exchange")
     return spec, src_url, db_type
 
 
