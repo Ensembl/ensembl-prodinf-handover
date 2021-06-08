@@ -51,15 +51,6 @@ db_copy_client = DbCopyRestClient(cfg.copy_uri)
 metadata_client = MetadataClient(cfg.meta_uri)
 event_client = EventClient(cfg.event_uri)
 
-logger.info(cfg.copy_uri)
-logger.info(cfg.dc_uri)
-logger.info(cfg.meta_uri)
-logger.info(cfg.event_uri)
-logger.info(cfg.report_server)
-logger.info(cfg.report_exchange)
-logger.info(cfg.report_exchange_type)
-
-logger.info('****************************************')
 
 def log_and_publish(report):
     """Handy function to mimick the logger/publisher behaviour.
