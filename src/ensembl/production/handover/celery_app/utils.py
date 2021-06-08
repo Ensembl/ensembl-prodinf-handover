@@ -201,6 +201,7 @@ def submit_dc(spec, src_url, db_type):
     try:
         src_uri = spec['src_uri']
         tgt_uri = spec['tgt_uri']
+        staging_uri = spec['staging_uri']
         handover_token = spec['handover_token']
         server_url = 'mysql://%s@%s:%s/' % (src_url.username, src_url.host, src_url.port)
         submitting_dc_msg = 'Submitting DC for %s on server: %s' % (src_url.database, server_url)
@@ -208,17 +209,17 @@ def submit_dc(spec, src_url, db_type):
         if db_type == 'compara':
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             db_type, None, db_type, 'critical', None, handover_token, tgt_uri)
+                                             db_type, None, db_type, 'critical', None, handover_token, staging_uri)
         elif db_type == 'ancestral':
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             'core', None, 'ancestral', 'critical', None, handover_token, tgt_uri)
+                                             'core', None, 'ancestral', 'critical', None, handover_token, staging_uri)
         elif db_type in ['rnaseq', 'cdna', 'otherfeatures']:
             division_msg = 'division: %s' % get_division(src_uri, tgt_uri, db_type)
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             db_type, None, 'corelike', 'critical', None, handover_token, tgt_uri)
+                                             db_type, None, 'corelike', 'critical', None, handover_token, staging_uri)
         else:
             db_msg = 'src_uri: %s dbtype %s server_url %s' % (src_uri, db_type, server_url)
             log_and_publish(make_report('DEBUG', db_msg, spec, src_uri))
@@ -226,7 +227,7 @@ def submit_dc(spec, src_url, db_type):
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
-                                             db_type, None, db_type, 'critical', None, handover_token, tgt_uri)
+                                             db_type, None, db_type, 'critical', None, handover_token, staging_uri)
     except Exception as e:
         err_msg = 'Handover failed, Cannot submit dc job'
         log_and_publish(make_report('ERROR', err_msg, spec, src_uri))
