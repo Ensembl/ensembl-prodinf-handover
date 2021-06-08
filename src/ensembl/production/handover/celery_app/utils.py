@@ -51,11 +51,6 @@ db_copy_client = DbCopyRestClient(cfg.copy_uri)
 metadata_client = MetadataClient(cfg.meta_uri)
 event_client = EventClient(cfg.event_uri)
 
-# logger.info(cfg.copy_uri)
-# logger.info(cfg.dc_uri)
-# logger.info(cfg.meta_uri)
-# logger.info(cfg.event_uri)
-
 
 def log_and_publish(report):
     """Handy function to mimick the logger/publisher behaviour.
@@ -190,8 +185,8 @@ def process_handover_payload(spec):
     spec['db_division'] = db_division
     spec['db_type'] = db_type
     msg = "Handling %s" % spec
+    logger.info("Testing handover publish......... %s", msg)
     log_and_publish(make_report('INFO', msg, spec, src_uri))
-
     return spec, src_url, db_type
 
 
