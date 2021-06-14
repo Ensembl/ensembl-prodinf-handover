@@ -317,6 +317,10 @@ def handover_result(handover_token=''):
             "size": 1, "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
         for doc in res['hits']['hits']:
             result = {"id": doc['_id']}
+            
+            if 'job_progress' in doc['_source']['params']:
+              result['job_progress'] = doc['_source']['params']['job_progress']
+
             result['message'] = doc['_source']['message']
             result['comment'] = doc['_source']['params']['comment']
             result['handover_token'] = doc['_source']['params']['handover_token']
@@ -414,6 +418,9 @@ def handover_results():
     for doc in res['hits']['hits']:
         if valid_handover(doc, release):
             result = {"id": doc['_id']}
+            if 'job_progress' in doc['_source']['params']:
+              result['job_progress'] = doc['_source']['params']['job_progress']
+              
             result['message'] = doc['_source']['message']
             result['comment'] = doc['_source']['params']['comment']
             result['handover_token'] = doc['_source']['params']['handover_token']

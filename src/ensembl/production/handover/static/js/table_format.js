@@ -30,12 +30,10 @@ function detailFormatter(index, row) {
       HandoverBaseInfo(result[0]);
     },
     error: function (){
-      //alert(`unable to retrive data for handover ${row.handover_token}`)
       $(`#${row.handover_token}`).html(`<div class="alert alert-danger m-4" role="alert">
               unable to retrive data for handover ${row.handover_token}
            </div>`);
     }
-    //async: false
 });
    return `
           <div class="row n-4" id="${row.handover_token}">
@@ -53,19 +51,6 @@ function HandoverBaseInfo(handover_details){
   const failure = new RegExp('^(.+)failed(.+)$');
   const problems = new RegExp('^(.+)problems(.+)$');
   const meta_data_failed = new RegExp('^Metadata(.+)failed(.+)');
-  //for testing 
-  /*handover_details = {
-    "comment": "Updated Refseq xrefs and MANE_Select attributes", 
-    "contact": "jmgonzalez@ebi.ac.uk", 
-    "handover_token": "6727f4a6-d663-11ea-afbd-005056ab00f0", 
-    "id": "YkG2SngBmi1dIqxAz48N", 
-    "message": "Metadata load failed, please see http://eg-prod-01.ebi.ac.uk:7003/jobs/5316?format=failures", 
-    "progress_complete": 1, 
-    "progress_total": 3, 
-    "report_time": "2021-03-19T13:39:57.816", 
-    "src_uri": "mysql://ensro@mysql-ens-havana-prod-2:4682/homo_sapiens_otherfeatures_104_38", 
-    "tgt_uri": "mysql://ensprod:s3cr3t@mysql-ens-sta-1:4519/homo_sapiens_otherfeatures_104_38"
-  };*/
     
   let job_status = urlify(handover_details.message);
 
@@ -82,19 +67,41 @@ function HandoverBaseInfo(handover_details){
                     ${job_status}
                  </div>`;
   }else{
+    
     const progress = (+handover_details.progress_complete / +handover_details.progress_total) * 100  ;
-  
+    let job_progress = '';
+
+    if ('job_progress' in handover_details ) {
+      job_progress = `
+        <div class="row m-2">
+          <div class="alert alert-dark" role="alert">DataCheck:
+            <span class="badge badge-warning">
+              Jobs Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
+            </span>
+            <span class="badge badge-success">
+              Jobs completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
+            </span>
+            <span class="badge badge-danger">
+              Jobs Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
+            </span>  
+          </div>  
+        </div>
+        `;
+    }  
     job_status = `
-                  <div class="alert alert-warning" role="alert">
-                    ${job_status}
-                  </div>
-                  <div class="progress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: ${progress}%" 
-                    aria-valuenow="0" aria-valuemin="0" aria-valuemax="${handover_details.progress_total}">
-                    ${handover_details.progress_complete} / ${handover_details.progress_total} tasks done..
-                    </div>
-                  </div>
-                  `;
+      <div class="alert alert-warning" role="alert">
+        ${job_status}
+      </div>
+      <div class="progress">
+        <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: ${progress}%" 
+        aria-valuenow="0" aria-valuemin="0" aria-valuemax="${handover_details.progress_total}">
+        ${handover_details.progress_complete} / ${handover_details.progress_total} tasks done..
+        </div>
+      </div>
+      <div>
+        ${job_progress}
+      </div>
+      `;
   }
   let base_html= `
   <div class="row m-2" >
