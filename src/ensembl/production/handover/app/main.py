@@ -294,43 +294,51 @@ def handover_result(handover_token=''):
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     handover_detail = []
-    res_error = es.search(index=es_index, body={"query": {"bool": {
-        "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
-                 {"term": {"report_type.keyword": "ERROR"}}], "must_not": [], "should": []}}, "from": 0, "size": 1,
-        "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
-    app.logger.info('Retrieving handover data with token %s', handover_token)
-    if len(res_error['hits']['hits']) != 0:
-        for doc in res_error['hits']['hits']:
-            result = {"id": doc['_id']}
-            result['message'] = doc['_source']['message']
-            result['comment'] = doc['_source']['params']['comment']
-            result['handover_token'] = doc['_source']['params']['handover_token']
-            result['contact'] = doc['_source']['params']['contact']
-            result['src_uri'] = doc['_source']['params']['src_uri']
-            result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-            result['report_time'] = doc['_source']['report_time']
-            handover_detail.append(result)
-    else:
-        res = es.search(index=es_index, body={"query": {"bool": {
-            "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
-                     {"term": {"report_type.keyword": "INFO"}}], "must_not": [], "should": []}}, "from": 0,
-            "size": 1, "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
-        for doc in res['hits']['hits']:
-            result = {"id": doc['_id']}
-            
-            if 'job_progress' in doc['_source']['params']:
-              result['job_progress'] = doc['_source']['params']['job_progress']
+    res = es.search(index=es_index, body={
+      "size":0,
+      "query": {
+        "bool": {
+          "must": [
+              {"term": {"params.handover_token.keyword": str(handover_token)}},
+              {"query_string": {"fields": ["report_type"],"query": "(INFO|ERROR)","analyze_wildcard": "true"}},
+          ]
+        }
+      },
+      "aggs": {
+        "top_result": {
+          "top_hits": {
+           "size": 1, 
+            "sort": {
+              "report_time" : "desc"
+            }
+          }
+        }
+      },
+      "sort": [
+        {
+          "report_time": {
+            "order": "desc"
+          }
+        }
+      ]
+    })
 
-            result['message'] = doc['_source']['message']
-            result['comment'] = doc['_source']['params']['comment']
-            result['handover_token'] = doc['_source']['params']['handover_token']
-            result['contact'] = doc['_source']['params']['contact']
-            result['src_uri'] = doc['_source']['params']['src_uri']
-            result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-            result['progress_complete'] = doc['_source']['params']['progress_complete']
-            result['progress_total'] = doc['_source']['params']['progress_total']
-            result['report_time'] = doc['_source']['report_time']
-            handover_detail.append(result)
+    for doc in res['aggregations']['top_result']['hits']['hits']:
+      result = {"id": doc['_id']}
+      if 'job_progress' in doc['_source']['params']:
+        result['job_progress'] = doc['_source']['params']['job_progress']
+
+      result['message'] = doc['_source']['message']
+      result['comment'] = doc['_source']['params']['comment']
+      result['handover_token'] = doc['_source']['params']['handover_token']
+      result['contact'] = doc['_source']['params']['contact']
+      result['src_uri'] = doc['_source']['params']['src_uri']
+      result['tgt_uri'] = doc['_source']['params']['tgt_uri']
+      result['progress_complete'] = doc['_source']['params']['progress_complete']
+      result['progress_total'] = doc['_source']['params']['progress_total']
+      result['report_time'] = doc['_source']['report_time']
+      handover_detail.append(result)
+  
     if len(handover_detail) == 0:
         raise HTTPRequestError('Handover token %s not found' % handover_token, 404)
     else:
@@ -394,56 +402,73 @@ def handover_results():
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     res = es.search(index=es_index, body={
-        "query": {
-            "bool": {
-                "must": [{
-                    "query_string": {
-                        "fields": ["message"],
-                        "query": "Handling*",
-                        "analyze_wildcard": "true"}
-                },
-                    {
-                        "query_string": {
-                            "fields": ["params.tgt_uri"],
-                            "query": "/.*_{}(_[0-9]+)?/".format(release)}
-                    }]
+      "size":0,
+      "query": {
+        "bool": {
+          "must": [
+            {
+              "query_string": {
+                "fields": [
+                    "report_type"
+                ],
+                "query": "(INFO|ERROR)",
+                  "analyze_wildcard": "true"
+                }
+            },
+            {
+              "query_string": {
+                "fields": [
+                  "params.tgt_uri"
+                ],
+                "query": "/.*_{}(_[0-9]+)?/".format(release)
+              }
             }
-        },
-        "size": 1000,
-        "sort": [{
-            "report_time": {"order": "desc"}
-        }]
+          ]
+        }
+      },
+      "aggs": {
+        "handover_token": {
+          "terms": {
+            "field": "params.handover_token.keyword",
+                "size": 1000
+          }
+        }
+      },
+      "sort": [
+        {
+          "report_time": {
+            "order": "desc"
+          }
+        }
+      ]
     })
-    list_handovers = []
-    for doc in res['hits']['hits']:
-        if valid_handover(doc, release):
-            result = {"id": doc['_id']}
-            if 'job_progress' in doc['_source']['params']:
-              result['job_progress'] = doc['_source']['params']['job_progress']
-              
-            result['message'] = doc['_source']['message']
-            result['comment'] = doc['_source']['params']['comment']
-            result['handover_token'] = doc['_source']['params']['handover_token']
-            res_error = es.search(index=es_index, body={"query": {"bool": {
-                "must": [{"term": {"params.handover_token.keyword": str(doc['_source']['params']['handover_token'])}},
-                         {"term": {"report_type.keyword": "ERROR"}}], "must_not": [], "should": []}}, "from": 0,
-                "size": 1, "sort": [{"report_time": {"order": "desc"}}],
-                "aggs": {}})
-            if len(res_error['hits']['hits']) != 0:
-                for doc_error in res_error['hits']['hits']:
-                    result['current_message'] = doc_error['_source']['message']
-            else:
-                res2 = es.search(index=es_index, body={"query": {"bool": {"must": [
-                    {"term": {"params.handover_token.keyword": str(doc['_source']['params']['handover_token'])}},
-                    {"term": {"report_type.keyword": "INFO"}}], "must_not": [], "should": []}}, "from": 0, "size": 1,
-                    "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
-                for doc2 in res2['hits']['hits']:
-                    result['current_message'] = doc2['_source']['message']
-            result['contact'] = doc['_source']['params']['contact']
-            result['src_uri'] = doc['_source']['params']['src_uri']
-            result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-            result['report_time'] = doc['_source']['report_time']
-            list_handovers.append(result)
+    list_handovers=[]
+    for handover_doc in res['aggregations']['handover_token']['buckets'] :
+      handover_token = handover_doc.get('key')
+      res2 = es.search(index=es_index, body={"query": {"bool": {"must": [
+                    { "query_string": {"fields": ["report_type"],
+                    "query": "(INFO|ERROR)","analyze_wildcard": "true"}},
+                    {"term": {"params.handover_token.keyword": str(handover_token)}},
+                     ], "must_not": [], "should": []}}, "from": 0, "size": 1,
+                     "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
+
+      for doc in res2['hits']['hits']:
+        result = {"id": doc['_id']}
+
+        if 'job_progress' in doc['_source']['params']:
+          result['job_progress'] = doc['_source']['params']['job_progress']
+
+        result['handover_token'] = doc['_source']['params']['handover_token']
+        result['message'] = doc['_source']['message']
+        result['comment'] = doc['_source']['params']['comment']
+        result['current_message'] = doc['_source']['message']
+        result['contact'] = doc['_source']['params']['contact']
+        result['src_uri'] = doc['_source']['params']['src_uri']
+        result['tgt_uri'] = doc['_source']['params']['tgt_uri']
+        result['report_time'] = doc['_source']['report_time']
+
+        list_handovers.append(result)   
+
     return jsonify(list_handovers)
 
 
