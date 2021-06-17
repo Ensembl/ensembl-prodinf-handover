@@ -226,14 +226,15 @@ def metadata_update_task(self, spec):
                                    body=msg)
 
             spec['progress_complete'] = 3
-            log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
+            #log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
+            log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))  
 
             dispatch_to = cfg.dispatch_targets.get(spec['db_type'], None)
             if dispatch_to is not None and \
                     cfg.HANDOVER_TYPE not in ('rapid', 'viruses') and \
                     len(result['output']['events']) > 0 and \
                     result['output']['events'][0].get('genome', None) and \
-                    result['output']['events'][0]['genome'] in cfg.compara_species[spec['db_division']]:
+                    result['output']['events'][0]['genome'] in cfg.compara_species.get(spec['db_division'], None):
 
                 spec['genome'] = result['output']['events'][0]['genome']
                 spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
