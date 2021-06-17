@@ -431,6 +431,16 @@ def handover_results():
           "terms": {
             "field": "params.handover_token.keyword",
                 "size": 1000
+          },
+          "aggs": {
+            "top_result": {
+              "top_hits": {
+                "size": 1, 
+                "sort": {
+                  "report_time" : "desc"
+                }
+              }
+            }
           }
         }
       },
@@ -442,19 +452,12 @@ def handover_results():
         }
       ]
     })
+    
     list_handovers=[]
-    for handover_doc in res['aggregations']['handover_token']['buckets'] :
-      handover_token = handover_doc.get('key')
-      res2 = es.search(index=es_index, body={"query": {"bool": {"must": [
-                    { "query_string": {"fields": ["report_type"],
-                    "query": "(INFO|ERROR)","analyze_wildcard": "true"}},
-                    {"term": {"params.handover_token.keyword": str(handover_token)}},
-                     ], "must_not": [], "should": []}}, "from": 0, "size": 1,
-                     "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
 
-      for doc in res2['hits']['hits']:
+    for each_handover_bucket in res['aggregations']['handover_token']['buckets'] :
+      for doc in each_handover_bucket['top_result']['hits']['hits']: 
         result = {"id": doc['_id']}
-
         if 'job_progress' in doc['_source']['params']:
           result['job_progress'] = doc['_source']['params']['job_progress']
 
@@ -466,9 +469,8 @@ def handover_results():
         result['src_uri'] = doc['_source']['params']['src_uri']
         result['tgt_uri'] = doc['_source']['params']['tgt_uri']
         result['report_time'] = doc['_source']['report_time']
-
-        list_handovers.append(result)   
-
+        list_handovers.append(result)
+ 
     return jsonify(list_handovers)
 
 
