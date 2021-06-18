@@ -73,16 +73,16 @@ function HandoverBaseInfo(handover_details){
 
     if ('job_progress' in handover_details ) {
       job_progress = `
-        <div class="row m-2">
-          <div class="alert alert-dark" role="alert">DataCheck:
+        <div class="row m-1">
+          <div class="alert alert-dark" role="alert">DataChecks:
             <span class="badge badge-warning">
-              Jobs Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
+              DC Jobs Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
             </span>
             <span class="badge badge-success">
-              Jobs completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
+              DC Jobs completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
             </span>
             <span class="badge badge-danger">
-              Jobs Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
+              DC Jobs Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
             </span>  
           </div>  
         </div>
@@ -134,7 +134,8 @@ function HandoverBaseInfo(handover_details){
     </div>
   </div>
   </div>
-  </div>`;
+  </div>
+  `;
 
   $(`#${handover_details.handover_token}`).html(base_html);
 }
@@ -145,6 +146,7 @@ function statusFormat(value, row){
   const sucess = new RegExp('^(.+)Handover'+'(.+){1}'+'successful$');
   const failure = new RegExp('^(.+)failed(.+)$');
   const problems = new RegExp('^(.+)problems(.+)$');
+  const running_job = new RegExp('.*(Datachecks|metadata|Copying|Dispatching)\\s?.+');
 
   if (sucess.test(row.current_message)){
     return ('<span class="badge badge-success">Complete</span><br></br>');
@@ -153,9 +155,30 @@ function statusFormat(value, row){
     return ('<span class="badge badge-danger">Failed</span><br></br>');
   }
   else{
-    return ('<span class="badge badge-info">running</span><br></br>');
+    let datacheck_job_progress = '';
+    if ('job_progress' in row ) {
+      let progress_count = Math.ceil((+row.job_progress.completed/+row.job_progress.total) * 100) || 0;
+      datacheck_job_progress = `
+        <div class="progress mt-2">
+        <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="${progress_count}" aria-valuemin="0"
+         aria-valuemax="100" style="width: ${progress_count}%; background-color:rgb(72, 221, 104) !important;">
+            <span class="sr-only">${progress_count}% Complete</span>
+        </div>
+        <span class="progress-type">DC Job</span>
+        <span class="progress-completed">${progress_count}%</span>
+        </div>
+      `;
+    }    
+    let job_in_progess = running_job.exec(row.current_message);
+    if(job_in_progess != null){
+      job_in_progess = ` ${job_in_progess[1]} in progress`;
+    }else{
+      job_in_progess = `Unknown status`
+    }
+    return (`<span class="badge badge-info">running: 
+              <span class="badge badge-light">${job_in_progess}</span>
+               </span><br>${datacheck_job_progress}</br>`);
   }
-
 }
 
 function urlify(text){
