@@ -31,12 +31,10 @@
 
 import json
 import logging
-from os import urandom
 import re
 import uuid
 
 from celery import chain
-import celery
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
 
@@ -101,7 +99,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
     src_uri = spec['src_uri']
     progress_msg = 'Datachecks in progress, please see: %sjobs/%s' % (cfg.dc_uri, dc_job_id)
     log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
-    try:   
+    try:  
         result = dc_client.retrieve_job(dc_job_id)
         if result.get('progress', None):
             spec['job_progress'] = result['progress']
@@ -132,17 +130,12 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
         log_and_publish(make_report('INFO', msg, spec, src_uri))
         send_email(to_address=spec['contact'], subject='Datacheck run issue', body=msg, smtp_server=cfg.smtp_server)
     else:
+        if spec.get('job_progress', None):
+            del spec['job_progress']
         log_and_publish(make_report('INFO', 'Datachecks successful, starting copy', spec, src_uri))
         spec['progress_complete'] = 1
-    
-    if spec.get('job_progress', None):
-        del spec['job_progress']
-
+        
     return spec
-
-
-
-
 
 @app.task(bind=True, default_retry_delay=retry_wait)
 def dbcopy_task(self, spec):
@@ -250,7 +243,8 @@ def metadata_update_task(self, spec):
                             body=msg)
 
         spec['progress_complete'] = 3
-        log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
+        #log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
+        log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
 
         dispatch_to = cfg.dispatch_targets.get(spec['db_type'], None)
 
@@ -258,7 +252,7 @@ def metadata_update_task(self, spec):
             cfg.HANDOVER_TYPE != 'rapid' and cfg.HANDOVER_TYPE != 'viruses' and\
             len(result['output']['events']) > 0 and \
             result['output']['events'][0].get('genome', None) and \
-            result['output']['events'][0]['genome']in cfg.compara_species[spec['db_division']]:
+            result['output']['events'][0]['genome'] in cfg.compara_species.get(spec['db_division'], []):
             
             spec['genome'] = result['output']['events'][0]['genome'] 
             spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
@@ -308,7 +302,6 @@ def dispatch_db_task(self, spec):
     else:
         spec['progress_complete'] = 4 
         log_and_publish(make_report('INFO', 'Database dispatch complete, Handover successful', spec, src_uri))  
-
 
     return spec
 
