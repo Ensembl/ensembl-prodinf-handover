@@ -72,3 +72,29 @@ margin: -1px;
 .h-border{
     border-color:#17a2b8!important;
 }
+
+.progress {
+    position: relative;
+	height: 30px;
+    border: ridge #ccc;
+    border-width: 1px;
+}
+.progress > .progress-type {
+	position: absolute;
+	left: 0px;
+	font-weight: 800;
+	padding: 5px 35px 7px 15px;
+	color: rgb(105, 61, 61);
+	background-color: rgba(25, 25, 25, 0);
+}
+.progress > .progress-completed {
+	position: absolute;
+	right: 0px;
+	font-weight: 800;
+	padding: 3px 10px 2px;
+}
+.card {
+    background-color: #fff;
+    box-shadow: 2px 4px 15px 0px rgb(0, 108, 170);
+    z-index: 0
+}
