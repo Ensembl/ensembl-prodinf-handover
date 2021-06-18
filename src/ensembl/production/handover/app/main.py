@@ -430,7 +430,7 @@ def handover_results():
         "handover_token": {
           "terms": {
             "field": "params.handover_token.keyword",
-                "size": 1000
+            "size": 1000
           },
           "aggs": {
             "top_result": {
