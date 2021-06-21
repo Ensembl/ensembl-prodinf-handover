@@ -38,13 +38,14 @@ from celery import chain
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
 
-#handover
+# handover
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.celery_app.celery import app
-from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, drop_current_databases, submit_dc, submit_copy, submit_metadata_update, submit_dispatch
-from ensembl.production.handover.celery_app.utils import db_copy_client , metadata_client , event_client, dc_client
+from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
+    drop_current_databases, submit_dc, submit_copy, submit_metadata_update, submit_dispatch
+from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, event_client, dc_client
 
-#core
+# core
 from ensembl.production.core.utils import send_email
 from ensembl.production.core.reporting import make_report
 import time
@@ -60,6 +61,7 @@ retry_wait = app.conf.get('retry_wait', 60)
 blat_species = cfg.BLAT_SPECIES
 
 logger = logging.getLogger(__name__)
+
 
 def handover_database(spec):
     """ Method to accept a new database for incorporation into the system
@@ -78,7 +80,7 @@ def handover_database(spec):
     """
     # TODO verify dict
     (spec, src_url, db_type) = process_handover_payload(spec)
-    (dc_job_id, spec, src_uri)=submit_dc(spec, src_url, db_type)
+    (dc_job_id, spec, src_uri) = submit_dc(spec, src_url, db_type)
     submitted_dc_msg = 'Submitted DB for data check as %s' % dc_job_id
 
     log_and_publish(make_report('DEBUG', submitted_dc_msg, spec, src_uri))
@@ -91,6 +93,7 @@ def handover_database(spec):
                  dispatch_db_task.s(), 
                  )()
     return spec['handover_token']
+
 
 @app.task(bind=True, default_retry_delay=retry_wait)
 def datacheck_task(self, spec, dc_job_id, src_uri):
@@ -137,6 +140,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
         
     return spec
 
+
 @app.task(bind=True, default_retry_delay=retry_wait)
 def dbcopy_task(self, spec):
     """Wait for copy to complete and then respond accordingly:
@@ -181,6 +185,7 @@ def dbcopy_task(self, spec):
         spec['progress_complete'] = 2
 
     return spec
+
 
 @app.task(bind=True, default_retry_delay=retry_wait)
 def metadata_update_task(self, spec):
@@ -263,6 +268,7 @@ def metadata_update_task(self, spec):
 
     return spec
 
+
 @app.task(bind=True, default_retry_delay=retry_wait)
 def dispatch_db_task(self, spec):
     """
@@ -304,6 +310,7 @@ def dispatch_db_task(self, spec):
         log_and_publish(make_report('INFO', 'Database dispatch complete, Handover successful', spec, src_uri))  
 
     return spec
+
 
 @app.task(bind=True, default_retry_delay=retry_wait)
 def event(self, spec):
