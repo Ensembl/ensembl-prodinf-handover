@@ -146,7 +146,7 @@ function statusFormat(value, row){
   const sucess = new RegExp('^(.+)Handover'+'(.+){1}'+'successful$');
   const failure = new RegExp('^(.+)failed(.+)$');
   const problems = new RegExp('^(.+)problems(.+)$');
-  const running_job = new RegExp('.*(Datachecks|metadata|Copying|Dispatching)\\s?.+');
+  const running_job = new RegExp('.*(Handling|Datachecks|metadata|Copying|Dispatching)\\s?.+');
 
   if (sucess.test(row.current_message)){
     return ('<span class="badge badge-success">Complete</span><br></br>');
