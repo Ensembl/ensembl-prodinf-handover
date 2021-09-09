@@ -36,12 +36,14 @@
       data-detail-formatter="detailFormatter"
       data-buttons-class="btn h-buttons"
       data-buttons-toolbar=".buttons-toolbar"
+      data-sort-name="report_time" 
+      data-sort-order="desc"
       data-show-columns="true">
       <thead>
         <tr style="cursor: pointer">
           <!--<th data-formatter="expandIcon"></th>-->
           <th data-field="state" data-checkbox="true">Select</th>
-          <th data-field="id" data-sortable="true">ID</th>
+          <th data-field="id" data-visible="false" data-sortable="true">ID</th>
           <!--<th data-field="input.db_type" data-sortable="true">DB Type</th>-->
           <th data-field="handover_token" data-formatter="FormatHandover" data-sortable="true">Handover token</th>
           <th data-field="report_time" data-sortable="true"   >Date</th>
