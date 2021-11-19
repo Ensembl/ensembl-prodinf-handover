@@ -75,16 +75,6 @@ es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
-# app.logger.info("Config %s", app.config)
-# app.logger.info("ALLOWED DB %s", os.getenv("ALLOWED_DIVISIONS", "Undefined"))
-# app.logger.info("STAGING_URI DB %s", os.getenv("STAGING_URI", "Undefined"))
-# app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
-# app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
-
-if not cfg.compara_species:
-    # Empty list of compara
-    abort(f"Missing Compara species configuration for {cfg.RELEASE}")
-
 
 @app.context_processor
 def inject_configs():
@@ -94,6 +84,10 @@ def inject_configs():
 
 @app.route('/', methods=['GET'])
 def info():
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise requests.exceptions.HTTPError(f"Missing Compara species configuration for {cfg.RELEASE}")
+
     app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(),
                              'uiversion': 2}
     return jsonify(app.config['SWAGGER'])
@@ -101,6 +95,10 @@ def info():
 
 @app.route('/ping', methods=['GET'])
 def ping():
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise requests.exceptions.HTTPError(f"Missing Compara species configuration for {cfg.RELEASE}")
+
     return jsonify({"status": "ok"})
 
 
@@ -131,6 +129,10 @@ def dropdown(src_host=None, src_port=None):
 # UI Submit-form for handover
 @app.route('/jobs/submit', methods=['GET', 'POST'])
 def handover_form():
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise requests.exceptions.HTTPError(f"Missing Compara species configuration for {cfg.RELEASE}")
+
     form = HandoverSubmissionForm(request.form)
     try:
 
@@ -597,3 +599,8 @@ def handle_sqlalchemy_error(e):
 def handle_notfound_error(e):
     app.logger.error(str(e))
     return jsonify(error=str(e)), 404
+
+
+@app.errorhandler(requests.exceptions.HTTPError)
+def handle_server_error(e):
+    return jsonify(error=str(e)), 500

@@ -11,15 +11,10 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-"""
-@author: dstaines
-@co-author: Vinay Kaikala
-@co-author: Marc Chakiachvili
-"""
 import os
 import warnings
 
-import sys
+import requests
 
 from ensembl.production.core.config import load_config_yaml
 from ensembl.utils.rloader import RemoteFileLoader
@@ -33,9 +28,12 @@ class ComparaDispatchConfig:
     def load_config(cls, version):
         loader = RemoteFileLoader('json')
         compara_species = {}
-        for division in cls.divisions:
-            uri = cls.uri.format(version, division)
-            compara_species[division] = loader.r_open(uri)
+        try:
+            for division in cls.divisions:
+                uri = cls.uri.format(version, division)
+                compara_species[division] = loader.r_open(uri)
+        except requests.HTTPError:
+            warnings.warn(f"Unable to load compara from {uri}")
         return compara_species
 
 
