@@ -57,10 +57,11 @@ app.config['SWAGGER'] = {
     },
     'favicon': '/img/production.png'
 }
-app.wsgi_app = DispatcherMiddleware(
-    Response('Not Found', status=404),
-    {'/vertebrates/handovers': app.wsgi_app}
-)
+if os.getenv('SCRIPT_NAME', ''):
+    app.wsgi_app = DispatcherMiddleware(
+        Response('Not Found', status=404),
+        {os.getenv('SCRIPT_NAME'): app.wsgi_app}
+    )
 swagger = Swagger(app)
 cors = CORS(app)
 bootstrap = Bootstrap(app)

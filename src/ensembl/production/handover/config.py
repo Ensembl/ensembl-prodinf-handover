@@ -11,14 +11,31 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-'''
-@author: dstaines; Vinay
-'''
+"""
+@author: dstaines
+@co-author: Vinay Kaikala
+@co-author: Marc Chakiachvili
+"""
 import os
 from ensembl.production.core.config import load_config_yaml
+from ensembl.utils.rloader import RemoteFileLoader
 
 
-class HandoverConfig():
+class ComparaDispatchConfig:
+    divisions = {'vertebrates', 'plants', 'metazoa'}
+    uri = 'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{}/conf/{}/allowed_species.json'
+
+    @classmethod
+    def load_config(cls, version):
+        loader = RemoteFileLoader('json')
+        compara_species = {}
+        for division in cls.divisions:
+            uri = cls.uri.format(version, division)
+            compara_species[division] = loader.r_open(uri)
+        return compara_species
+
+
+class HandoverConfig:
     config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH', os.path.join(os.path.dirname(__file__),
                                                                                 'handover_config.dev.yaml'))
     file_config = load_config_yaml(config_file_path)
@@ -82,7 +99,6 @@ class HandoverConfig():
                                                        'vertebrates'))
 
     dispatch_targets = file_config.get('dispatch_targets', [])
-    compara_species = file_config.get('compara_species', [])
     copy_job_user = file_config.get('copy_job_user', 'ensprod')
 
     # handover layout
@@ -96,6 +112,9 @@ class HandoverConfig():
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version', '104'))
+
+    compara_species = ComparaDispatchConfig.load_config(RELEASE)
+
     BLAT_SPECIES = ['homo_sapiens',
                     'mus_musculus',
                     'danio_rerio',
@@ -112,10 +131,8 @@ class HandoverConfig():
                     'oreochromis_niloticus',
                     'gadus_morhua']
 
-    print('Config Loaded!', dc_uri)
 
-
-class HandoverCeleryConfig():
+class HandoverCeleryConfig:
     config_file_path = os.environ.get('HANDOVER_CELERY_CONFIG_PATH')
 
     file_config = load_config_yaml(config_file_path)
