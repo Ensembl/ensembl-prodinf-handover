@@ -80,6 +80,10 @@ es_index = app.config['ES_INDEX']
 # app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
 # app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
 
+@app.context_processor
+def inject_script_name():
+    return dict(script_name=cfg.script_name)
+
 
 @app.route('/', methods=['GET'])
 def info():
@@ -139,9 +143,7 @@ def handover_form():
         flash(str(e))
     return render_template(
         'submit.html',
-        form=form,
-        copy_uri=cfg.copy_uri_dropdown,
-        script_name=cfg.script_name
+        form=form
     )
 
 
@@ -308,8 +310,7 @@ def handover_result(handover_token=''):
     app.logger.info("Request Headers %s", request.headers)
     if fmt != 'json' and not request.is_json:
         return render_template('result.html',
-                               handover_token=handover_token,
-                               script_name=cfg.script_name)
+                               handover_token=handover_token)
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     handover_detail = []
@@ -417,7 +418,7 @@ def handover_results():
 
     # renter bootstrap table
     if fmt != 'json' and not request.is_json:
-        return render_template('list.html', script_name=cfg.script_name)
+        return render_template('list.html')
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     res = es.search(index=es_index, body={
