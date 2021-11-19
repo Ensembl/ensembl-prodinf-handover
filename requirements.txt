@@ -56,8 +56,6 @@ flask==1.1.2
     #   flasgger
     #   flask-cors
     #   flask-wtf
-git+git://github.com/mher/flower.git#egg=flower
-    # via -r requirements.in
 greenlet==1.0.0
     # via sqlalchemy
 gunicorn==20.1.0

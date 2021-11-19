@@ -7,7 +7,6 @@ Flask
 flasgger
 Flask-Cors
 flask_wtf
-git+git://github.com/mher/flower.git#egg=flower
 gunicorn
 mysqlclient
 requests
