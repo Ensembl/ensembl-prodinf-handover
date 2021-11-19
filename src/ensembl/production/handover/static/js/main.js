@@ -10,8 +10,8 @@ $(function () {
     $("#src_uri").autocomplete({
         source: function (request, response) {
             $.ajax({
-                //url: `${copy_url}api/dbcopy/src_host`,
-                url: '/dropdown/src_host',
+                url: `${script_name}/api/dbcopy/src_host`,
+                //url: '/dropdown/src_host',
                 dataType: "json",
                 data: {
                     name: request.term
@@ -53,8 +53,8 @@ $(function () {
     $("#database").autocomplete({
         source: function (request, response) {
             $.ajax({
-                //url: `${copy_url}api/dbcopy/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
-                url: `/dropdown/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
+                url: `${script_name}/dropdown/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
+                // url: `/dropdown/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
                 dataType: "json",
                 data: {
                     search: request.term

@@ -53,7 +53,13 @@
 
         {% block scripts %}
             <!-- Optional JavaScript -->
+            <script type="text/javascript">
+                var copy_url = "{{copy_uri}}"; // set copy url for dropdown list
+                var script_name = "{{script_name}}";
+                console.log("script_name " + script_name);
+            </script>
             {{ bootstrap.load_js() }}
+
         {% endblock %}
     </body>
 </html>

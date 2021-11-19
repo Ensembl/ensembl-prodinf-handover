@@ -31,24 +31,19 @@
 
 import json
 import logging
-import re
-import uuid
 
-from celery import chain
-from sqlalchemy.engine.url import make_url
-from sqlalchemy_utils.functions import database_exists, drop_database
-
-# handover
-from ensembl.production.handover.config import HandoverConfig as cfg
-from ensembl.production.handover.celery_app.celery import app
-from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
-    drop_current_databases, submit_dc, submit_copy, submit_metadata_update, submit_dispatch
-from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, event_client, dc_client
-
+from ensembl.production.core.reporting import make_report
 # core
 from ensembl.production.core.utils import send_email
-from ensembl.production.core.reporting import make_report
-import time
+from sqlalchemy_utils.functions import drop_database
+
+from celery import chain
+from ensembl.production.handover.celery_app.celery import app
+from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client
+from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
+    drop_current_databases, submit_dc, submit_copy, submit_metadata_update
+# handover
+from ensembl.production.handover.config import HandoverConfig as cfg
 
 retry_wait = app.conf.get('retry_wait', 60)
 release = int(cfg.RELEASE)

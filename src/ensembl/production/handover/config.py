@@ -22,14 +22,13 @@ class HandoverConfig():
     config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH', os.path.join(os.path.dirname(__file__),
                                                                                 'handover_config.dev.yaml'))
     file_config = load_config_yaml(config_file_path)
-
+    script_name = os.environ.get("SCRIPT_NAME", '')
     # core config
     SECRET_KEY = os.environ.get('SECRET_KEY',
                                 file_config.get('secret_key', os.urandom(32)))
     dc_uri = os.environ.get("DC_URI",
                             file_config.get('dc_uri', "http://localhost:8006/datacheck"))
     copy_uri = os.environ.get("COPY_URI",
-                              # file_config.get('copy_uri', "http://127.0.0.1:5002/")) production-services.ensembl.org
                               file_config.get('copy_uri',
                                               "http://production-services.ensembl.org:80/api/dbcopy/requestjob"))
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
@@ -88,7 +87,7 @@ class HandoverConfig():
 
     # handover layout
     HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type',
-                                                                    'vertebrates'))  # change this value based on haver you want to deploy ex: plants/metazoa/bacteria
+                                                                    'vertebrates'))
 
     # es config
     HOST = os.environ.get('SERVICE_HOST', file_config.get('host', '0.0.0.0'))
@@ -112,6 +111,8 @@ class HandoverConfig():
                     'ovis_aries',
                     'oreochromis_niloticus',
                     'gadus_morhua']
+
+    print('Config Loaded!', dc_uri)
 
 
 class HandoverCeleryConfig():

@@ -11,33 +11,36 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import logging
-import re
-import os
 import datetime
+import logging
+import os
+import re
 
-from elasticsearch import Elasticsearch, TransportError, NotFoundError
-from sqlalchemy.exc import OperationalError
-from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, url_for, redirect, json, flash
-from flask_cors import CORS
-from flask_bootstrap import Bootstrap
-
-from ensembl.production.core import app_logging
-from ensembl.production.handover.celery_app.tasks import handover_database
-from ensembl.production.core.exceptions import HTTPRequestError
-from ensembl.production.core.db_utils import validate_mysql_url, list_databases, get_databases_list
-
-from ensembl.production.handover.forms import HandoverSubmissionForm
-from ensembl.production.handover.config import HandoverConfig as cfg
 import requests
+from elasticsearch import Elasticsearch, TransportError, NotFoundError
+from ensembl.production.core import app_logging
+from ensembl.production.core.exceptions import HTTPRequestError
+from flasgger import Swagger
+from flask import Flask, request, jsonify, render_template, redirect, flash
+from flask_bootstrap import Bootstrap
+from flask_cors import CORS
 from requests.exceptions import HTTPError
+from sqlalchemy.exc import OperationalError
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.wrappers import Response
+
+from ensembl.production.handover.celery_app.tasks import handover_database
+from ensembl.production.handover.config import HandoverConfig as cfg
+from ensembl.production.handover.forms import HandoverSubmissionForm
 
 # set static and template paths
 app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
-app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path,
+app = Flask(__name__,
+            instance_relative_config=True,
+            static_folder=static_path,
+            template_folder=template_path,
             static_url_path='/static/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 formatter = logging.Formatter(
@@ -54,7 +57,10 @@ app.config['SWAGGER'] = {
     },
     'favicon': '/img/production.png'
 }
-
+app.wsgi_app = DispatcherMiddleware(
+    Response('Not Found', status=404),
+    {'/vertebrates/handovers': app.wsgi_app}
+)
 swagger = Swagger(app)
 cors = CORS(app)
 bootstrap = Bootstrap(app)
@@ -66,7 +72,8 @@ es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
-#app.logger.info("Config %s", app.config)
+
+# app.logger.info("Config %s", app.config)
 # app.logger.info("ALLOWED DB %s", os.getenv("ALLOWED_DIVISIONS", "Undefined"))
 # app.logger.info("STAGING_URI DB %s", os.getenv("STAGING_URI", "Undefined"))
 # app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
@@ -85,8 +92,8 @@ def ping():
     return jsonify({"status": "ok"})
 
 
-@app.route('/dropdown/src_host', methods=['GET'])
-@app.route('/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
+@app.route('/jobs/dropdown/src_host', methods=['GET'])
+@app.route('/jobs/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
 def dropdown(src_host=None, src_port=None):
     try:
         src_name = request.args.get('name', None)
@@ -133,6 +140,7 @@ def handover_form():
         'submit.html',
         form=form,
         copy_uri=cfg.copy_uri_dropdown,
+        script_name=cfg.script_name
     )
 
 
@@ -298,55 +306,57 @@ def handover_result(handover_token=''):
     # renter bootstrap table
     app.logger.info("Request Headers %s", request.headers)
     if fmt != 'json' and not request.is_json:
-        return render_template('result.html', handover_token=handover_token)
+        return render_template('result.html',
+                               handover_token=handover_token,
+                               script_name=cfg.script_name)
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     handover_detail = []
     res = es.search(index=es_index, body={
-      "size":0,
-      "query": {
-        "bool": {
-          "must": [
-              {"term": {"params.handover_token.keyword": str(handover_token)}},
-              {"query_string": {"fields": ["report_type"],"query": "(INFO|ERROR)","analyze_wildcard": "true"}},
-          ]
-        }
-      },
-      "aggs": {
-        "top_result": {
-          "top_hits": {
-           "size": 1, 
-            "sort": {
-              "report_time" : "desc"
+        "size": 0,
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"params.handover_token.keyword": str(handover_token)}},
+                    {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)", "analyze_wildcard": "true"}},
+                ]
             }
-          }
-        }
-      },
-      "sort": [
-        {
-          "report_time": {
-            "order": "desc"
-          }
-        }
-      ]
+        },
+        "aggs": {
+            "top_result": {
+                "top_hits": {
+                    "size": 1,
+                    "sort": {
+                        "report_time": "desc"
+                    }
+                }
+            }
+        },
+        "sort": [
+            {
+                "report_time": {
+                    "order": "desc"
+                }
+            }
+        ]
     })
 
     for doc in res['aggregations']['top_result']['hits']['hits']:
-      result = {"id": doc['_id']}
-      if 'job_progress' in doc['_source']['params']:
-        result['job_progress'] = doc['_source']['params']['job_progress']
+        result = {"id": doc['_id']}
+        if 'job_progress' in doc['_source']['params']:
+            result['job_progress'] = doc['_source']['params']['job_progress']
 
-      result['message'] = doc['_source']['message']
-      result['comment'] = doc['_source']['params']['comment']
-      result['handover_token'] = doc['_source']['params']['handover_token']
-      result['contact'] = doc['_source']['params']['contact']
-      result['src_uri'] = doc['_source']['params']['src_uri']
-      result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-      result['progress_complete'] = doc['_source']['params']['progress_complete']
-      result['progress_total'] = doc['_source']['params']['progress_total']
-      result['report_time'] = doc['_source']['report_time']
-      handover_detail.append(result)
-  
+        result['message'] = doc['_source']['message']
+        result['comment'] = doc['_source']['params']['comment']
+        result['handover_token'] = doc['_source']['params']['handover_token']
+        result['contact'] = doc['_source']['params']['contact']
+        result['src_uri'] = doc['_source']['params']['src_uri']
+        result['tgt_uri'] = doc['_source']['params']['tgt_uri']
+        result['progress_complete'] = doc['_source']['params']['progress_complete']
+        result['progress_total'] = doc['_source']['params']['progress_total']
+        result['report_time'] = doc['_source']['report_time']
+        handover_detail.append(result)
+
     if len(handover_detail) == 0:
         raise HTTPRequestError('Handover token %s not found' % handover_token, 404)
     else:
@@ -406,79 +416,79 @@ def handover_results():
 
     # renter bootstrap table
     if fmt != 'json' and not request.is_json:
-        return render_template('list.html', )
+        return render_template('list.html', script_name=cfg.script_name)
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     res = es.search(index=es_index, body={
-      "size":0,
-      "query": {
-        "bool": {
-          "must": [
-            {
-              "query_string": {
-                "fields": [
-                    "report_type"
-                ],
-                "query": "(INFO|ERROR)",
-                  "analyze_wildcard": "true"
-                }
-            },
-            {
-              "query_string": {
-                "fields": [
-                  "params.tgt_uri"
-                ],
-                "query": "/.*_{}(_[0-9]+)?/".format(release)
-              }
+        "size": 0,
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "query_string": {
+                            "fields": [
+                                "report_type"
+                            ],
+                            "query": "(INFO|ERROR)",
+                            "analyze_wildcard": "true"
+                        }
+                    },
+                    {
+                        "query_string": {
+                            "fields": [
+                                "params.tgt_uri"
+                            ],
+                            "query": "/.*_{}(_[0-9]+)?/".format(release)
+                        }
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "aggs": {
-        "handover_token": {
-          "terms": {
-            "field": "params.handover_token.keyword",
-            "size": 1000
-          },
-          "aggs": {
-            "top_result": {
-              "top_hits": {
-                "size": 1, 
-                "sort": {
-                  "report_time" : "desc"
+        },
+        "aggs": {
+            "handover_token": {
+                "terms": {
+                    "field": "params.handover_token.keyword",
+                    "size": 1000
+                },
+                "aggs": {
+                    "top_result": {
+                        "top_hits": {
+                            "size": 1,
+                            "sort": {
+                                "report_time": "desc"
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-        }
-      },
-      "sort": [
-        {
-          "report_time": {
-            "order": "desc"
-          }
-        }
-      ]
+        },
+        "sort": [
+            {
+                "report_time": {
+                    "order": "desc"
+                }
+            }
+        ]
     })
-    
-    list_handovers=[]
 
-    for each_handover_bucket in res['aggregations']['handover_token']['buckets'] :
-      for doc in each_handover_bucket['top_result']['hits']['hits']: 
-        result = {"id": doc['_id']}
-        if 'job_progress' in doc['_source']['params']:
-          result['job_progress'] = doc['_source']['params']['job_progress']
+    list_handovers = []
 
-        result['handover_token'] = doc['_source']['params']['handover_token']
-        result['message'] = doc['_source']['message']
-        result['comment'] = doc['_source']['params']['comment']
-        result['current_message'] = doc['_source']['message']
-        result['contact'] = doc['_source']['params']['contact']
-        result['src_uri'] = doc['_source']['params']['src_uri']
-        result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-        result['report_time'] = doc['_source']['report_time']
-        list_handovers.append(result)
- 
+    for each_handover_bucket in res['aggregations']['handover_token']['buckets']:
+        for doc in each_handover_bucket['top_result']['hits']['hits']:
+            result = {"id": doc['_id']}
+            if 'job_progress' in doc['_source']['params']:
+                result['job_progress'] = doc['_source']['params']['job_progress']
+
+            result['handover_token'] = doc['_source']['params']['handover_token']
+            result['message'] = doc['_source']['message']
+            result['comment'] = doc['_source']['params']['comment']
+            result['current_message'] = doc['_source']['message']
+            result['contact'] = doc['_source']['params']['contact']
+            result['src_uri'] = doc['_source']['params']['src_uri']
+            result['tgt_uri'] = doc['_source']['params']['tgt_uri']
+            result['report_time'] = doc['_source']['report_time']
+            list_handovers.append(result)
+
     return jsonify(list_handovers)
 
 
