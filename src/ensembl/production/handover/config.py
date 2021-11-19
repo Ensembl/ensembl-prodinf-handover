@@ -17,6 +17,8 @@
 @co-author: Marc Chakiachvili
 """
 import os
+import sys
+
 from ensembl.production.core.config import load_config_yaml
 from ensembl.utils.rloader import RemoteFileLoader
 
@@ -31,7 +33,13 @@ class ComparaDispatchConfig:
         compara_species = {}
         for division in cls.divisions:
             uri = cls.uri.format(version, division)
-            compara_species[division] = loader.r_open(uri)
+            print("Uri to load ", uri)
+            try:
+                compara_species[division] = loader.r_open(uri)
+            except Exception as e:
+                print("Can't start, compara species %s unavailable for release %s" %
+                      (uri, version))
+                sys.exit(255)
         return compara_species
 
 
@@ -111,7 +119,7 @@ class HandoverConfig:
     ES_HOST = os.environ.get('ES_HOST', file_config.get('es_host', 'localhost'))
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
-    RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version', '104'))
+    RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version', '205'))
 
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
