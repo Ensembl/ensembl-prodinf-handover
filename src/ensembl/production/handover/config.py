@@ -33,7 +33,6 @@ class ComparaDispatchConfig:
         compara_species = {}
         for division in cls.divisions:
             uri = cls.uri.format(version, division)
-            print("Uri to load ", uri)
             try:
                 compara_species[division] = loader.r_open(uri)
             except Exception as e:
