@@ -16,4 +16,3 @@ sqlalchemy_utils==0.37.0
 wtforms
 Jinja2
 python-dotenv==0.17.1
-git+https://github.com/Ensembl/ensembl-py.git@features/remote-file-loader#egg=ensembl-py
