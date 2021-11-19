@@ -81,8 +81,9 @@ es_index = app.config['ES_INDEX']
 # app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
 
 @app.context_processor
-def inject_script_name():
-    return dict(script_name=cfg.script_name)
+def inject_configs():
+    return dict(script_name=cfg.script_name,
+                copy_uri=cfg.copy_uri)
 
 
 @app.route('/', methods=['GET'])
