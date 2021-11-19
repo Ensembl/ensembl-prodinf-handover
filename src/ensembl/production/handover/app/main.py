@@ -18,10 +18,8 @@ import re
 
 import requests
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
-from ensembl.production.core import app_logging
-from ensembl.production.core.exceptions import HTTPRequestError
 from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, redirect, flash
+from flask import Flask, request, jsonify, render_template, redirect, flash, abort
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from requests.exceptions import HTTPError
@@ -29,6 +27,8 @@ from sqlalchemy.exc import OperationalError
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Response
 
+from ensembl.production.core import app_logging
+from ensembl.production.core.exceptions import HTTPRequestError
 from ensembl.production.handover.celery_app.tasks import handover_database
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.forms import HandoverSubmissionForm
@@ -57,11 +57,13 @@ app.config['SWAGGER'] = {
     },
     'favicon': '/img/production.png'
 }
-if cfg.script_name:
+if app.env == 'development':
+    # ENV dev (assumed run from builtin server, so update script_name at wsgi level)
     app.wsgi_app = DispatcherMiddleware(
         Response('Not Found', status=404),
         {cfg.script_name: app.wsgi_app}
     )
+
 swagger = Swagger(app)
 cors = CORS(app)
 bootstrap = Bootstrap(app)
@@ -73,12 +75,16 @@ es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
-
 # app.logger.info("Config %s", app.config)
 # app.logger.info("ALLOWED DB %s", os.getenv("ALLOWED_DIVISIONS", "Undefined"))
 # app.logger.info("STAGING_URI DB %s", os.getenv("STAGING_URI", "Undefined"))
 # app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
 # app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
+
+if not cfg.compara_species:
+    # Empty list of compara
+    abort(f"Missing Compara species configuration for {cfg.RELEASE}")
+
 
 @app.context_processor
 def inject_configs():

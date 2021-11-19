@@ -17,6 +17,8 @@
 @co-author: Marc Chakiachvili
 """
 import os
+import warnings
+
 import sys
 
 from ensembl.production.core.config import load_config_yaml
@@ -33,12 +35,7 @@ class ComparaDispatchConfig:
         compara_species = {}
         for division in cls.divisions:
             uri = cls.uri.format(version, division)
-            try:
-                compara_species[division] = loader.r_open(uri)
-            except Exception as e:
-                print("Can't start, compara species %s unavailable for release %s" %
-                      (uri, version))
-                sys.exit(255)
+            compara_species[division] = loader.r_open(uri)
         return compara_species
 
 
