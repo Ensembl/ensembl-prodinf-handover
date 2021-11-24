@@ -109,23 +109,31 @@ def get_tgt_uri(src_url, staging_uri):
     return '%s%s' % (staging_uri, src_url.database)
 
 
-def drop_current_databases(current_db_list, spec):
+def drop_current_databases(current_db_list, spec, target_db_delete=None):
     """Drop databases on a previous assembly or previous genebuild (e.g: Wormbase) from the staging MySQL server"""
-    tgt_uri = spec['tgt_uri']
-    staging_uri = spec['staging_uri']
-    tgt_url = make_url(tgt_uri)
-    # Check if the new database has the same name as the one on staging. In this case DO NOT drop it
-    # This can happen if the assembly get renamed or genebuild version has changed for Wormbase
-    if tgt_url.database in current_db_list:
-        msg = 'The assembly or genebuild has been updated but the new database %s is the same as old one' % tgt_url.database
-        log_and_publish(make_report('DEBUG', msg, spec, tgt_uri))
-    else:
-        for database in current_db_list:
-            db_uri = staging_uri + database
-            if database_exists(db_uri):
-                msg = 'Dropping %s' % db_uri
-                log_and_publish(make_report('INFO', msg, spec, tgt_uri))
-                drop_database(db_uri)
+    try:
+        
+        if target_db_delete:
+            drop_database(spec['tgt_uri'])
+            return True
+            
+        tgt_uri = spec['tgt_uri']
+        staging_uri = spec['staging_uri']
+        tgt_url = make_url(tgt_uri)
+        # Check if the new database has the same name as the one on staging. In this case DO NOT drop it
+        # This can happen if the assembly get renamed or genebuild version has changed for Wormbase
+        if tgt_url.database in current_db_list:
+            msg = 'The assembly or genebuild has been updated but the new database %s is the same as old one' % tgt_url.database
+            log_and_publish(make_report('DEBUG', msg, spec, tgt_uri))
+        else:
+            for database in current_db_list:
+                db_uri = staging_uri + database
+                if database_exists(db_uri):
+                    msg = 'Dropping %s' % db_uri
+                    log_and_publish(make_report('INFO', msg, spec, tgt_uri))
+                    drop_database(db_uri)
+    except Exception as e:
+        return False
 
 
 def process_handover_payload(spec):

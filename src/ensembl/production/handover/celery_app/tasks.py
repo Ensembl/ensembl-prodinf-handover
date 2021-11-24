@@ -35,7 +35,7 @@ import logging
 from ensembl.production.core.reporting import make_report
 # core
 from ensembl.production.core.utils import send_email
-from sqlalchemy_utils.functions import drop_database
+
 
 from celery import chain
 from ensembl.production.handover.celery_app.celery import app
@@ -216,7 +216,10 @@ def metadata_update_task(self, spec):
         self.request.chain = None
         drop_msg = 'Dropping %s' % tgt_uri
         log_and_publish(make_report('INFO', drop_msg, spec, tgt_uri))
-        drop_database(spec['tgt_uri'])
+        
+        db_drop_status = drop_current_databases([], spec, target_db_delete=True)
+        db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
+        log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
         failed_msg = 'Metadata load failed, please see %sjobs/%s?format=failures' % (cfg.meta_uri, spec['metadata_job_id'])
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
         msg = """
