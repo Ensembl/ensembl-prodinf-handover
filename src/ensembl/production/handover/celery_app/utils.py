@@ -166,7 +166,8 @@ def process_handover_payload(spec):
         if db_prefix == 'homo_sapiens' and assembly == '37':
             logger.debug("It's 37 assembly - no metadata update")
             spec['progress_total'] = 2
-        elif db_type in cfg.dispatch_targets.keys() and \
+        elif db_type in cfg.dispatch_targets.keys() and cfg.HANDOVER_TYPE != 'rapid' \
+                and cfg.HANDOVER_TYPE != 'viruses' and \
                 any(db_prefix in val for val in cfg.compara_species.values()):
             logger.debug("Adding dispatch step to total")
             spec['progress_total'] = 4
