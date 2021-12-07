@@ -115,7 +115,7 @@ def drop_current_databases(current_db_list, spec, target_db_delete=None):
     Args:
         current_db_list ([List]): [List of databases names to be dropped]
         spec ([Dict]): [Handover payload with details ]
-        target_db_delete ([Boolean], optional): [Flag to delete givem list of databases]. Defaults to None.
+        target_db_delete ([Boolean], optional): [Flag to delete given list of databases]. Defaults to None.
 
     Returns:
         [Boolean]: [status of dropdatabase method]
