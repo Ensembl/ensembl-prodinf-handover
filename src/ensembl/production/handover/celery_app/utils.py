@@ -110,7 +110,17 @@ def get_tgt_uri(src_url, staging_uri):
 
 
 def drop_current_databases(current_db_list, spec, target_db_delete=None):
-    """Drop databases on a previous assembly or previous genebuild (e.g: Wormbase) from the staging MySQL server"""
+    """[Drop databases on a previous assembly or previous genebuild (e.g: Wormbase) from the staging MySQL server]
+
+    Args:
+        current_db_list ([List]): [List of databases names to be dropped]
+        spec ([Dict]): [Handover payload with details ]
+        target_db_delete ([Boolean], optional): [Flag to delete givem list of databases]. Defaults to None.
+
+    Returns:
+        [Boolean]: [status of dropdatabase method]
+    """    
+
     try:
         
         if target_db_delete:
