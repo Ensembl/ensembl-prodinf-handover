@@ -612,5 +612,5 @@ def handle_server_error(e):
 
 @app.errorhandler(ensembl.production.handover.exceptions.MissingDispatchException)
 def handle_server_error(e):
-    message = f"Missing Handover db dispatch configuration for {app.config['ENS_VERSION']} {e}"
-    return jsonify(error=str(e)), 500
+    message = f"Missing Handover db dispatch configuration for {app.config['RELEASE']} {e}"
+    return jsonify(error=message), 500
