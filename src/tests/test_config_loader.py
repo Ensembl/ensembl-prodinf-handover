@@ -17,15 +17,21 @@ from ensembl.production.handover.config import ComparaDispatchConfig
 
 class TestHOConfigLoader(unittest.TestCase):
 
-    def test_config_load(self):
+    def test_config_load_104(self):
         # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('104')
-        self.assertNotIn('', config.keys())
+        self.assertIn('homo_sapiens', config['vertebrates'])
+        self.assertIn('anopheles_gambiae', config['metazoa'])
+        self.assertIn('zea_mays', config['plants'])
+
+    def test_config_load_106(self):
         # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('106')
-        self.assertIn('DuplicateComparaMemberXref', config.keys())
+        self.assertIn('homo_sapiens', config['vertebrates'])
+        self.assertIn('anopheles_gambiae', config['metazoa'])
+        self.assertIn('zea_mays', config['plants'])
 
-        with self.assertWarns(Warning):
-            config = ComparaDispatchConfig.load_config('5000')
-            # Load main instead
-            self.assertIn('SpeciesCommonName', config.keys())
+    def test_config_load_not_exists(self):
+        config = ComparaDispatchConfig.load_config('5000')
+        # Load main instead
+        self.assertFalse(config)
