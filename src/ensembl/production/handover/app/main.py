@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # .. See the NOTICE file distributed with this work for additional information
 #    regarding copyright ownership.
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,7 +18,7 @@ import re
 import requests
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
 from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, redirect, flash, abort
+from flask import Flask, request, jsonify, render_template, redirect, flash
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from requests.exceptions import HTTPError
@@ -31,6 +30,7 @@ from ensembl.production.core import app_logging
 from ensembl.production.core.exceptions import HTTPRequestError
 from ensembl.production.handover.celery_app.tasks import handover_database
 from ensembl.production.handover.config import HandoverConfig as cfg
+from ensembl.production.handover.exceptions import MissingDispatchException
 from ensembl.production.handover.forms import HandoverSubmissionForm
 
 # set static and template paths
@@ -86,7 +86,7 @@ def inject_configs():
 def info():
     if not cfg.compara_species:
         # Empty list of compara
-        raise requests.exceptions.HTTPError(f"Missing Compara species configuration for {cfg.RELEASE}")
+        raise MissingDispatchException
 
     app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(),
                              'uiversion': 2}
@@ -97,7 +97,7 @@ def info():
 def ping():
     if not cfg.compara_species:
         # Empty list of compara
-        raise requests.exceptions.HTTPError(f"Missing Compara species configuration for {cfg.RELEASE}")
+        raise MissingDispatchException
 
     return jsonify({"status": "ok"})
 
@@ -131,7 +131,7 @@ def dropdown(src_host=None, src_port=None):
 def handover_form():
     if not cfg.compara_species:
         # Empty list of compara
-        raise requests.exceptions.HTTPError(f"Missing Compara species configuration for {cfg.RELEASE}")
+        raise MissingDispatchException
 
     form = HandoverSubmissionForm(request.form)
     try:
@@ -213,6 +213,9 @@ def handovers():
         examples:
           {src_uri: "mysql://user@server:port/saccharomyces_cerevisiae_core_91_4", contact: "joe.blogg@ebi.ac.uk", comment: "handover new Panda OF"}
     """
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise MissingDispatchException
     # get form data
     if form_pattern.match(request.headers['Content-Type']):
         spec = request.form.to_dict(flat=True)
@@ -603,4 +606,10 @@ def handle_notfound_error(e):
 
 @app.errorhandler(requests.exceptions.HTTPError)
 def handle_server_error(e):
+    return jsonify(error=str(e)), 500
+
+
+@app.errorhandler(ensembl.production.handover.exceptions.MissingDispatchException)
+def handle_server_error(e):
+    message = f"Missing Handover db dispatch configuration for {app.config['ENS_VERSION']} {e}"
     return jsonify(error=str(e)), 500
