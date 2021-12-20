@@ -1,20 +1,41 @@
-# .. See the NOTICE file distributed with this work for additional information
-#    regarding copyright ownership.
-#    Licensed under the Apache License, Version 2.0 (the "License");
-#    you may not use this file except in compliance with the License.
-#    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS,
-#    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    See the License for the specific language governing permissions and
-#    limitations under the License.
-
-
 import unittest
+
+import pytest
+import requests
+from requests.exceptions import ConnectionError
+
 from ensembl.production.handover.app.main import valid_handover
+from ensembl.production.handover.celery_app import utils as ut
 from ensembl.production.handover.celery_app.utils import parse_db_infos
-import ensembl.production.handover.celery_app.utils as ut
+
+
+def is_responsive(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return True
+    except ConnectionError:
+        return False
+
+
+@pytest.fixture(scope="session")
+def http_service(docker_ip, docker_services):
+    """Ensure that HTTP service is up and responsive."""
+
+    # `port_for` takes a container port and returns the corresponding host port
+    port = docker_services.port_for("handover_app", 5000)
+    url = "http://{}:{}".format(docker_ip, port)
+    docker_services.wait_until_responsive(
+        timeout=30.0, pause=0.1, check=lambda: is_responsive(url)
+    )
+    return url
+
+
+def test_status_code(http_service):
+    status = 200
+    response = requests.get(http_service)
+    assert response.status_code == status
+
 
 class TestHandover(unittest.TestCase):
     def test_valid_handover_valid(self):
@@ -53,13 +74,14 @@ class TestHandover(unittest.TestCase):
         for uri in invalid_uris:
             doc = {'_source': {'params': {'src_uri': uri}}}
             self.assertFalse(valid_handover(doc, release))
-    
+
     def test_valid_core_database(self):
-        expect_db_type='core'
-        dbname='zonotrichia_albicollis_core_96_101'  
+        expect_db_type = 'core'
+        dbname = 'zonotrichia_albicollis_core_96_101'
         db_prefix, db_type, assembly = parse_db_infos(dbname)
         self.assertTrue(expect_db_type, db_type)
-          
+
+
 class ParseDbInfosTest(unittest.TestCase):
     def test_accepted_species_patterns(self):
         names = (
@@ -88,29 +110,29 @@ class ParseDbInfosTest(unittest.TestCase):
             'canis_lupus_familiarisbasenji_core_100_11',
         )
         parsed_names = (
-            ('homo_sapiens', 'cdna',  '38'),
-            ('homo_sapiens', 'core',  '38'),
-            ('homo_sapiens', 'funcgen',  '38'),
+            ('homo_sapiens', 'cdna', '38'),
+            ('homo_sapiens', 'core', '38'),
+            ('homo_sapiens', 'funcgen', '38'),
             ('homo_sapiens', 'otherfeatures', '38'),
-            ('homo_sapiens', 'rnaseq',  '38'),
+            ('homo_sapiens', 'rnaseq', '38'),
             ('homo_sapiens', 'variation', '38'),
-            ('bacteria_0_collection', 'core',  '1'),
-            ('bacteria_100_collection', 'core',  '1'),
-            ('bacteria_101_collection', 'core',  '1'),
-            ('fungi_ascomycota1_collection', 'core',  '1'),
+            ('bacteria_0_collection', 'core', '1'),
+            ('bacteria_100_collection', 'core', '1'),
+            ('bacteria_101_collection', 'core', '1'),
+            ('fungi_ascomycota1_collection', 'core', '1'),
             ('fungi_ascomycota2_collection', 'core', '1'),
-            ('hordeum_vulgare', 'core',  '3'),
-            ('hordeum_vulgare', 'funcgen',  '3'),
-            ('hordeum_vulgare', 'otherfeatures',  '3'),
-            ('hordeum_vulgare', 'variation',  '3'),
-            ('protists_alveolata1_collection', 'core',  '1'),
-            ('protists_amoebozoa1_collection', 'core',  '1'),
-            ('protists_apusozoa1_collection', 'core',  '1'),
-            ('protists_choanoflagellida1_collection', 'core','1'),
+            ('hordeum_vulgare', 'core', '3'),
+            ('hordeum_vulgare', 'funcgen', '3'),
+            ('hordeum_vulgare', 'otherfeatures', '3'),
+            ('hordeum_vulgare', 'variation', '3'),
+            ('protists_alveolata1_collection', 'core', '1'),
+            ('protists_amoebozoa1_collection', 'core', '1'),
+            ('protists_apusozoa1_collection', 'core', '1'),
+            ('protists_choanoflagellida1_collection', 'core', '1'),
             ('protists_cryptophyta1_collection', 'core', '1'),
-            ('protists_euglenozoa1_collection', 'core','1'),
+            ('protists_euglenozoa1_collection', 'core', '1'),
             ('anas_platyrhynchos_platyrhynchos', 'core', '1'),
-            ('canis_lupus_familiarisbasenji','core',  '11'),
+            ('canis_lupus_familiarisbasenji', 'core', '11'),
         )
         for parsed_name, database_name in zip(parsed_names, names):
             self.assertEqual(parsed_name, ut.parse_db_infos(database_name))

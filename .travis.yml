@@ -22,5 +22,5 @@ before_script:
   - pip install .
 
 script:
-  - coverage run -m pytest src
+  - coverage run -m pytest src/tests
   - coverage report -m
