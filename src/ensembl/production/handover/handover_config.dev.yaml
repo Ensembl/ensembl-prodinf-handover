@@ -2,8 +2,8 @@
 debug: false
 service_port: 7004
 service_host: 0.0.0.0
-es_host: es.production.ensembl.org
-es_port: 80
+es_host: localhost
+es_port: 9200
 es_index: reports_vertebrates
 ens_version: 500
 dc_uri: http://localhost:5000/api/vertebrates/datachecks/
