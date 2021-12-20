@@ -12,17 +12,19 @@
 
 
 import unittest
-from flask import Flask, render_template, jsonify, Request, request
+
+from flask import Flask, Request, request
 from werkzeug.test import EnvironBuilder
+
 from ensembl.production.handover.forms import HandoverSubmissionForm
 
-valid_payload ={
-                'src_uri':'mysql://ensro@mysql:4123/' ,
-                'database': 'homo_sapiens_core_104_38',
-                'contact': 'production@ebi.ac.uk',
-                'comment': 'Testcase for handover form',
-                'source': 'Handover',
-                }
+valid_payload = {
+    'src_uri': 'mysql://ensro@mysql:4123/',
+    'database': 'homo_sapiens_core_104_38',
+    'contact': 'production@ebi.ac.uk',
+    'comment': 'Testcase for handover form',
+    'source': 'Handover',
+}
 
 class TestHandoverForm(unittest.TestCase):
     def setUp(self):
