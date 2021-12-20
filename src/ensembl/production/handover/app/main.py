@@ -26,7 +26,7 @@ from sqlalchemy.exc import OperationalError
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Response
 
-import ensembl.production.datacheck.exceptions
+import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
 from ensembl.production.core.exceptions import HTTPRequestError
 from ensembl.production.handover.celery_app.tasks import handover_database
