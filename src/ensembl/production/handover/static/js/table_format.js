@@ -64,7 +64,7 @@ function HandoverBaseInfo(handover_details) {
     } else if (failure.test(handover_details.message) || problems.test(handover_details.message)) {
         job_status = `<div class="alert alert-danger" role="alert">${job_status}</div>`;
     } else {
-        const progress = (+handover_details.progress_complete + 1 / +handover_details.progress_total) * 100;
+        const progress = ((handover_details.progress_complete + 1) / handover_details.progress_total) * 100;
         let job_progress = '';
 
         if ('job_progress' in handover_details) {
