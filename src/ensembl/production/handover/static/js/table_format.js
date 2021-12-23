@@ -75,15 +75,15 @@ function HandoverBaseInfo(handover_details) {
         if ('job_progress' in handover_details) {
             job_progress = `
         <div class="row m-1">
-          <div class="alert alert-dark" role="alert">DataChecks:
+          <div class="alert alert-dark" role="alert">
             <span class="badge badge-warning">
-              DC Jobs Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
+              Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
             </span>
             <span class="badge badge-success">
-              DC Jobs completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
+              Completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
             </span>
             <span class="badge badge-danger">
-              DC Jobs Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
+              Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
             </span>  
           </div>  
         </div>
@@ -174,7 +174,7 @@ function statusFormat(value, row) {
         } else {
             job_in_progess = `Unknown status`
         }
-        return (`<span class="badge badge-info">running: 
+        return (`<span class="badge badge-info">Running: 
               <span class="badge badge-light">${job_in_progess}</span>
                </span><br>${datacheck_job_progress}</br>`);
     }
