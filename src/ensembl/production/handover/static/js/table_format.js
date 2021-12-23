@@ -27,7 +27,7 @@ function FormatHandover(index, row) {
 
 function detailFormatter(index, row) {
     $.ajax({
-        url: `${script_name}/jobs/${row.handover_token}?format=json`,
+        url: `/api/${script_name}/jobs/${row.handover_token}`,
         success: function (result) {
             HandoverBaseInfo(result[0]);
         },
