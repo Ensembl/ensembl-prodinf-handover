@@ -49,7 +49,7 @@ function detailFormatter(index, row) {
 
 function HandoverBaseInfo(handover_details) {
 
-    const sucess = new RegExp('^(.+)Handover' + '(.+){1}' + 'successful$');
+    const success = new RegExp('^(.+)Handover' + '(.+){1}' + 'successful$');
     const failure = new RegExp('^(.+)failed(.+)$');
     const problems = new RegExp('^(.+)problems(.+)$');
     const meta_data_failed = new RegExp('^Metadata(.+)failed(.+)');
@@ -59,23 +59,18 @@ function HandoverBaseInfo(handover_details) {
     if (meta_data_failed.test(handover_details.message)) {
         $('#status').show();
     }
-    if (sucess.test(handover_details.message)) {
-        job_status = `<div class="alert alert-success" role="alert">
-                    ${job_status}
-                 </div>`;
+    if (success.test(handover_details.message)) {
+        job_status = `<div class="alert alert-success" role="alert">${job_status}</div>`;
     } else if (failure.test(handover_details.message) || problems.test(handover_details.message)) {
-        job_status = `<div class="alert alert-danger" role="alert">
-                    ${job_status}
-                 </div>`;
+        job_status = `<div class="alert alert-danger" role="alert">${job_status}</div>`;
     } else {
-
-        const progress = (+handover_details.progress_complete / +handover_details.progress_total) * 100;
+        const progress = (+handover_details.progress_complete + 1 / +handover_details.progress_total) * 100;
         let job_progress = '';
 
         if ('job_progress' in handover_details) {
             job_progress = `
-        <div class="row m-1">
-          <div class="alert alert-dark" role="alert">
+        <div class="m-1 align-content-end">
+          <div class="alert alert-block" role="alert">
             <span class="badge badge-warning">
               Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
             </span>
@@ -90,17 +85,16 @@ function HandoverBaseInfo(handover_details) {
         `;
         }
         job_status = `
-      <div class="alert alert-warning" role="alert">
+      <div class="alert alert-info" role="alert">
         ${job_status}
-      </div>
-      <div class="progress">
-        <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" style="width: ${progress}%" 
-        aria-valuenow="0" aria-valuemin="0" aria-valuemax="${handover_details.progress_total}">
-        ${handover_details.progress_complete} / ${handover_details.progress_total} tasks done..
-        </div>
-      </div>
-      <div>
         ${job_progress}
+          <div class="progress">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" 
+                style="width: ${progress}%"  aria-valuenow="${handover_details.progress_complete}+1" aria-valuemin="0" 
+                aria-valuemax="${handover_details.progress_total}">
+            ${handover_details.progress_complete + 1} / ${handover_details.progress_total} tasks
+            </div>
+          </div>
       </div>
       `;
     }
