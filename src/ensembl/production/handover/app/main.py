@@ -18,7 +18,7 @@ import re
 import requests
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
 from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, redirect, flash
+from flask import Flask, request, jsonify, render_template, redirect, flash, url_for
 from flask_bootstrap import Bootstrap
 from flask_cors import CORS
 from requests.exceptions import HTTPError
@@ -145,7 +145,7 @@ def handover_form():
                 app.logger.debug('Submitting handover request %s', spec)
                 ticket = handover_database(spec)
                 app.logger.info('Ticket: %s', ticket)
-                return redirect('/jobs/' + str(ticket))
+                return redirect(url_for('handover_result', handover_token=str(ticket)))
             else:
                 for error_key, error in form.errors.items():
                     flash(f"{error_key}: {error}")
