@@ -158,25 +158,23 @@ function statusFormat(value, row) {
         if ('job_progress' in row) {
             let progress_count = Math.ceil((+row.job_progress.completed / +row.job_progress.total) * 100) || 0;
             datacheck_job_progress = `
-        <div class="progress mt-2">
-        <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="${progress_count}" aria-valuemin="0"
-         aria-valuemax="100" style="width: ${progress_count}%; background-color:rgb(72, 221, 104) !important;">
-            <span class="sr-only">${progress_count}% Complete</span>
-        </div>
-        <span class="progress-type">DC Job</span>
-        <span class="progress-completed">${progress_count}%</span>
-        </div>
-      `;
+                <div class="progress mt-2" style="min-width: 100px">
+                    <div class="progress-bar progress-bar-striped" role="progressbar" aria-valuenow="${progress_count}" aria-valuemin="0"
+                        aria-valuemax="100" style="width: ${progress_count}%; background-color:rgb(72, 221, 104) !important;">
+                        <span class="sr-only">${progress_count}% Complete</span>
+                    </div>
+                    <span class="progress-type">DC</span>
+                    <span class="progress-completed">${progress_count}%</span>
+                </div>`;
         }
         let job_in_progess = running_job.exec(row.current_message);
         if (job_in_progess != null) {
-            job_in_progess = ` ${job_in_progess[1]} in progress`;
+            job_in_progess = "Running";
         } else {
-            job_in_progess = `Unknown status`
+            job_in_progess = "Unknown status";
         }
-        return (`<span class="badge badge-info">Running: 
-              <span class="badge badge-light">${job_in_progess}</span>
-               </span><br>${datacheck_job_progress}</br>`);
+        return (`<div class="badge badge-info">${job_in_progess}</div>
+                ${datacheck_job_progress}`);
     }
 }
 
