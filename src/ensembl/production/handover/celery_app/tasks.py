@@ -39,7 +39,7 @@ from ensembl.production.core.utils import send_email
 
 from celery import chain
 from ensembl.production.handover.celery_app.celery import app
-from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client
+from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client, event_client
 from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
     drop_current_databases, submit_dc, submit_copy, submit_metadata_update
 # handover
@@ -86,6 +86,7 @@ def handover_database(spec):
                  dbcopy_task.s(), 
                  metadata_update_task.s(),
                  dispatch_db_task.s(), 
+                 event_submit.s()
                  )()
     return spec['handover_token']
 
@@ -137,10 +138,22 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
 
 
 @app.task(bind=True, default_retry_delay=retry_wait)
-def dbcopy_task(self, spec):
-    """Wait for copy to complete and then respond accordingly:
-    * if Success, submit to metadata database
-    * if failure, flag error using email"""
+def dbcopy_task(self, spec: dict) -> dict:
+    """[Copy Handover DB To Production Staging Server,
+        Wait for copy to complete and then respond accordingly:
+         * if Success, submit to metadata database
+         * if failure, flag error using email
+       ]
+    Args:
+        spec (dict): [Handover payload details]
+
+    Raises:
+        ValueError: [Failed to retrive the job status ]
+        self.retry: [ Rerun the task until job status is changed to Success/Failed ]
+        
+    Returns:
+        dict: [Handover payload details with updated status]
+    """    
     # allow infinite retries
     self.max_retries = None
     src_uri = spec['src_uri']
@@ -183,10 +196,22 @@ def dbcopy_task(self, spec):
 
 
 @app.task(bind=True, default_retry_delay=retry_wait)
-def metadata_update_task(self, spec):
-    """Wait for metadata update to complete and then respond accordingly:
-    * if success, submit event to event handler for further processing
-    * if failure, flag error using email"""
+def metadata_update_task(self, spec: dict) -> dict:
+    """[ Updated Handovered DB details into metadata DB,
+         Wait for metadata update to complete and then respond accordingly:
+         * if success, submit event to event handler for further processing
+         * if failure, flag error using email
+        ]
+    Args:
+        spec (dict): [Handover payload details]
+
+    Raises:
+        ValueError: [Failed to retrive the job status ]
+        self.retry: [ Rerun the task until job status is changed to Success/Failed ]
+        
+    Returns:
+        dict: [Hanodver payload details with updated status]
+    """    
     # allow infinite retries
     self.max_retries = None
     tgt_uri = spec['tgt_uri']
@@ -268,13 +293,19 @@ def metadata_update_task(self, spec):
 
 
 @app.task(bind=True, default_retry_delay=retry_wait)
-def dispatch_db_task(self, spec):
-    """
-    Process dispatched dbs after metadata updates.
-    :param self:
-    :param spec:
-    :return:
-    """
+def dispatch_db_task(self, spec: dict) -> dict:
+    """[Copy Handovered DBs to Vertannot Servers]
+
+    Args:
+        spec (dict): [Handover payload details with status]
+
+    Raises:
+        ValueError: [Failed to retrive the job status ]
+        self.retry: [ Rerun the task until job status is changed to Success/Failed ]
+
+    Returns:
+        dict: [Handover payload details with updated status]
+    """    
     self.max_retries = None
     src_uri = spec['src_uri']
     try:    
@@ -311,6 +342,60 @@ def dispatch_db_task(self, spec):
 
 
 @app.task(bind=True, default_retry_delay=retry_wait)
-def event(self, spec):
-    print('coming soon.....')
+def event_submit(self, spec: dict) -> dict:
+    """[Create and Submit Payload to Event App which applies the production pipeline to create RapidRelease Data  ]
+
+    Args:
+        spec (dict): [Handover payload details]
+
+    Raises:
+        self.retry: [ Rerun the task until job status is changed to Success/Failed ]
+
+    Returns:
+        dict: [Handover payload details with updated status]
+    """    
+    
+    self.max_retries = None      
+    if cfg.HANDOVER_TYPE in ('rapid','viruses'):
+        try:
+            if not self.request.retries:
+                event_payload = {
+                    "src_uri": spec['src_uri'],
+                    "database": spec['database'],
+                    "contact": spec['contact'],
+                    "comment": spec['comment'],
+                    "source": "rapid",
+                    "handover_token": spec['handover_token'],
+                    "tgt_uri": spec['tgt_uri'],
+                    "db_division": spec['db_division'],
+                    "staging_uri": cfg.staging_uri,
+                    "EG_VERSION": cfg.RELEASE,
+                    "ENS_VERSION": cfg.EG_VERSION,
+                    "RR_VERSION": cfg.RR_VERSION
+                }
+                event_status = event_client.submit_job(event_payload)
+                event_msg = f"Event Job Submission Failed for handover {event_payload['handover_token']}, Handover successful"
+                if event_status['status'] == True:             
+                    event_msg = f"Event Job Submitted, Handover successful please see: {cfg.event_uri}/{event_payload['handover_token']}"
+
+                log_and_publish(make_report('INFO', event_msg, spec, cfg.event_uri ))
+                
+                #retrieve event job status
+                status = event_client.list_workflows(event_payload['handover_token'])[0]
+
+        except Exception as e:
+            self.request.chain = None  
+            log_and_publish(make_report('ERROR', str(e), spec, cfg.event_uri ))
+            return spec
+
+        if status['handover_token'] == event_payload['handover_token'] and \
+            status['status'] == True and status['workflow'] not in  ('Failed', 'Done'):
+                event_msg = f"Event Job Status : {status['message']}, Handover successful please see: {cfg.event_uri}/{event_payload['handover_token']}"
+                log_and_publish(make_report('INFO', event_msg, spec, cfg.event_uri ))
+                raise self.retry()
+        
+        if status['handover_token'] == event_payload['handover_token'] and status['workflow'] == 'Done':
+            event_msg = f"Event Job Completed {status['message']}, Handover successful"
+            log_and_publish(make_report('INFO', event_msg, spec, cfg.event_uri ))
+            
     return spec

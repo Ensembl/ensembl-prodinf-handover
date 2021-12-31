@@ -65,7 +65,7 @@ class HandoverConfig:
                                                   "http://127.0.0.1:9000/#!/metadata_result/"))
     event_uri = os.environ.get("EVENT_URI",
                                file_config.get('event_uri',
-                                               'http://127.0.0.1:8009/'))
+                                               'http://127.0.0.1:8009/workflows'))
     staging_uri = os.environ.get("STAGING_URI",
                                  file_config.get('staging_uri',
                                                  "mysql://ensro@mysql-ens-general-dev-1:4484/"))
@@ -114,6 +114,8 @@ class HandoverConfig:
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
+    EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
+    RR_VERSION = os.environ.get('RR_VERSION', file_config.get('rr_version'))
 
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
