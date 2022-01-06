@@ -31,24 +31,19 @@
 
 import json
 import logging
-import re
-import uuid
 
-from celery import chain
-from sqlalchemy.engine.url import make_url
-from sqlalchemy_utils.functions import database_exists, drop_database
-
-# handover
-from ensembl.production.handover.config import HandoverConfig as cfg
-from ensembl.production.handover.celery_app.celery import app
-from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
-    drop_current_databases, submit_dc, submit_copy, submit_metadata_update, submit_dispatch
-from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, event_client, dc_client
-
+from ensembl.production.core.reporting import make_report
 # core
 from ensembl.production.core.utils import send_email
-from ensembl.production.core.reporting import make_report
-import time
+
+
+from celery import chain
+from ensembl.production.handover.celery_app.celery import app
+from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client
+from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
+    drop_current_databases, submit_dc, submit_copy, submit_metadata_update
+# handover
+from ensembl.production.handover.config import HandoverConfig as cfg
 
 retry_wait = app.conf.get('retry_wait', 60)
 release = int(cfg.RELEASE)
@@ -221,7 +216,10 @@ def metadata_update_task(self, spec):
         self.request.chain = None
         drop_msg = 'Dropping %s' % tgt_uri
         log_and_publish(make_report('INFO', drop_msg, spec, tgt_uri))
-        drop_database(spec['tgt_uri'])
+        
+        db_drop_status = drop_current_databases([], spec, target_db_delete=True)
+        db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
+        log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
         failed_msg = 'Metadata load failed, please see %sjobs/%s?format=failures' % (cfg.meta_uri, spec['metadata_job_id'])
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
         msg = """

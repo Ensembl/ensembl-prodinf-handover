@@ -1,13 +1,12 @@
-ensembl-prodinf-core~=2.0.0
+ensembl-prodinf-core~=2.0.1
 Bootstrap-Flask
-celery
+celery~=5.0.5
 elasticsearch>=6.8.1,<7.0.0
 email_validator
 Flask
 flasgger
 Flask-Cors
 flask_wtf
-git+git://github.com/mher/flower.git#egg=flower
 gunicorn
 mysqlclient
 requests
@@ -15,4 +14,4 @@ SQLAlchemy
 sqlalchemy_utils==0.37.0
 wtforms
 Jinja2
-python-dotenv==0.17.1
+git+https://github.com/Ensembl/ensembl-py.git#egg=ensembl-py

@@ -10,16 +10,16 @@ $(function () {
     $("#src_uri").autocomplete({
         source: function (request, response) {
             $.ajax({
-                //url: `${copy_url}api/dbcopy/src_host`,
-                url: '/dropdown/src_host',
+                url: `${script_name}/jobs/dropdown/src_host`,
+                //url: '/dropdown/src_host',
                 dataType: "json",
                 data: {
                     name: request.term
                 },
                 success: function (data) {
                     console.log('success...........');
-                    response($.map(data.results, function (item) {   
-                        return  item; 
+                    response($.map(data.results, function (item) {
+                        return item;
                     }));
 
                 }
@@ -53,14 +53,14 @@ $(function () {
     $("#database").autocomplete({
         source: function (request, response) {
             $.ajax({
-                //url: `${copy_url}api/dbcopy/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
-                url: `/dropdown/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
+                url: `${script_name}/jobs/dropdown/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
+                // url: `/dropdown/databases/${SelectedHostDetails.name}/${SelectedHostDetails.port}`,
                 dataType: "json",
                 data: {
                     search: request.term
                 },
                 success: function (data) {
-            
+
                     response(data);
                 },
                 error: function (_request, _textStatus, _error) {

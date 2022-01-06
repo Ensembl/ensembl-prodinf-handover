@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # .. See the NOTICE file distributed with this work for additional information
 #    regarding copyright ownership.
 #    Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,33 +10,38 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import logging
-import re
-import os
 import datetime
+import logging
+import os
+import re
 
-from elasticsearch import Elasticsearch, TransportError, NotFoundError
-from sqlalchemy.exc import OperationalError
-from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, url_for, redirect, json, flash
-from flask_cors import CORS
-from flask_bootstrap import Bootstrap
-
-from ensembl.production.core import app_logging
-from ensembl.production.handover.celery_app.tasks import handover_database
-from ensembl.production.core.exceptions import HTTPRequestError
-from ensembl.production.core.db_utils import validate_mysql_url, list_databases, get_databases_list
-
-from ensembl.production.handover.forms import HandoverSubmissionForm
-from ensembl.production.handover.config import HandoverConfig as cfg
 import requests
+from elasticsearch import Elasticsearch, TransportError, NotFoundError
+from flasgger import Swagger
+from flask import Flask, request, jsonify, render_template, redirect, flash, url_for
+from flask_bootstrap import Bootstrap
+from flask_cors import CORS
 from requests.exceptions import HTTPError
+from sqlalchemy.exc import OperationalError
+from werkzeug.middleware.dispatcher import DispatcherMiddleware
+from werkzeug.wrappers import Response
+
+import ensembl.production.handover.exceptions
+from ensembl.production.core import app_logging
+from ensembl.production.core.exceptions import HTTPRequestError
+from ensembl.production.handover.celery_app.tasks import handover_database
+from ensembl.production.handover.config import HandoverConfig as cfg
+from ensembl.production.handover.exceptions import MissingDispatchException
+from ensembl.production.handover.forms import HandoverSubmissionForm
 
 # set static and template paths
 app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 static_path = os.path.join(app_path, 'static')
 template_path = os.path.join(app_path, 'templates')
-app = Flask(__name__, instance_relative_config=True, static_folder=static_path, template_folder=template_path,
+app = Flask(__name__,
+            instance_relative_config=True,
+            static_folder=static_path,
+            template_folder=template_path,
             static_url_path='/static/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 formatter = logging.Formatter(
@@ -54,6 +58,12 @@ app.config['SWAGGER'] = {
     },
     'favicon': '/img/production.png'
 }
+if app.env == 'development':
+    # ENV dev (assumed run from builtin server, so update script_name at wsgi level)
+    app.wsgi_app = DispatcherMiddleware(
+        Response('Not Found', status=404),
+        {cfg.script_name: app.wsgi_app}
+    )
 
 swagger = Swagger(app)
 cors = CORS(app)
@@ -66,15 +76,19 @@ es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 
-#app.logger.info("Config %s", app.config)
-# app.logger.info("ALLOWED DB %s", os.getenv("ALLOWED_DIVISIONS", "Undefined"))
-# app.logger.info("STAGING_URI DB %s", os.getenv("STAGING_URI", "Undefined"))
-# app.logger.warn("HANDOVER_CORE_CONFIG_PATH %s", os.environ.get('HANDOVER_CORE_CONFIG_PATH', "none defined"))
-# app.logger.warn("HANDOVER_CELERY_CONFIG_PATH %s", os.environ.get('HANDOVER_CELERY_CONFIG_PATH', "none defined"))
+
+@app.context_processor
+def inject_configs():
+    return dict(script_name=cfg.script_name,
+                copy_uri=cfg.copy_uri)
 
 
 @app.route('/', methods=['GET'])
 def info():
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise MissingDispatchException
+
     app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(),
                              'uiversion': 2}
     return jsonify(app.config['SWAGGER'])
@@ -82,11 +96,15 @@ def info():
 
 @app.route('/ping', methods=['GET'])
 def ping():
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise MissingDispatchException
+
     return jsonify({"status": "ok"})
 
 
-@app.route('/dropdown/src_host', methods=['GET'])
-@app.route('/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
+@app.route('/jobs/dropdown/src_host', methods=['GET'])
+@app.route('/jobs/dropdown/databases/<string:src_host>/<string:src_port>', methods=['GET'])
 def dropdown(src_host=None, src_port=None):
     try:
         src_name = request.args.get('name', None)
@@ -112,6 +130,10 @@ def dropdown(src_host=None, src_port=None):
 # UI Submit-form for handover
 @app.route('/jobs/submit', methods=['GET', 'POST'])
 def handover_form():
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise MissingDispatchException
+
     form = HandoverSubmissionForm(request.form)
     try:
 
@@ -123,7 +145,7 @@ def handover_form():
                 app.logger.debug('Submitting handover request %s', spec)
                 ticket = handover_database(spec)
                 app.logger.info('Ticket: %s', ticket)
-                return redirect('/jobs/' + str(ticket))
+                return redirect(url_for('handover_result', handover_token=str(ticket)))
             else:
                 for error_key, error in form.errors.items():
                     flash(f"{error_key}: {error}")
@@ -131,8 +153,7 @@ def handover_form():
         flash(str(e))
     return render_template(
         'submit.html',
-        form=form,
-        copy_uri=cfg.copy_uri_dropdown,
+        form=form
     )
 
 
@@ -193,6 +214,9 @@ def handovers():
         examples:
           {src_uri: "mysql://user@server:port/saccharomyces_cerevisiae_core_91_4", contact: "joe.blogg@ebi.ac.uk", comment: "handover new Panda OF"}
     """
+    if not cfg.compara_species:
+        # Empty list of compara
+        raise MissingDispatchException
     # get form data
     if form_pattern.match(request.headers['Content-Type']):
         spec = request.form.to_dict(flat=True)
@@ -298,55 +322,56 @@ def handover_result(handover_token=''):
     # renter bootstrap table
     app.logger.info("Request Headers %s", request.headers)
     if fmt != 'json' and not request.is_json:
-        return render_template('result.html', handover_token=handover_token)
+        return render_template('result.html',
+                               handover_token=handover_token)
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     handover_detail = []
     res = es.search(index=es_index, body={
-      "size":0,
-      "query": {
-        "bool": {
-          "must": [
-              {"term": {"params.handover_token.keyword": str(handover_token)}},
-              {"query_string": {"fields": ["report_type"],"query": "(INFO|ERROR)","analyze_wildcard": "true"}},
-          ]
-        }
-      },
-      "aggs": {
-        "top_result": {
-          "top_hits": {
-           "size": 1, 
-            "sort": {
-              "report_time" : "desc"
+        "size": 0,
+        "query": {
+            "bool": {
+                "must": [
+                    {"term": {"params.handover_token.keyword": str(handover_token)}},
+                    {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)", "analyze_wildcard": "true"}},
+                ]
             }
-          }
-        }
-      },
-      "sort": [
-        {
-          "report_time": {
-            "order": "desc"
-          }
-        }
-      ]
+        },
+        "aggs": {
+            "top_result": {
+                "top_hits": {
+                    "size": 1,
+                    "sort": {
+                        "report_time": "desc"
+                    }
+                }
+            }
+        },
+        "sort": [
+            {
+                "report_time": {
+                    "order": "desc"
+                }
+            }
+        ]
     })
 
     for doc in res['aggregations']['top_result']['hits']['hits']:
-      result = {"id": doc['_id']}
-      if 'job_progress' in doc['_source']['params']:
-        result['job_progress'] = doc['_source']['params']['job_progress']
+        result = {"id": doc['_id']}
+        if 'job_progress' in doc['_source']['params']:
+            result['job_progress'] = doc['_source']['params']['job_progress']
 
-      result['message'] = doc['_source']['message']
-      result['comment'] = doc['_source']['params']['comment']
-      result['handover_token'] = doc['_source']['params']['handover_token']
-      result['contact'] = doc['_source']['params']['contact']
-      result['src_uri'] = doc['_source']['params']['src_uri']
-      result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-      result['progress_complete'] = doc['_source']['params']['progress_complete']
-      result['progress_total'] = doc['_source']['params']['progress_total']
-      result['report_time'] = doc['_source']['report_time']
-      handover_detail.append(result)
-  
+        result['message'] = doc['_source']['message']
+        result['comment'] = doc['_source']['params']['comment']
+        result['handover_token'] = doc['_source']['params']['handover_token']
+        result['contact'] = doc['_source']['params']['contact']
+        result['src_uri'] = doc['_source']['params']['src_uri']
+        result['tgt_uri'] = doc['_source']['params']['tgt_uri']
+        result['progress_complete'] = doc['_source']['params']['progress_complete']
+        result['progress_total'] = doc['_source']['params']['progress_total']
+        result['report_time'] = doc['_source']['report_time']
+        handover_detail.append(result)
+
     if len(handover_detail) == 0:
         raise HTTPRequestError('Handover token %s not found' % handover_token, 404)
     else:
@@ -406,79 +431,79 @@ def handover_results():
 
     # renter bootstrap table
     if fmt != 'json' and not request.is_json:
-        return render_template('list.html', )
+        return render_template('list.html')
 
     es = Elasticsearch([{'host': es_host, 'port': es_port}])
     res = es.search(index=es_index, body={
-      "size":0,
-      "query": {
-        "bool": {
-          "must": [
-            {
-              "query_string": {
-                "fields": [
-                    "report_type"
-                ],
-                "query": "(INFO|ERROR)",
-                  "analyze_wildcard": "true"
-                }
-            },
-            {
-              "query_string": {
-                "fields": [
-                  "params.tgt_uri"
-                ],
-                "query": "/.*_{}(_[0-9]+)?/".format(release)
-              }
+        "size": 0,
+        "query": {
+            "bool": {
+                "must": [
+                    {
+                        "query_string": {
+                            "fields": [
+                                "report_type"
+                            ],
+                            "query": "(INFO|ERROR)",
+                            "analyze_wildcard": "true"
+                        }
+                    },
+                    {
+                        "query_string": {
+                            "fields": [
+                                "params.tgt_uri"
+                            ],
+                            "query": "/.*_{}(_[0-9]+)?/".format(release)
+                        }
+                    }
+                ]
             }
-          ]
-        }
-      },
-      "aggs": {
-        "handover_token": {
-          "terms": {
-            "field": "params.handover_token.keyword",
-            "size": 1000
-          },
-          "aggs": {
-            "top_result": {
-              "top_hits": {
-                "size": 1, 
-                "sort": {
-                  "report_time" : "desc"
+        },
+        "aggs": {
+            "handover_token": {
+                "terms": {
+                    "field": "params.handover_token.keyword",
+                    "size": 1000
+                },
+                "aggs": {
+                    "top_result": {
+                        "top_hits": {
+                            "size": 1,
+                            "sort": {
+                                "report_time": "desc"
+                            }
+                        }
+                    }
                 }
-              }
             }
-          }
-        }
-      },
-      "sort": [
-        {
-          "report_time": {
-            "order": "desc"
-          }
-        }
-      ]
+        },
+        "sort": [
+            {
+                "report_time": {
+                    "order": "desc"
+                }
+            }
+        ]
     })
-    
-    list_handovers=[]
 
-    for each_handover_bucket in res['aggregations']['handover_token']['buckets'] :
-      for doc in each_handover_bucket['top_result']['hits']['hits']: 
-        result = {"id": doc['_id']}
-        if 'job_progress' in doc['_source']['params']:
-          result['job_progress'] = doc['_source']['params']['job_progress']
+    list_handovers = []
 
-        result['handover_token'] = doc['_source']['params']['handover_token']
-        result['message'] = doc['_source']['message']
-        result['comment'] = doc['_source']['params']['comment']
-        result['current_message'] = doc['_source']['message']
-        result['contact'] = doc['_source']['params']['contact']
-        result['src_uri'] = doc['_source']['params']['src_uri']
-        result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-        result['report_time'] = doc['_source']['report_time']
-        list_handovers.append(result)
- 
+    for each_handover_bucket in res['aggregations']['handover_token']['buckets']:
+        for doc in each_handover_bucket['top_result']['hits']['hits']:
+            result = {"id": doc['_id']}
+            if 'job_progress' in doc['_source']['params']:
+                result['job_progress'] = doc['_source']['params']['job_progress']
+
+            result['handover_token'] = doc['_source']['params']['handover_token']
+            result['message'] = doc['_source']['message']
+            result['comment'] = doc['_source']['params']['comment']
+            result['current_message'] = doc['_source']['message']
+            result['contact'] = doc['_source']['params']['contact']
+            result['src_uri'] = doc['_source']['params']['src_uri']
+            result['tgt_uri'] = doc['_source']['params']['tgt_uri']
+            result['report_time'] = doc['_source']['report_time']
+            list_handovers.append(result)
+
     return jsonify(list_handovers)
 
 
@@ -578,3 +603,14 @@ def handle_sqlalchemy_error(e):
 def handle_notfound_error(e):
     app.logger.error(str(e))
     return jsonify(error=str(e)), 404
+
+
+@app.errorhandler(requests.exceptions.HTTPError)
+def handle_server_error(e):
+    return jsonify(error=str(e)), 500
+
+
+@app.errorhandler(ensembl.production.handover.exceptions.MissingDispatchException)
+def handle_server_error(e):
+    message = f"Missing Handover db dispatch configuration for {app.config['RELEASE']} {e}"
+    return jsonify(error=message), 500

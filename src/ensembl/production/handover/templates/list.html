@@ -29,7 +29,6 @@
       data-show-button-text="true"
       data-page-size="25"
       data-checkbox-header="false"
-      data-single-select="true"
       data-detail-view="true"
       data-detail-view-by-click="false"
       data-detail-view-icon="true"
@@ -72,7 +71,7 @@
     var $table = $('#table');
     $table.bootstrapTable('refreshOptions', {
       theadClasses: "h-buttons",
-       url: '/jobs?format=json'
+       url: `${script_name}/jobs?format=json`
     });
 
     $table.bootstrapTable('expandAllRows');
@@ -87,22 +86,24 @@
       if(  ids.length == 0){
         return ;
       } 
-      //delete handover
-      $.ajax({
-        url: `/jobs/${handovers_token[0]}`,
-        type: 'DELETE',
-        success: function(){
-              // delete row
-              $table.bootstrapTable('remove', {
-                field: 'id',
-                values: ids
-              });
-        },
-        error: function(){
-          alert(`Unable to delete hand over ${handovers_token[0]}`);
-        }
+      //delete list of handovers_token
+      $.each(handovers_token, function( index, value ) {
+        $.ajax({
+          url: `${script_name}/jobs/${value}`,
+          type: 'DELETE',
+          success: function(){
+            $table.bootstrapTable('remove', {
+              field: 'id',
+              values: ids[index]
+            }); 
+          },
+          error: function(){
+            alert(`Unable to delete hand over ${value}`);
+          }
+        });
       });
     });
+
   // resubmit handover job  
   $('#resubmitbutton').click(function () {
       const row = $.map($table.bootstrapTable('getSelections'), function (row) {
@@ -113,7 +114,7 @@
       } 
       //delete handover
        $.ajax({
-         url: `/jobs`,
+         url: `${script_name}/jobs`,
          type: 'POST',
          data: JSON.stringify({'src_uri' : row[0].src_uri, 'contact' : row[0].contact, 
             'source': 'Handover', 'comment' : row[0].comment }),

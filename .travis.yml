@@ -20,7 +20,8 @@ before_script:
   - pip install -r requirements-test.txt
   - pip install coverage
   - pip install .
+  - export PYTHONPATH=$PYTHONPATH:$PWD/src
 
 script:
-  - coverage run -m pytest src
+  - coverage run -m pytest src/tests
   - coverage report -m

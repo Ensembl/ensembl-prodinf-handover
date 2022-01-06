@@ -7,7 +7,7 @@
     color: #1a1a19;
     display:block;
     border:  2px solid #17a2b8!important ;
-    float: auto;   
+    float: unset;
 }
 .ui-menu .ui-menu-item-wrapper:hover {
    color: #303030;
