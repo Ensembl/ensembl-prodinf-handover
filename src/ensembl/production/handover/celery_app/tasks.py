@@ -356,7 +356,7 @@ def event_submit(self, spec: dict) -> dict:
     """    
     
     self.max_retries = None      
-    if cfg.HANDOVER_TYPE in ('rapid','viruses'):
+    if cfg.HANDOVER_TYPE in ('rapid','viruses') and cfg.EVENT_AUTOMATION:
         try:
             if not self.request.retries:
                 event_payload = {

@@ -116,6 +116,7 @@ class HandoverConfig:
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
     EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
     RR_VERSION = os.environ.get('RR_VERSION', file_config.get('rr_version'))
+    EVENT_AUTOMATION = os.environ.get('EVENT_AUTOMATION', file_config.get('event_automation', False))
 
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
