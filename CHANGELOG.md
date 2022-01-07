@@ -1,5 +1,10 @@
-CHANGELOG - Ensembl Prodinf Database copy
-=========================================
+CHANGELOG - Ensembl Prodinf Handover App
+========================================
+
+v1.2.0
+------
+- Update all files to allow execution behind reverse proxy with `SCRIPT_NAME` set
+- Slight updates on display for DC status monitoring (css and layout)
 
 v1.1.0
 ------
