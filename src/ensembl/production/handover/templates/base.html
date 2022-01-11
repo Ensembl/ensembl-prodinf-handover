@@ -59,6 +59,12 @@
             </script>
             {{ bootstrap.load_js() }}
 
-        {% endblock %}
+        {% endblock %}  
     </body>
+    <footer class="text-right text-lg-start appfooter " 
+        style="position:absolute; bottom:0; width:100%; height:50px; color: white;">
+        <div class="text-right p-3">
+          V {{config['APP_VERSION']}}
+        </div>
+    </footer>  
 </html>
