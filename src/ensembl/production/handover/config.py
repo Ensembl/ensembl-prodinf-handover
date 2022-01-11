@@ -13,8 +13,8 @@
 
 import os
 import warnings
-
 import requests
+import pkg_resources
 
 from ensembl.production.core.config import load_config_yaml
 from ensembl.utils.rloader import RemoteFileLoader
@@ -35,8 +35,8 @@ class ComparaDispatchConfig:
         except requests.HTTPError:
             warnings.warn(f"Unable to load compara from {uri}")
         return compara_species
-
-
+    
+    
 class HandoverConfig:
     config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH', os.path.join(os.path.dirname(__file__),
                                                                                 'handover_config.dev.yaml'))
@@ -114,7 +114,7 @@ class HandoverConfig:
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
-
+    APP_VERSION = version = pkg_resources.require("handover")[0].version
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
     BLAT_SPECIES = ['homo_sapiens',

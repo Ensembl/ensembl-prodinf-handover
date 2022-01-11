@@ -11,9 +11,10 @@
 #   limitations under the License.
 
 import unittest
+from pathlib import Path
+import pkg_resources
 
-from ensembl.production.handover.config import ComparaDispatchConfig
-
+from ensembl.production.handover.config import ComparaDispatchConfig, HandoverConfig
 
 class TestHOConfigLoader(unittest.TestCase):
 
@@ -35,3 +36,17 @@ class TestHOConfigLoader(unittest.TestCase):
         config = ComparaDispatchConfig.load_config('5000')
         # Load main instead
         self.assertFalse(config)
+
+class TestAPPVersion(unittest.TestCase):
+
+    def test_config_app_version(self):
+        
+        version = pkg_resources.require("handover")[0].version
+        with open(Path(__file__).parent.parent.parent / 'VERSION') as f:
+            version_file = f.read().strip('\n')
+        
+        version_config = HandoverConfig.APP_VERSION
+        self.assertEqual(version, version_config)
+        self.assertEqual(version, version_file)
+        self.assertEqual(version_file, version_config )
+
