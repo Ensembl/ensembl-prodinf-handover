@@ -37,7 +37,10 @@
        
         {% block content %}
             <nav class="navbar navbar-icon-top navbar-expand-lg navbar-dark hnav ">
-                <a class="navbar-brand" href="#"><span class="mb-0 h3">Handover {{config['HANDOVER_TYPE']}} </span>e{{config['RELEASE']}}</a>
+                <a class="navbar-brand" href="#"><span class="mb-0 h3">Handover {{config['HANDOVER_TYPE']}} </span></a>
+                    <ul class="nav navbar-nav navbar-right navbar-toggler" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation" >
+                        <li><a class="nav-item nav-link active">e{{config['RELEASE']}} - v{{config['APP_VERSION']}}</a></li>
+                    </ul>
                     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
@@ -47,7 +50,11 @@
                         {{ render_nav_item('handover_results', 'List Jobs') }}
                         {{ render_nav_item('handover_result', 'Job Status') }}
                     </div>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a class="nav-item nav-link active navbar-brand">e{{config['RELEASE']}} - v{{config['APP_VERSION']}}</a></li>
+                    </ul>
                 </div>
+
             </nav>
         {% endblock %}
 
@@ -61,10 +68,5 @@
 
         {% endblock %}  
     </body>
-    <footer class="text-right appfooter " 
-        style="position:fixed; bottom:0; width:100%; height:30px; color: white;">
-        <div class="text-right">
-          V {{config['APP_VERSION']}}
-        </div>
-    </footer>  
+    
 </html>
