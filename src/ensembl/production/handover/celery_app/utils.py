@@ -30,6 +30,9 @@ from ensembl.production.core.clients.event import EventClient
 from ensembl.production.core.clients.metadata import MetadataClient
 from ensembl.production.core.clients.datachecks import DatacheckClient
 
+# es clients
+from elasticsearch import Elasticsearch, TransportError, NotFoundError
+ 
 logger = logging.getLogger(__name__)
 
 release = int(cfg.RELEASE)
@@ -51,6 +54,87 @@ db_copy_client = DbCopyRestClient(cfg.copy_uri)
 metadata_client = MetadataClient(cfg.meta_uri)
 event_client = EventClient(cfg.event_uri)
 
+#es Details
+es_host = cfg.ES_HOST
+es_port = str(cfg.ES_PORT)
+es_index = cfg.ES_INDEX
+
+def check_handover_db_resubmit(spec: dict):
+    """[Restric Mutiple handover submission with same Database name]
+
+    Args:
+        spec (dict): [Handover payload with database name]
+
+    Raises:
+        ValueError: [Handover Status in progress ]
+
+    Returns:
+        [bool]: [Status boolean]
+    """ 
+    try:   
+        es = Elasticsearch([{'host': es_host, 'port': es_port}])
+        res_error = es.search(index=es_index, body={
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "term": {
+                                "params.database.keyword": spec['database']
+                            }
+                        },
+                        {
+                            "query_string": {
+                                "fields": [
+                                    "report_type"
+                                ],
+                                "query": "(INFO|ERROR)",
+                                "analyze_wildcard": "true"
+                            }
+                        },
+                    ]
+                }
+            },
+            "aggs": {
+                "handover_token": {
+                    "terms": {
+                        "field": "params.handover_token.keyword",
+                        "size": 1000
+                    },
+                    "aggs": {
+                        "top_result": {
+                            "top_hits": {
+                                "size": 1,
+                                "sort": {
+                                    "report_time": "desc"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "sort": [
+                {
+                    "report_time": {
+                        "order": "desc"
+                    }
+                }
+            ]
+        })
+
+        faild_msg_pattern = re.compile(r'.*(failed|Failed|found problems|complete|successful).*', re.IGNORECASE)
+        for each_handover_bucket in res_error['aggregations']['handover_token']['buckets']:
+            for doc in each_handover_bucket['top_result']['hits']['hits']:
+                messg = doc['_source']['message']
+                if not faild_msg_pattern.match(messg):
+                    #found  handover with status running for submitted DB 
+                    raise ValueError(
+                        f"DB {doc['_source']['params']['database']} already submitted with handover: {doc['_source']['params']['handover_token']} and status: {messg} "
+                    ) 
+    except Exception as e:
+        return {'status': False, 'error': str(e)}
+                  
+    return {'status': True, 'error': ''}
 
 def log_and_publish(report):
     """Handy function to mimick the logger/publisher behaviour.

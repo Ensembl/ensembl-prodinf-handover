@@ -41,7 +41,7 @@ from celery import chain
 from ensembl.production.handover.celery_app.celery import app
 from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client
 from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
-    drop_current_databases, submit_dc, submit_copy, submit_metadata_update
+    drop_current_databases, submit_dc, submit_copy, submit_metadata_update, check_handover_db_resubmit
 # handover
 from ensembl.production.handover.config import HandoverConfig as cfg
 
@@ -73,6 +73,11 @@ def handover_database(spec):
     * progress_total - Total number of task to do
     * progress_complete - Total number of task completed
     """
+    #check handover with dbname already exist and its in progress
+    submit_status = check_handover_db_resubmit(spec)
+    if not submit_status['status']:
+        raise ValueError(submit_status['error'])
+    
     # TODO verify dict
     (spec, src_url, db_type) = process_handover_payload(spec)
     (dc_job_id, spec, src_uri) = submit_dc(spec, src_url, db_type)
@@ -115,7 +120,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
         raise self.retry()
     elif result['status'] == 'failed':
         self.request.chain = None
-        prob_msg = 'Datachecks found problems, you can download the output here: %sdownload_datacheck_outputs/%s' % (
+        prob_msg = 'Datachecks found problems, Handover failed, you can download the output here: %sdownload_datacheck_outputs/%s' % (
             cfg.dc_uri, dc_job_id)
         log_and_publish(make_report('INFO', prob_msg, spec, src_uri))
         msg = """Running datachecks on %s completed but found problems. You can download the output here %s""" % (
@@ -124,7 +129,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
                 smtp_server=cfg.smtp_server)
     elif result['status'] == 'dc-run-error':
         self.request.chain = None
-        msg = """Datachecks didn't run successfully. Please see %s""" % (cfg.dc_uri + "jobs/" + str(dc_job_id))
+        msg = """Datachecks didn't run successfully, Handover failed. Please see %s""" % (cfg.dc_uri + "jobs/" + str(dc_job_id))
         log_and_publish(make_report('INFO', msg, spec, src_uri))
         send_email(to_address=spec['contact'], subject='Datacheck run issue', body=msg, smtp_server=cfg.smtp_server)
     else:
