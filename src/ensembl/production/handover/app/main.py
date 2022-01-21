@@ -451,7 +451,7 @@ def handover_results():
                     {
                         "query_string": {
                             "fields": [
-                                "params.tgt_uri"
+                                "params.database"
                             ],
                             "query": "/.*_{}(_[0-9]+)?/".format(release)
                         }
@@ -500,7 +500,6 @@ def handover_results():
             result['current_message'] = doc['_source']['message']
             result['contact'] = doc['_source']['params']['contact']
             result['src_uri'] = doc['_source']['params']['src_uri']
-            result['tgt_uri'] = doc['_source']['params']['tgt_uri']
             result['report_time'] = doc['_source']['report_time']
             list_handovers.append(result)
 
