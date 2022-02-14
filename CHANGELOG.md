@@ -1,5 +1,9 @@
 CHANGELOG - Ensembl Prodinf Handover App
 ========================================
+v1.2.1
+------
+- Introduce app version in menu header
+- Prevent duplicate submissions with same database / params being processed with another handover
 
 v1.2.0
 ------
