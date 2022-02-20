@@ -38,10 +38,13 @@ from ensembl.production.core.utils import send_email
 
 
 from celery import chain
+from celery.result import AsyncResult
+from celery import states 
 from ensembl.production.handover.celery_app.celery import app
 from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client
 from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
-    drop_current_databases, submit_dc, submit_copy, submit_metadata_update, check_handover_db_resubmit
+    drop_current_databases, submit_dc, submit_copy, submit_metadata_update, check_handover_db_resubmit, \
+    get_celery_task_id    
 # handover
 from ensembl.production.handover.config import HandoverConfig as cfg
 
@@ -94,12 +97,37 @@ def handover_database(spec):
                  )()
     return spec['handover_token']
 
+def stop_handover_job(handover_token):
+    """[Stop celery job for given handover token]
 
+    Args:
+        handover_token ([type]): [description]
+
+    Returns:
+        [dict]: [task status with handover spec]
+    """    
+    try:
+        status = get_celery_task_id(handover_token)
+        if not status['status']:
+            return status        
+        #get celery task id        
+        task_id = status['task_id']
+        spec = status['spec']
+        task = AsyncResult(task_id)
+        if task.state not in ['FAILURE', 'REVOKED']:
+            task.revoke(terminate=True)
+            log_and_publish(make_report('ERROR', f"Handover failed, Job Revoked", spec, ""))
+    except Exception as e:
+        return {'status': False, 'error': f"{e.info['error']['reason'] , str(e.error)}", 'spec': spec}
+    
+    return status
+    
 @app.task(bind=True, default_retry_delay=retry_wait)
 def datacheck_task(self, spec, dc_job_id, src_uri):
     """Submit the source database for data check and wait until DCs pipeline finish"""
     self.max_retries = None
     src_uri = spec['src_uri']
+    spec['task_id'] = self.request.id
     progress_msg = 'Datachecks in progress, please see: %sjobs/%s' % (cfg.dc_uri, dc_job_id)
     log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
     try:  
@@ -158,6 +186,7 @@ def dbcopy_task(self, spec):
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
         
         #retrieve copy job status
+        spec['task_id'] = self.request.id
         status = db_copy_client.retrieve_job(spec['copy_job_id'])['overall_status']
         
     except Exception as e:
@@ -203,6 +232,7 @@ def metadata_update_task(self, spec):
             log_and_publish(make_report('INFO', loading_msg, spec, tgt_uri))
 
         #retrieve metadata update job status
+        spec['task_id'] = self.request.id
         result = metadata_client.retrieve_job(spec['metadata_job_id'])
 
     except Exception as e:
@@ -290,6 +320,7 @@ def dispatch_db_task(self, spec):
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
         
         #retrieve dispatch job status
+        spec['task_id'] = self.request.id
         status = db_copy_client.retrieve_job(spec['dispatch_job_id'])['overall_status']
 
     except Exception as e:

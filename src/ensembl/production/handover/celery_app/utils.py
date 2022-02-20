@@ -60,7 +60,7 @@ es_port = str(cfg.ES_PORT)
 es_index = cfg.ES_INDEX
 
 def check_handover_db_resubmit(spec: dict):
-    """[Restric Mutiple handover submission with same Database name]
+    """[Restrict Multiple handover submission with same Database name]
 
     Args:
         spec (dict): [Handover payload with database name]
@@ -122,19 +122,72 @@ def check_handover_db_resubmit(spec: dict):
             ]
         })
 
-        faild_msg_pattern = re.compile(r'.*(failed|Failed|found problems|complete|successful).*', re.IGNORECASE)
+        failed_msg_pattern = re.compile(r'.*(failed|Failed|found problems|complete|successful).*', re.IGNORECASE)
         for each_handover_bucket in res_error['aggregations']['handover_token']['buckets']:
             for doc in each_handover_bucket['top_result']['hits']['hits']:
-                messg = doc['_source']['message']
-                if not faild_msg_pattern.match(messg):
+                msg = doc['_source']['message']
+                if not failed_msg_pattern.match(msg):
                     #found  handover with status running for submitted DB 
                     raise ValueError(
-                        f"DB {doc['_source']['params']['database']} already submitted with handover: {doc['_source']['params']['handover_token']} and status: {messg} "
+                        f"DB {doc['_source']['params']['database']} already submitted with handover: {doc['_source']['params']['handover_token']} and status: {msg} "
                     ) 
     except Exception as e:
         return {'status': False, 'error': str(e)}
                   
     return {'status': True, 'error': ''}
+
+def get_celery_task_id(handover_token: str):
+    """[Get celery task id for given handover id]
+
+    Args:
+        hadover_id (str): [Handover Id]
+
+    Raises:
+        ValueError: [Handover Status in progress ]
+
+    Returns:
+        [task_id]: [str]
+    """ 
+    try:
+        task_id = ''
+        es = Elasticsearch([{'host': es_host, 'port': es_port}])
+        res = es.search(index=es_index, body={
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {"term": {"params.handover_token.keyword": str(handover_token)}},
+                        {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)", "analyze_wildcard": "true"}},
+                    ]
+                }
+            },
+            "aggs": {
+                "top_result": {
+                    "top_hits": {
+                        "size": 1,
+                        "sort": {
+                            "report_time": "desc"
+                        }
+                    }
+                }
+            },
+            "sort": [
+                {
+                    "report_time": {
+                        "order": "desc"
+                    }
+                }
+            ]
+        })
+          
+        for doc in res['aggregations']['top_result']['hits']['hits']:
+            task_id = doc['_source']['params']['task_id']
+
+    except Exception as e:
+        return {'status': False, 'error': e.info['error']['reason']}
+                  
+    return {'status': True, 'error': '', 'task_id': task_id, 'spec': doc['_source']['params'] }
+
 
 def log_and_publish(report):
     """Handy function to mimick the logger/publisher behaviour.

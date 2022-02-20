@@ -29,7 +29,7 @@ from werkzeug.wrappers import Response
 import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
 from ensembl.production.core.exceptions import HTTPRequestError
-from ensembl.production.handover.celery_app.tasks import handover_database
+from ensembl.production.handover.celery_app.tasks import handover_database, stop_handover_job
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.exceptions import MissingDispatchException
 from ensembl.production.handover.forms import HandoverSubmissionForm
@@ -577,6 +577,73 @@ def delete_handover(handover_token):
     except NotFoundError as e:
         raise HTTPRequestError('Error while looking for handover token: {} - {}:{}'.format(
             handover_token, e.error, e.info['error']['reason']), 404)
+
+
+@app.route('/job/stop/<string:handover_token>', methods=['GET'])
+def stop_handover(handover_token=None):
+    """
+    Endpoint to delete all the reports linked to a handover_token
+    This is using docstring for specifications
+    ---
+    tags:
+      - handovers
+    parameters:
+      - name: handover_token
+        in: path
+        type: string
+        required: true
+        default: 15ce20fd-68cd-11e8-8117-005056ab00f0
+        description: handover token for the database handed over
+    operationId: handovers
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    security:
+      delete_auth:
+        - 'write:delete'
+        - 'read:delete'
+    schemes: ['http', 'https']
+    deprecated: false
+    externalDocs:
+      description: Project repository
+      url: http://github.com/rochacbruno/flasgger
+    definitions:
+      handover_token:
+        type: object
+        properties:
+          handover_token:
+            type: integer
+            items:
+              $ref: '#/definitions/handover_token'
+      id:
+        type: integer
+        properties:
+          id:
+            type: integer
+            items:
+              $ref: '#/definitions/id'
+    responses:
+      200:
+        description: handover_token of the reports that need deleting
+        schema:
+          $ref: '#/definitions/handover_token'
+        examples:
+          id: 15ce20fd-68cd-11e8-8117-005056ab00f0
+    """
+    try:
+        
+        handover_token = request.args.get('handover_token', handover_token )
+        if handover_token is None:
+          raise ValueError('required handover_token')
+          
+        status = stop_handover_job(handover_token)
+        return status
+      
+    except NotFoundError as e:
+        raise HTTPRequestError('Error while looking for handover token: {} - {}:{}'.format(
+            handover_token, e.error, e.info['error']['reason']), 404)
+
 
 
 @app.errorhandler(TransportError)
