@@ -184,7 +184,7 @@ def get_celery_task_id(handover_token: str):
             task_id = doc['_source']['params']['task_id']
 
     except Exception as e:
-        return {'status': False, 'error': e.info['error']['reason']}
+        return {'status': False, 'error': str(e)}
                   
     return {'status': True, 'error': '', 'task_id': task_id, 'spec': doc['_source']['params'] }
 

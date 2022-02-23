@@ -579,7 +579,7 @@ def delete_handover(handover_token):
             handover_token, e.error, e.info['error']['reason']), 404)
 
 
-@app.route('/job/stop/<string:handover_token>', methods=['GET'])
+@app.route('/jobs/stop/<string:handover_token>', methods=['GET'])
 def stop_handover(handover_token=None):
     """
     Endpoint to delete all the reports linked to a handover_token

@@ -118,7 +118,7 @@ def stop_handover_job(handover_token):
             task.revoke(terminate=True)
             log_and_publish(make_report('ERROR', f"Handover failed, Job Revoked", spec, ""))
     except Exception as e:
-        return {'status': False, 'error': f"{e.info['error']['reason'] , str(e.error)}", 'spec': spec}
+        return {'status': False, 'error': f"{str(e)}", 'spec': spec}
     
     return status
     
