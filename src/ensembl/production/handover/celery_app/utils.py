@@ -319,7 +319,7 @@ def process_handover_payload(spec):
             spec['progress_total'] = 4
     if release != db_release:
         msg = "Handover failed, %s database release version %s does not match handover service " \
-              "release version %s, update schema version in meta table to handover version " % (src_uri, db_release, release)
+              "release version %s, update schema version in meta table to current handover version %s" % (src_uri, db_release, release, release)
         log_and_publish(make_report('ERROR', msg, spec, src_uri))
         raise ValueError(msg)
     # Check to which staging server the database need to be copied to
