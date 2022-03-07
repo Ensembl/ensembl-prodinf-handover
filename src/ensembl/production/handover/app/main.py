@@ -214,23 +214,28 @@ def handovers():
         examples:
           {src_uri: "mysql://user@server:port/saccharomyces_cerevisiae_core_91_4", contact: "joe.blogg@ebi.ac.uk", comment: "handover new Panda OF"}
     """
-    if not cfg.compara_species:
-        # Empty list of compara
-        raise MissingDispatchException
-    # get form data
-    if form_pattern.match(request.headers['Content-Type']):
-        spec = request.form.to_dict(flat=True)
-    elif json_pattern.match(request.headers['Content-Type']):
-        spec = request.json
-    else:
-        raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
+    try:
+      
+      if not cfg.compara_species:
+          # Empty list of compara
+          raise MissingDispatchException
+      # get form data
+      if form_pattern.match(request.headers['Content-Type']):
+          spec = request.form.to_dict(flat=True)
+      elif json_pattern.match(request.headers['Content-Type']):
+          spec = request.json
+      else:
+          raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
 
-    if 'src_uri' not in spec or 'contact' not in spec or 'comment' not in spec:
-        raise HTTPRequestError("Handover specification incomplete - please specify src_uri, contact and comment")
+      if 'src_uri' not in spec or 'contact' not in spec or 'comment' not in spec:
+          raise HTTPRequestError("Handover specification incomplete - please specify src_uri, contact and comment")
 
-    app.logger.debug('Submitting handover request %s', spec)
-    ticket = handover_database(spec)
-    app.logger.info('Ticket: %s', ticket)
+      app.logger.debug('Submitting handover request %s', spec)
+      ticket = handover_database(spec)
+      app.logger.info('Ticket: %s', ticket)
+    except Exception as e:
+      return str(e) , 400
+    
     return jsonify(ticket)
 
 
