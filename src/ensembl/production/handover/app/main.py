@@ -234,7 +234,7 @@ def handovers():
       ticket = handover_database(spec)
       app.logger.info('Ticket: %s', ticket)
     except Exception as e:
-      return str(e) , 400
+      raise HTTPRequestError(str(e), 400)
     
     return jsonify(ticket)
 
