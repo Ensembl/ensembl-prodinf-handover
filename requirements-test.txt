@@ -60,7 +60,7 @@ elasticsearch==6.8.2
     # via -r requirements.txt
 email-validator==1.1.3
     # via -r requirements.txt
-git+https://github.com/Ensembl/ensembl-hive.git@master#egg=ensembl-hive
+git+https://github.com/Ensembl/ensembl-hive.git@main#egg=ensembl-hive
     # via
     #   -r requirements.txt
     #   ensembl-py
