@@ -276,7 +276,7 @@ def drop_current_databases(current_db_list, spec, target_db_delete=None):
             for database in current_db_list:
                 db_uri = staging_uri + database
                 if database_exists(db_uri):
-                    msg = 'Dropping %s' % db_uri
+                    msg = 'Dropping database %s' % database
                     log_and_publish(make_report('INFO', msg, spec, tgt_uri))
                     drop_database(db_uri)
     except Exception as e:
