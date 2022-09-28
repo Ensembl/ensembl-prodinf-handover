@@ -47,8 +47,7 @@ def get_app_version():
         
 
 class HandoverConfig:
-    config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH', os.path.join(os.path.dirname(__file__),
-                                                                                'handover_config.dev.yaml'))
+    config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH')
     file_config = load_config_yaml(config_file_path)
     script_name = os.environ.get("SCRIPT_NAME", '')
     # core config
@@ -58,14 +57,14 @@ class HandoverConfig:
                             file_config.get('dc_uri', "http://localhost:5001/datacheck"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
-                                              "http://production-services.ensembl.org:80/api/dbcopy/requestjob"))
+                                              "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
                                        file_config.get('copy_uri_dropdown',
-                                                       "http://services.ensembl-production.ebi.ac.uk/"))
+                                                       "http://services.test.ensembl-production.ebi.ac.uk/"))
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
-                                                  "http://services.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
+                                                  "http://services.test.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
     meta_uri = os.environ.get("META_URI",
                               file_config.get('meta_uri',
                                               "http://localhost:5002/"))
@@ -141,8 +140,7 @@ class HandoverConfig:
 
 
 class HandoverCeleryConfig:
-    config_file_path = os.environ.get('HANDOVER_CELERY_CONFIG_PATH', os.path.join(os.path.dirname(__file__),
-                                                                                'handover_config.dev.yaml'))
+    config_file_path = os.environ.get('HANDOVER_CELERY_CONFIG_PATH')
 
     file_config = load_config_yaml(config_file_path)
 
@@ -153,7 +151,7 @@ class HandoverCeleryConfig:
     smtp_server = os.environ.get("SMTP_SERVER",
                                  file_config.get('smtp_server', 'localhost'))
     from_email_address = os.environ.get("FROM_EMAIL_ADDRESS",
-                                        file_config.get('from_email_address', 'ensembl-production@ebi.ac.uk'))
+                                        file_config.get('from_email_address', 'ensprod@ebi.ac.uk'))
     retry_wait = int(os.environ.get("RETRY_WAIT",
                                     file_config.get('retry_wait', 60)))
 
