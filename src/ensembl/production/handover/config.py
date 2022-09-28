@@ -22,7 +22,7 @@ from ensembl.utils.rloader import RemoteFileLoader
 
 
 class ComparaDispatchConfig:
-    divisions = {'vertebrates', 'plants', 'metazoa'}
+    divisions = {'vertebrates', 'plants', 'metazoa', 'fungi', 'protists'}
     uri = 'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{}/conf/{}/allowed_species.json'
 
     @classmethod
