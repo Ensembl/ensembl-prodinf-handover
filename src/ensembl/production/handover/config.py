@@ -55,26 +55,23 @@ class HandoverConfig:
     SECRET_KEY = os.environ.get('SECRET_KEY',
                                 file_config.get('secret_key', os.urandom(32)))
     dc_uri = os.environ.get("DC_URI",
-                            file_config.get('dc_uri', "http://localhost:8006/datacheck"))
+                            file_config.get('dc_uri', "http://localhost:5001/datacheck"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
                                               "http://production-services.ensembl.org:80/api/dbcopy/requestjob"))
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
                                        file_config.get('copy_uri_dropdown',
-                                                       "http://production-services.ensembl.org:80/"))
+                                                       "http://services.ensembl-production.ebi.ac.uk/"))
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
-                                                  "http://production-services.ensembl.org:80/admin/ensembl_dbcopy/requestjob/"))
+                                                  "http://services.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
     meta_uri = os.environ.get("META_URI",
                               file_config.get('meta_uri',
-                                              "http://127.0.0.1:8008/"))
-    meta_web_uri = os.environ.get("META_WEB_URI",
-                                  file_config.get('meta_web_uri',
-                                                  "http://127.0.0.1:9000/#!/metadata_result/"))
+                                              "http://localhost:5002/"))
     event_uri = os.environ.get("EVENT_URI",
                                file_config.get('event_uri',
-                                               'http://127.0.0.1:8009/'))
+                                               'http://localhost:5003/'))
     staging_uri = os.environ.get("STAGING_URI",
                                  file_config.get('staging_uri',
                                                  "mysql://ensro@mysql-ens-general-dev-1:4484/"))
@@ -144,7 +141,8 @@ class HandoverConfig:
 
 
 class HandoverCeleryConfig:
-    config_file_path = os.environ.get('HANDOVER_CELERY_CONFIG_PATH')
+    config_file_path = os.environ.get('HANDOVER_CELERY_CONFIG_PATH', os.path.join(os.path.dirname(__file__),
+                                                                                'handover_config.dev.yaml'))
 
     file_config = load_config_yaml(config_file_path)
 
