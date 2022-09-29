@@ -24,15 +24,21 @@ from ensembl.utils.rloader import RemoteFileLoader
 class ComparaDispatchConfig:
     divisions = {'vertebrates', 'plants', 'metazoa', 'fungi', 'protists'}
     uri = 'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{}/conf/{}/allowed_species.json'
-
+    main_uri = 'https://raw.githubusercontent.com/Ensembl/ensembl-compara/main/conf/{}/allowed_species.json'
     @classmethod
     def load_config(cls, version):
         loader = RemoteFileLoader('json')
         compara_species = {}
         try:
-            for division in cls.divisions:
-                uri = cls.uri.format(version, division)
-                compara_species[division] = loader.r_open(uri)
+            if version is not None:
+                for division in cls.divisions:
+                    uri = cls.uri.format(version, division)
+                    compara_species[division] = loader.r_open(uri)
+            else:
+                warnings.warn(f"Loading from main {cls.main_uri}")
+                for division in cls.divisions:
+                    uri = cls.main_uri.format(division)
+                    compara_species[division] = loader.r_open(uri)
         except requests.HTTPError:
             warnings.warn(f"Unable to load compara from {uri}")
         return compara_species
