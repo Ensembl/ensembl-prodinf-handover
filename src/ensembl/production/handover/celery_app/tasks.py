@@ -32,19 +32,17 @@
 import json
 import logging
 
+from celery.result import AsyncResult
+
+from celery import chain
 from ensembl.production.core.reporting import make_report
 # core
 from ensembl.production.core.utils import send_email
-
-
-from celery import chain
-from celery.result import AsyncResult
-from celery import states 
 from ensembl.production.handover.celery_app.celery import app
 from ensembl.production.handover.celery_app.utils import db_copy_client, metadata_client, dc_client
 from ensembl.production.handover.celery_app.utils import process_handover_payload, log_and_publish, \
     drop_current_databases, submit_dc, submit_copy, submit_metadata_update, check_handover_db_resubmit, \
-    get_celery_task_id    
+    get_celery_task_id
 # handover
 from ensembl.production.handover.config import HandoverConfig as cfg
 

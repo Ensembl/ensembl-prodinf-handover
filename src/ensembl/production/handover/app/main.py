@@ -19,7 +19,7 @@ import requests
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
 from flasgger import Swagger
 from flask import Flask, request, jsonify, render_template, redirect, flash, url_for
-from flask_bootstrap import Bootstrap
+from flask_bootstrap import Bootstrap4
 from flask_cors import CORS
 from requests.exceptions import HTTPError
 from sqlalchemy.exc import OperationalError
@@ -67,7 +67,7 @@ if app.env == 'development':
 
 swagger = Swagger(app)
 cors = CORS(app)
-bootstrap = Bootstrap(app)
+bootstrap = Bootstrap4(app)
 
 # use re to support different charsets
 json_pattern = re.compile("application/json")

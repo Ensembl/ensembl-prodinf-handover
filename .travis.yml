@@ -1,7 +1,7 @@
 language: python
 python:
-  - "3.7.9"
   - "3.8"
+  - "3.9"
 
 sudo: required
 
@@ -9,7 +9,7 @@ services:
   - docker
 
 env:
-  DOCKER_COMPOSE_VERSION: 1.23.2
+  - DOCKER_COMPOSE_VERSION=1.23.2 HANDOVER_CORE_CONFIG_PATH=handover_config.test.yaml HANDOVER_CELERY_CONFIG_PATH=handover_config.test.yaml
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose

@@ -11,3 +11,6 @@ dc_uri: http://localhost:5000/api/vertebrates/datachecks/
 dispatch_targets:
  core: 'localhost'
 
+retry_wait: 30
+celery_broker_url: "pyamqp://localhost:31772/production"
+result_backend: "rpc://localhost:31772/production"
