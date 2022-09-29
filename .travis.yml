@@ -9,9 +9,7 @@ services:
   - docker
 
 env:
-  - DOCKER_COMPOSE_VERSION=1.23.2
-  - HANDOVER_CORE_CONFIG_PATH=handover_config.test.yaml
-  - HANDOVER_CELERY_CONFIG_PATH=handover_config.test.yaml
+  - DOCKER_COMPOSE_VERSION=1.23.2 HANDOVER_CORE_CONFIG_PATH=handover_config.test.yaml HANDOVER_CELERY_CONFIG_PATH=handover_config.test.yaml
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
