@@ -38,7 +38,6 @@ class TestHOConfigLoader(unittest.TestCase):
     def test_config_load_not_exists(self):
         config = ComparaDispatchConfig.load_config('5000')
         # Load main instead
-        self.assertRaises()
         self.assertFalse(config)
 
 class TestAPPVersion(unittest.TestCase):
