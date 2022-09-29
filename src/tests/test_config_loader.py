@@ -19,15 +19,18 @@ from ensembl.production.handover.config import ComparaDispatchConfig, HandoverCo
 class TestHOConfigLoader(unittest.TestCase):
 
     def test_config_load_104(self):
-        # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('104')
+        # Protists and Fungi were not in compara for this release
+        self.assertNotIn('protists', config)
+        self.assertNotIn('fungi', config)
         self.assertIn('homo_sapiens', config['vertebrates'])
         self.assertIn('anopheles_gambiae', config['metazoa'])
         self.assertIn('zea_mays', config['plants'])
 
-    def test_config_load_106(self):
-        # DuplicateComparaMemberXref was not implemented at this point
-        config = ComparaDispatchConfig.load_config('106')
+    def test_config_load_108(self):
+        config = ComparaDispatchConfig.load_config('108')
+        self.assertIn('protists', config)
+        self.assertIn('fungi', config)
         self.assertIn('homo_sapiens', config['vertebrates'])
         self.assertIn('anopheles_gambiae', config['metazoa'])
         self.assertIn('zea_mays', config['plants'])
@@ -35,6 +38,7 @@ class TestHOConfigLoader(unittest.TestCase):
     def test_config_load_not_exists(self):
         config = ComparaDispatchConfig.load_config('5000')
         # Load main instead
+        self.assertRaises()
         self.assertFalse(config)
 
 class TestAPPVersion(unittest.TestCase):

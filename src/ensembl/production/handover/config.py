@@ -29,18 +29,16 @@ class ComparaDispatchConfig:
     def load_config(cls, version):
         loader = RemoteFileLoader('json')
         compara_species = {}
-        try:
-            if version is not None:
-                for division in cls.divisions:
+        for division in cls.divisions:
+            try:
+                if version is not None:
                     uri = cls.uri.format(version, division)
-                    compara_species[division] = loader.r_open(uri)
-            else:
-                warnings.warn(f"Loading from main {cls.main_uri}")
-                for division in cls.divisions:
+                else:
+                    warnings.warn(f"Loading from main {cls.main_uri}")
                     uri = cls.main_uri.format(division)
-                    compara_species[division] = loader.r_open(uri)
-        except requests.HTTPError:
-            warnings.warn(f"Unable to load compara from {uri}")
+                compara_species[division] = loader.r_open(uri)
+            except requests.HTTPError:
+                warnings.warn(f"Unable to load compara species {division} from {uri}")
         return compara_species
     
 def get_app_version():
