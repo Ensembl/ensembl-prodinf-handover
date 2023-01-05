@@ -21,16 +21,16 @@ class TestHOConfigLoader(unittest.TestCase):
     def test_config_load_104(self):
         # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('104')
-        self.assertIn('homo_sapiens', config['vertebrates'])
-        self.assertIn('anopheles_gambiae', config['metazoa'])
-        self.assertIn('zea_mays', config['plants'])
+        self.assertIn('homo_sapiens', config)
+        self.assertIn('anopheles_gambiae', config)
+        self.assertIn('zea_mays', config)
 
     def test_config_load_106(self):
         # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('106')
-        self.assertIn('homo_sapiens', config['vertebrates'])
-        self.assertIn('anopheles_gambiae', config['metazoa'])
-        self.assertIn('zea_mays', config['plants'])
+        self.assertIn('homo_sapiens', config)
+        self.assertIn('anopheles_gambiae', config)
+        self.assertIn('zea_mays', config)
 
     def test_config_load_not_exists(self):
         config = ComparaDispatchConfig.load_config('5000')
