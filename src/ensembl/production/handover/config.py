@@ -28,11 +28,11 @@ class ComparaDispatchConfig:
     @classmethod
     def load_config(cls, version):
         loader = RemoteFileLoader('json')
-        compara_species = {}
+        compara_species = []
         try:
             for division in cls.divisions:
                 uri = cls.uri.format(version, division)
-                compara_species[division] = loader.r_open(uri)
+                compara_species.extend(loader.r_open(uri))
         except requests.HTTPError:
             warnings.warn(f"Unable to load compara from {uri}")
         return compara_species
