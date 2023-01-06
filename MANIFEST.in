@@ -1,7 +1,6 @@
 include LICENSE
 include NOTICE
 include VERSION
-include src/ensembl/production/handover/handover_config.dev.yaml
 include src/ensembl/production/handover/templates/*
 include src/ensembl/production/handover/static/css/*
 include src/ensembl/production/handover/static/js/*

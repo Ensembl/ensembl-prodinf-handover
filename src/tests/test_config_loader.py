@@ -19,7 +19,6 @@ from ensembl.production.handover.config import ComparaDispatchConfig, HandoverCo
 class TestHOConfigLoader(unittest.TestCase):
 
     def test_config_load_104(self):
-        # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('104')
         self.assertIn('homo_sapiens', config)
         self.assertIn('anopheles_gambiae', config)
@@ -28,6 +27,12 @@ class TestHOConfigLoader(unittest.TestCase):
     def test_config_load_106(self):
         # DuplicateComparaMemberXref was not implemented at this point
         config = ComparaDispatchConfig.load_config('106')
+        self.assertIn('homo_sapiens', config)
+        self.assertIn('anopheles_gambiae', config)
+        self.assertIn('zea_mays', config)
+
+    def test_config_load_108(self):
+        config = ComparaDispatchConfig.load_config('108')
         self.assertIn('homo_sapiens', config)
         self.assertIn('anopheles_gambiae', config)
         self.assertIn('zea_mays', config)
