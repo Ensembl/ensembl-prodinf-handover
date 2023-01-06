@@ -19,14 +19,17 @@ from ensembl.production.handover.config import ComparaDispatchConfig, HandoverCo
 class TestHOConfigLoader(unittest.TestCase):
 
     def test_config_load_104(self):
-        config = ComparaDispatchConfig.load_config('104')
+        # compara config for fungi / metazoa not existing in 104
+        with self.assertWarnsRegex(UserWarning,  r'^Unable to load (fungi|metazoa) compara from .*$'):
+            config = ComparaDispatchConfig.load_config('104')
         self.assertIn('homo_sapiens', config)
         self.assertIn('anopheles_gambiae', config)
         self.assertIn('zea_mays', config)
 
     def test_config_load_106(self):
-        # DuplicateComparaMemberXref was not implemented at this point
-        config = ComparaDispatchConfig.load_config('106')
+        # compara config for metazoa added in 106
+        with self.assertWarnsRegex(UserWarning,  r'^Unable to load fungi compara from .*$'):
+            config = ComparaDispatchConfig.load_config('106')
         self.assertIn('homo_sapiens', config)
         self.assertIn('anopheles_gambiae', config)
         self.assertIn('zea_mays', config)
@@ -45,11 +48,10 @@ class TestHOConfigLoader(unittest.TestCase):
 class TestAPPVersion(unittest.TestCase):
 
     def test_config_app_version(self):
-        
         version = pkg_resources.require("handover")[0].version
         with open(Path(__file__).parent.parent.parent / 'VERSION') as f:
             version_file = f.read().strip('\n')
-        
+
         version_config = HandoverConfig.APP_VERSION
         self.assertEqual(version, version_config)
         self.assertEqual(version, version_file)
