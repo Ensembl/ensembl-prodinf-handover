@@ -62,6 +62,12 @@ class TestHandover(unittest.TestCase):
         db_prefix, db_type, assembly = parse_db_infos(dbname)
         self.assertTrue(expect_db_type, db_type)
 
+    def test_valid_core_collection(self):
+        expect_db_type = 'core'
+        dbname = 'bacteria_collection_0_core_96_101'
+        db_prefix, db_type, assembly = parse_db_infos(dbname)
+        self.assertTrue(expect_db_type, db_type)
+
 
 class ParseDbInfosTest(unittest.TestCase):
     def test_accepted_species_patterns(self):

@@ -18,7 +18,6 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
 
 from ensembl.production.handover.config import HandoverConfig as cfg
-from ensembl.production.handover.celery_app.celery import app
 from ensembl.production.core.reporting import make_report, ReportFormatter
 from ensembl.production.core.amqp_publishing import AMQPPublisher
 from ensembl.production.core.models.compara import check_grch37, get_release_compara
@@ -314,7 +313,7 @@ def process_handover_payload(spec):
             logger.debug("It's 37 assembly - no metadata update")
             spec['progress_total'] = 2
         elif db_type in cfg.dispatch_targets.keys() and cfg.HANDOVER_TYPE not in ('rapid' , 'viruses') and \
-                any(db_prefix in val for val in cfg.compara_species.values()):
+                any(db_prefix in val for val in cfg.compara_species):
             logger.debug("Adding dispatch step to total")
             spec['progress_total'] = 4
     if release != db_release:
