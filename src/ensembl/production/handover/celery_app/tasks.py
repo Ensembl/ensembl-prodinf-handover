@@ -299,7 +299,7 @@ def metadata_update_task(self, spec):
                 if to_dispatch:
                     break
             if to_dispatch:
-                spec['genome'] = result['output']['events'][0]['genome']
+                spec['genome'] = genome
                 spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
                 spec['progress_total'] = 4
                 log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
