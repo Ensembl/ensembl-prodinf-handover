@@ -118,6 +118,8 @@ class HandoverConfig:
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
+    EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
+    
     APP_VERSION =  get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 

@@ -5,7 +5,8 @@ service_host: 0.0.0.0
 es_host: localhost
 es_port: 9200
 es_index: reports_vertebrates
-ens_version: 105
+ens_version: 110
+eg_version: 57
 dc_uri: http://localhost:5000/api/vertebrates/datachecks/
 
 dispatch_targets:
