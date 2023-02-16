@@ -104,7 +104,7 @@ class HandoverConfig:
                                        file_config.get('allowed_divisions',
                                                        'vertebrates'))
 
-    dispatch_targets = file_config.get('dispatch_targets', [])
+    dispatch_targets = file_config.get('dispatch_targets', {})
     copy_job_user = file_config.get('copy_job_user', 'ensprod')
 
     # handover layout

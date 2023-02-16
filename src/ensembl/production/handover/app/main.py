@@ -369,6 +369,7 @@ def handover_result(handover_token=''):
         result['message'] = doc['_source']['message']
         result['comment'] = doc['_source']['params']['comment']
         result['handover_token'] = doc['_source']['params']['handover_token']
+        result['handover_submission_time'] = doc['_source']['params'].get('handover_submission_time', "")
         result['contact'] = doc['_source']['params']['contact']
         result['src_uri'] = doc['_source']['params']['src_uri']
         result['tgt_uri'] = doc['_source']['params']['tgt_uri']

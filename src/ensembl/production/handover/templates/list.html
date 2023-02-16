@@ -16,9 +16,13 @@
         <div class="titles mb-2">
             <button id="resubmitbutton" class="btn h-buttons ">Resubmit Job</button>
             <button id="deletebutton" class="btn h-buttons">Delete Job</button>
+            <button id="exportbutton" class="btn h-buttons"><i class="fa fa-download" aria-hidden="true"></i></button>
+        <!--tittle...end-->    
         </div>      
     <table id="table"
       class="table table-striped thead-dark table-bordered "
+      data-show-export="true"
+      data-filter-control="true"
       data-toggle="table"
       data-row-style="rowStyle"
       data-search="true"
@@ -45,11 +49,12 @@
           <th data-field="id" data-visible="false" data-sortable="true">ID</th>
           <!--<th data-field="input.db_type" data-sortable="true">DB Type</th>-->
           <th data-field="handover_token" data-formatter="FormatHandover" data-sortable="true">Handover token</th>
+          <th data-field="handover_submission_time" data-sortable="true">Submission Date</th>
           <th data-field="report_time" data-sortable="true"   >Date</th>
           <th data-field="src_uri" data-sortable="true"   >DB</th>
           <th data-field="contact" data-sortable="true" >Email</th>
           <th data-field="comment" data-sortable="true" >Description</th>
-          <th data-field="current_message" data-sortable="true" data-formatter="statusFormat" >Status</th>
+          <th data-field="current_message" data-sortable="true" data-title="Status" data-formatter="statusFormat" >Status</th>
         </tr>
       </thead>
     </table>
@@ -63,6 +68,9 @@
   {{ super() }}
   <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/table_format.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/filesaver.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin@1.10.21/tableExport.min.js"></script>
+
 
  <script>
 
@@ -104,6 +112,17 @@
       });
     });
 
+    //export hanodver jobs as csv file
+    $('#exportbutton').click(function(){
+      let handover_data = $table.bootstrapTable('getData')
+      let hearder = {}
+      let colums = $table.bootstrapTable('getVisibleColumns')
+      $.each(colums, function( key, value ) {
+        hearder[value.field]= value.field;
+      })
+      exportCSVFile(hearder,handover_data,'handover_data' )  
+    })
+   
   // resubmit handover job  
   $('#resubmitbutton').click(function () {
       const row = $.map($table.bootstrapTable('getSelections'), function (row) {
