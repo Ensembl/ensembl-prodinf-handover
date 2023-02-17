@@ -479,7 +479,9 @@ def handover_results():
                                 "report_time": "desc"
                             }
                         }
-                    }
+                    },
+                    "submission_time": {"min": {"field": "report_time"}},
+                    "last_message": {"max": {"field": "report_time"}}
                 }
             }
         },
@@ -491,7 +493,7 @@ def handover_results():
             }
         ]
     })
-
+    
     list_handovers = []
 
     for each_handover_bucket in res['aggregations']['handover_token']['buckets']:
@@ -507,6 +509,7 @@ def handover_results():
             result['contact'] = doc['_source']['params']['contact']
             result['src_uri'] = doc['_source']['params']['src_uri']
             result['report_time'] = doc['_source']['report_time']
+            result['handover_submission_time'] = each_handover_bucket['submission_time']['value_as_string']
             list_handovers.append(result)
 
     return jsonify(list_handovers)

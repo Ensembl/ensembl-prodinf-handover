@@ -17,6 +17,30 @@
             <button id="resubmitbutton" class="btn h-buttons ">Resubmit Job</button>
             <button id="deletebutton" class="btn h-buttons">Delete Job</button>
             <button id="exportbutton" class="btn h-buttons"><i class="fa fa-download" aria-hidden="true"></i></button>
+            <button class="btn h-buttons dropdown-toggle " type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Status
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+              <a class="dropdown-item" href="#">           
+                 <span class="badge badge-success customfilter" data-value="Complete">
+                  Completed <span class="badge badge-light"></span>
+                 </span></a>
+              <a class="dropdown-item" href="#">
+                <span class="badge badge-warning customfilter" data-value="Running">
+                  Running <span class="badge badge-light"></span>
+                </span></a>
+              </a>
+              <a class="dropdown-item" href="#">
+                <span class="badge badge-danger customfilter" data-value="Fail">
+                  Failed <span class="badge badge-light"></span>
+                </span></a>
+                <a class="dropdown-item" href="#">
+                  <span class="badge badge-primary customfilter"  data-value="All">
+                    ALL <span class="badge badge-light"></span>
+                  </span></a>
+              </a>
+            </div>
+
         <!--tittle...end-->    
         </div>      
     <table id="table"
@@ -54,7 +78,8 @@
           <th data-field="src_uri" data-sortable="true"   >DB</th>
           <th data-field="contact" data-sortable="true" >Email</th>
           <th data-field="comment" data-sortable="true" >Description</th>
-          <th data-field="current_message" data-sortable="true" data-title="Status" data-formatter="statusFormat" >Status</th>
+          <th data-field="current_message" data-sortable="true" data-title="Status"
+          data-formatter="statusFormat" >Status</th>
         </tr>
       </thead>
     </table>
@@ -74,6 +99,7 @@
   $(document).ready(function(){
 
     var $table = $('#table');
+    var $completed = $('.customfilter')
     $table.bootstrapTable('refreshOptions', {
       theadClasses: "h-buttons",
        url: `${script_name}/jobs?format=json`
@@ -107,6 +133,28 @@
           }
         });
       });
+    });
+
+    //filter by status 
+    $('.customfilter').click(function () {
+      let value = $(this).attr('data-value');
+      let regex = new RegExp('.+'); 
+      $table.bootstrapTable('filterBy', {
+      }, {
+        'filterAlgorithm': (row, filters) => {
+          
+          if(value=='Complete')  {
+            regex = new RegExp('^(.+)Handover' + '(.+){1}' + 'successful$');  
+          }
+          if(value=='Fail')  {
+             regex = new RegExp('^(.+)failed(.+)$');   
+          }
+          if(value=='Running')  {
+             regex = new RegExp('.*(Handling|Datachecks|metadata|Copying|Dispatching)\\s?.+');    
+          }
+          return regex.test(row.current_message)
+        }
+      })
     });
 
     //export hanodver jobs as csv file

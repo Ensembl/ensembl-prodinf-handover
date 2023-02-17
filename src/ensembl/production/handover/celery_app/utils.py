@@ -10,7 +10,6 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import datetime
 import json
 import logging
 import re
@@ -288,7 +287,6 @@ def process_handover_payload(spec):
     src_uri = spec['src_uri']
     # create unique identifier
     spec['handover_token'] = str(uuid.uuid1())
-    spec['handover_submission_time'] = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]
     spec['progress_total'] = 3
     if not database_exists(src_uri):
         msg = "Handover failed, %s does not exist" % src_uri
