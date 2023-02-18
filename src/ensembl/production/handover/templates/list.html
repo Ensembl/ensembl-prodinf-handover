@@ -11,7 +11,7 @@
 <div class="m-4">
     <div class="row table-responsive">
     <div class="col-12">
-        <div id="toolbar" class="buttons-toolbar"> 
+        <div id="toolbar" class="buttons-toolbar select"> 
         </div>  
         <div class="titles mb-2">
             <button id="resubmitbutton" class="btn h-buttons ">Resubmit Job</button>
@@ -21,26 +21,25 @@
               Status
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item" href="#">           
-                 <span class="badge badge-success customfilter" data-value="Complete">
+              <a class="dropdown-item customfilter" data-value="Complete" >           
+                 <span class="badge badge-success">
                   Completed <span class="badge badge-light"></span>
                  </span></a>
-              <a class="dropdown-item" href="#">
-                <span class="badge badge-warning customfilter" data-value="Running">
+              <a class="dropdown-item customfilter" data-value="Running" >
+                <span class="badge badge-warning ">
                   Running <span class="badge badge-light"></span>
                 </span></a>
               </a>
-              <a class="dropdown-item" href="#">
-                <span class="badge badge-danger customfilter" data-value="Fail">
+              <a class="dropdown-item customfilter" data-value="Fail" >
+                <span class="badge badge-danger ">
                   Failed <span class="badge badge-light"></span>
                 </span></a>
-                <a class="dropdown-item" href="#">
-                  <span class="badge badge-primary customfilter"  data-value="All">
+                <a class="dropdown-item customfilter"  data-value="All">
+                  <span class="badge badge-primary">
                     ALL <span class="badge badge-light"></span>
                   </span></a>
               </a>
             </div>
-
         <!--tittle...end-->    
         </div>      
     <table id="table"
@@ -93,7 +92,7 @@
   {{ super() }}
   <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/table_format.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/filesaver.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin/tableExport.min.js"></script>
  <script>
 
   $(document).ready(function(){
@@ -138,8 +137,8 @@
     //filter by status 
     $('.customfilter').click(function () {
       let value = $(this).attr('data-value');
-      let regex = new RegExp('.+'); 
-      $table.bootstrapTable('filterBy', {
+      let regex = new RegExp('.*');
+     $table.bootstrapTable('filterBy', {
       }, {
         'filterAlgorithm': (row, filters) => {
           
@@ -150,7 +149,7 @@
              regex = new RegExp('^(.+)failed(.+)$');   
           }
           if(value=='Running')  {
-             regex = new RegExp('.*(Handling|Datachecks|metadata|Copying|Dispatching)\\s?.+');    
+             regex = new RegExp('.*(progress,)\\s?.+');    
           }
           return regex.test(row.current_message)
         }
@@ -158,14 +157,13 @@
     });
 
     //export hanodver jobs as csv file
-    $('#exportbutton').click(function(){
-      let handover_data = $table.bootstrapTable('getData')
-      let hearder = {}
-      let colums = $table.bootstrapTable('getVisibleColumns')
-      $.each(colums, function( key, value ) {
-        hearder[value.field]= value.field;
-      })
-      exportCSVFile(hearder,handover_data,'handover_data' )  
+    $('#exportbutton').click(function () {
+      $('#table').tableExport({
+        filename: 'handovers.csv',
+        format: 'csv',
+        ignoreColumn: [0,1],
+        selector: 'tr.selected'
+      });
     })
    
   // resubmit handover job  
@@ -191,13 +189,7 @@
            alert(`Unable to submit handover : ${e}`);
          }
        });
-
-
     });
-
 });
-
-
 </script>
-
 {% endblock scripts %}
