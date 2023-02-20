@@ -339,7 +339,6 @@ def process_handover_payload(spec):
     spec['db_division'] = db_division
     spec['db_type'] = db_type
     msg = "Handling %s" % spec
-    logger.info("Testing handover publish......... %s", msg)
     log_and_publish(make_report('INFO', msg, spec, src_uri))
     return spec, src_url, db_type
 
