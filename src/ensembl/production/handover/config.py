@@ -138,6 +138,10 @@ class HandoverConfig:
                     'ovis_aries',
                     'oreochromis_niloticus',
                     'gadus_morhua']
+    
+    ALLOWED_TASK_RESTART = os.environ.get('ALLOWED_TASK_RESTART', file_config.get('allowed_tasks_restart', 'datacheck,copyjob,metadata')).split(',')
+    
+    
 
 
 class HandoverCeleryConfig:
@@ -155,7 +159,13 @@ class HandoverCeleryConfig:
                                         file_config.get('from_email_address', 'ensprod@ebi.ac.uk'))
     retry_wait = int(os.environ.get("RETRY_WAIT",
                                     file_config.get('retry_wait', 60)))
-
+    
+    task_queue_ha_policy = os.environ.get("TASK_QUEUE_HA_POLICY",
+                                        file_config.get('task_queue_ha_policy', 'all'))
+    task_default_queue = os.environ.get("TASK_DEFAULT_QUEUE",
+                                        file_config.get('task_default_queue', 'handover'))
+    worker_prefetch_multiplier = int(os.environ.get("WORKER_PREFETCH_MULTIPLIER",
+                                        file_config.get('worker_prefetch_multiplier', 1)))
     task_routes = {
         os.environ.get("ROUTING_KEY",
                        file_config.get('routing_key', 'ensembl.production.handover.celery_app.tasks.*')): {

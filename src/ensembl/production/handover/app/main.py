@@ -29,7 +29,7 @@ from werkzeug.wrappers import Response
 import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
 from ensembl.production.core.exceptions import HTTPRequestError
-from ensembl.production.handover.celery_app.tasks import handover_database, stop_handover_job
+from ensembl.production.handover.celery_app.tasks import handover_database, stop_handover_job, restart_handover_job
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.exceptions import MissingDispatchException
 from ensembl.production.handover.forms import HandoverSubmissionForm
@@ -651,6 +651,89 @@ def stop_handover(handover_token=None):
     except NotFoundError as e:
         raise HTTPRequestError('Error while looking for handover token: {} - {}:{}'.format(
             handover_token, e.error, e.info['error']['reason']), 404)
+
+
+@app.route('/jobs/restart', methods=['GET'])
+def restart_handover():
+    """
+    Endpoint to restart specific handover task  
+    This is using docstring for specifications
+    ---
+    tags:
+      - handovers
+    parameters:
+      - name: handover_token
+        in: path
+        type: string
+        required: true
+        default: 15ce20fd-68cd-11e8-8117-005056ab00f0
+        description: handover token for the database handed over
+      - name: task_name
+        in: path
+        type: string
+        required: true
+        default: datacheck
+        description: handover task name to restart the job         
+    operationId: handovers
+    consumes:
+      - application/json
+    produces:
+      - application/json
+    security:
+      delete_auth:
+        - 'write:delete'
+        - 'read:delete'
+    schemes: ['http', 'https']
+    deprecated: false
+    externalDocs:
+      description: Project repository
+      url: http://github.com/rochacbruno/flasgger
+    definitions:
+      handover_token:
+        type: object
+        properties:
+          handover_token:
+            type: integer
+            items:
+              $ref: '#/definitions/handover_token'
+      id:
+        type: integer
+        properties:
+          id:
+            type: integer
+            items:
+              $ref: '#/definitions/id'
+    responses:
+      200:
+        description: handover_token with restart status
+        schema:
+          $ref: '#/definitions/handover_token'
+        examples:
+          id: 15ce20fd-68cd-11e8-8117-005056ab00f0
+    """
+    try:
+        
+        handover_token = request.args.get('handover_token', None )
+        task_name = request.args.get('task_name', None )
+      
+        
+        if handover_token is None or task_name is None:
+          raise ValueError('request arguments handover_token and task_name are required')
+        
+        if task_name not in app.config.get('ALLOWED_TASK_RESTART', []):
+          raise ValueError('request arguments task_name is not in ALLOWED_TASK_RESTART')
+           
+        res = restart_handover_job(handover_token, task_name)
+        
+        if not res['status']:
+          raise ValueError(res['error'])
+        
+        return jsonify(res)
+      
+    except Exception as e:
+        return jsonify(error=str(e)), 400
+
+
 
 
 
