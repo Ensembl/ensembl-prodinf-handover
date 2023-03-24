@@ -50,6 +50,7 @@ from ensembl.production.handover.config import HandoverConfig as cfg
 retry_wait = app.conf.get('retry_wait', 60)
 release = int(cfg.RELEASE)
 
+
 if release is None:
     raise RuntimeError("Can't figure out expected release, can't start, please review config files")
 
@@ -121,6 +122,46 @@ def stop_handover_job(handover_token):
     return status
 
 
+def restart_handover_job(handover_token, task_name):
+    """Restart Handover job from specific task 
+
+    Args:
+        handover_token (string): Unique Handover job id 
+        task_name      (String): Unique handover tasks (datacheck, dbcopy, metadata) 
+    Returns:
+        [dict]: [task restart status with handover spec]
+    """
+    try:
+        
+        response = stop_handover_job(handover_token)
+        if 'status' in response and not response['status']:
+            return response
+        
+        spec = response['spec'] 
+           
+        if task_name == 'datacheck':
+            ticket = handover_database(spec)
+        elif task_name == 'dbcopy':
+            res = chain(
+                dbcopy_task.s(spec),
+                metadata_update_task.s(),
+                dispatch_db_task.s(),
+            )()
+        elif task_name == 'metadata':
+            res = chain(
+                metadata_update_task.s(spec),
+                dispatch_db_task.s(),
+            )()
+        else:
+            raise ValueError(f"No task {task_name} defined")                             
+                 
+        return {'status': True, 'error': f"", 'spec': spec}
+        
+    except Exception as e:
+        return {'status': False, 'error': f"{str(e)}"}
+
+
+
 @app.task(bind=True, default_retry_delay=retry_wait)
 def datacheck_task(self, spec, dc_job_id, src_uri):
     """Submit the source database for data check and wait until DCs pipeline finish"""
@@ -177,6 +218,7 @@ def dbcopy_task(self, spec):
     # allow infinite retries
     self.max_retries = None
     src_uri = spec['src_uri']
+    spec['task_id'] = self.request.id
     try:
 
         # submit copy job for first retry
@@ -186,7 +228,6 @@ def dbcopy_task(self, spec):
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
 
         # retrieve copy job status
-        spec['task_id'] = self.request.id
         status = db_copy_client.retrieve_job(spec['copy_job_id'])['overall_status']
 
     except Exception as e:
@@ -225,6 +266,7 @@ def metadata_update_task(self, spec):
     # allow infinite retries
     self.max_retries = None
     tgt_uri = spec['tgt_uri']
+    spec['task_id'] = self.request.id
     try:
         # submit metadata update job for first retry
         if not self.request.retries:
@@ -234,7 +276,6 @@ def metadata_update_task(self, spec):
             log_and_publish(make_report('INFO', loading_msg, spec, tgt_uri))
 
         # retrieve metadata update job status
-        spec['task_id'] = self.request.id
         result = metadata_client.retrieve_job(spec['metadata_job_id'])
 
     except Exception as e:
@@ -322,6 +363,7 @@ def dispatch_db_task(self, spec):
     """
     self.max_retries = None
     src_uri = spec['src_uri']
+    spec['task_id'] = self.request.id
     try:
         # submit dispatch job for first retry
         if not self.request.retries:
@@ -331,7 +373,6 @@ def dispatch_db_task(self, spec):
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
 
         # retrieve dispatch job status
-        spec['task_id'] = self.request.id
         status = db_copy_client.retrieve_job(spec['dispatch_job_id'])['overall_status']
 
     except Exception as e:
