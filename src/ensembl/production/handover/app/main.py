@@ -16,15 +16,17 @@ import os
 import re
 
 import requests
+from functools import wraps
 from elasticsearch import Elasticsearch, TransportError, NotFoundError
 from flasgger import Swagger
-from flask import Flask, request, jsonify, render_template, redirect, flash, url_for
+from flask import Flask, request, jsonify, render_template, redirect, flash, url_for, abort
 from flask_bootstrap import Bootstrap4
 from flask_cors import CORS
 from requests.exceptions import HTTPError
 from sqlalchemy.exc import OperationalError
 from werkzeug.middleware.dispatcher import DispatcherMiddleware
 from werkzeug.wrappers import Response
+from ensembl.utils.rloader import RemoteFileLoader
 
 import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
@@ -33,6 +35,7 @@ from ensembl.production.handover.celery_app.tasks import handover_database, stop
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.exceptions import MissingDispatchException
 from ensembl.production.handover.forms import HandoverSubmissionForm
+from ensembl.production.handover.celery_app.utils import parse_db_infos
 
 # set static and template paths
 app_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -82,7 +85,39 @@ def inject_configs():
     return dict(script_name=cfg.script_name,
                 copy_uri=cfg.copy_uri)
 
+def before_endpoint(endpoint):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if request.path == endpoint and request.method == 'POST':
+                # This function will be called before requests to the specified endpoint, can be used for authentication in future.
+                try:
+                  loader = RemoteFileLoader('json')
+                  uri = os.path.join(cfg.production_portal,f"/api/{cfg.allowed_divisions}/dbtypes")
+                  response = loader.r_open("https://run.mocky.io/v3/9031edf1-4d8c-40f3-8f97-07b85c70bba8")
+                  #TODO: replace above mock api with : response = loader.r_open(uri) # expected output : {"allowed_database_types": "rnaseq"}
+                  allowed_database_types = response['allowed_database_types']
+                  dbname = request.form.get('database') if request.form.get('database') else request.json['database']
+                  db_prefix, db_type, assembly = parse_db_infos(dbname)
+                  msg = f"{dbname} has been handed over after deadline. Please contact the Production team"
+                  if db_type not in allowed_database_types  :
+                    if request.form:
+                      form = HandoverSubmissionForm(request.form)
+                      flash(msg)
+                      return render_template(
+                      'submit.html',
+                        form=form
+                      )  
+                    raise ValueError(msg)
+                except Exception as e:
+                  abort(400, str(e))           
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
 
+def do_something_before_request():
+    # This function will be called before every request.
+    print("Doing something before request.")
 @app.route('/', methods=['GET'])
 def info():
     if not cfg.compara_species:
@@ -129,6 +164,7 @@ def dropdown(src_host=None, src_port=None):
 
 # UI Submit-form for handover
 @app.route('/jobs/submit', methods=['GET', 'POST'])
+@before_endpoint("/jobs/submit")
 def handover_form():
     if not cfg.compara_species:
         # Empty list of compara
@@ -158,6 +194,7 @@ def handover_form():
 
 
 @app.route('/jobs', methods=['POST'])
+@before_endpoint("/jobs")
 def handovers():
     """
     Endpoint to submit an handover job
@@ -771,3 +808,7 @@ def handle_server_error(e):
 def handle_server_error(e):
     message = f"Missing Handover db dispatch configuration for {app.config['RELEASE']} {e}"
     return jsonify(error=message), 500
+  
+@app.errorhandler(400)
+def bad_request(error):
+    return jsonify({'error': error.description}), 400
