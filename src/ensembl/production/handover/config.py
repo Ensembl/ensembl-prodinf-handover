@@ -60,6 +60,10 @@ class HandoverConfig:
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
                                        file_config.get('copy_uri_dropdown',
                                                        "http://services.test.ensembl-production.ebi.ac.uk/"))
+    
+    production_portal = os.environ.get("PRODUCTION_PORTAL",
+                                       file_config.get('production_portal',
+                                                       "http://services.test.ensembl-production.ebi.ac.uk/"))
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
