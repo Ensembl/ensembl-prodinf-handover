@@ -63,7 +63,7 @@ class HandoverConfig:
     
     production_portal = os.environ.get("PRODUCTION_PORTAL",
                                        file_config.get('production_portal',
-                                                       "http://services.test.ensembl-production.ebi.ac.uk/"))
+                                                       "http://services.test.ensembl-production.ebi.ac.uk/api/dbtypes/"))
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
