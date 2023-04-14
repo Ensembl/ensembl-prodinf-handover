@@ -9,10 +9,10 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+import os
 from pathlib import Path
-
 from setuptools import setup, find_namespace_packages, find_packages
- 
+
 with open(Path(__file__).parent / 'README.md') as f:
     readme = f.read()
 with open(Path(__file__).parent / 'VERSION') as f:
@@ -28,7 +28,7 @@ def import_requirements():
 
 setup(
     name='handover',
-    version=version,
+    version=os.getenv('CI_COMMIT_TAG', version),
     namespace_packages=['ensembl'],
     packages=find_namespace_packages(where='src', include=['ensembl.*']),
     package_dir={'': 'src'}, 

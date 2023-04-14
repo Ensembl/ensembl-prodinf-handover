@@ -12,9 +12,9 @@
 #    limitations under the License.
 
 import os
-import warnings
-import requests
 import pkg_resources
+import requests
+import warnings
 from pathlib import Path
 
 from ensembl.production.core.config import load_config_yaml
@@ -35,7 +35,8 @@ class ComparaDispatchConfig:
             except requests.HTTPError:
                 warnings.warn(UserWarning(f"Unable to load {division} compara from {uri}"))
         return compara_species
-    
+
+
 def get_app_version():
     try:
         version = pkg_resources.require("handover")[0].version
@@ -43,7 +44,7 @@ def get_app_version():
         with open(Path(__file__).parents[4] / 'VERSION') as f:
             version = f.read()
     return version
-        
+
 
 class HandoverConfig:
     config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH')
@@ -116,11 +117,14 @@ class HandoverConfig:
     PORT = os.environ.get('SERVICE_PORT', file_config.get('port'))
     ES_HOST = os.environ.get('ES_HOST', file_config.get('es_host', 'localhost'))
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
+    ES_USER = os.getenv("ES_USER", EnsemblConfig.file_config.get("es_user", "elastic")),
+    ES_PASSWORD = os.getenv("ES_PASSWORD", EnsemblConfig.file_config.get("es_password", "password")),
+    ES_SSL = os.environ.get('ES_SSL', EnsemblConfig.file_config.get('es_ssl', "f")).lower() in ['true', '1']
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
     EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
-    
-    APP_VERSION =  get_app_version()
+
+    APP_VERSION = get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
     BLAT_SPECIES = ['homo_sapiens',

@@ -14,24 +14,21 @@ import json
 import logging
 import re
 import uuid
+# es clients
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
 
-from ensembl.production.handover.config import HandoverConfig as cfg
-from ensembl.production.core.reporting import make_report, ReportFormatter
 from ensembl.production.core.amqp_publishing import AMQPPublisher
-from ensembl.production.core.models.compara import check_grch37, get_release_compara
-from ensembl.production.core.models.core import get_division, get_release
-
+from ensembl.production.core.clients.datachecks import DatacheckClient
 # clients
 from ensembl.production.core.clients.dbcopy import DbCopyRestClient
 from ensembl.production.core.clients.event import EventClient
 from ensembl.production.core.clients.metadata import MetadataClient
-from ensembl.production.core.clients.datachecks import DatacheckClient
+from ensembl.production.core.models.compara import check_grch37, get_release_compara
+from ensembl.production.core.models.core import get_division, get_release
+from ensembl.production.core.reporting import make_report, ReportFormatter
+from ensembl.production.handover.config import HandoverConfig as cfg
 
-# es clients
-from elasticsearch import Elasticsearch, TransportError, NotFoundError
- 
 logger = logging.getLogger(__name__)
 
 release = int(cfg.RELEASE)
@@ -53,10 +50,14 @@ db_copy_client = DbCopyRestClient(cfg.copy_uri)
 metadata_client = MetadataClient(cfg.meta_uri)
 event_client = EventClient(cfg.event_uri)
 
-#es Details
+# es Details
 es_host = cfg.ES_HOST
 es_port = str(cfg.ES_PORT)
 es_index = cfg.ES_INDEX
+es_user = cfg.ES_USER
+es_password = cfg.ES_PASSWORD
+es_ssl = cfg.ES_SSL
+
 
 def check_handover_db_resubmit(spec: dict):
     """[Restrict Multiple handover submission with same Database name]
@@ -69,71 +70,72 @@ def check_handover_db_resubmit(spec: dict):
 
     Returns:
         [bool]: [Status boolean]
-    """ 
-    try:   
-        es = Elasticsearch([{'host': es_host, 'port': es_port}])
-        res_error = es.search(index=es_index, body={
-            "size": 0,
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "term": {
-                                "params.database.keyword": spec['database']
-                            }
+    """
+    try:
+        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+            res_error = es.search(index=es_index, body={
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [
+                            {
+                                "term": {
+                                    "params.database.keyword": spec['database']
+                                }
+                            },
+                            {
+                                "query_string": {
+                                    "fields": [
+                                        "report_type"
+                                    ],
+                                    "query": "(INFO|ERROR)",
+                                    "analyze_wildcard": "true"
+                                }
+                            },
+                        ]
+                    }
+                },
+                "aggs": {
+                    "handover_token": {
+                        "terms": {
+                            "field": "params.handover_token.keyword",
+                            "size": 1000
                         },
-                        {
-                            "query_string": {
-                                "fields": [
-                                    "report_type"
-                                ],
-                                "query": "(INFO|ERROR)",
-                                "analyze_wildcard": "true"
-                            }
-                        },
-                    ]
-                }
-            },
-            "aggs": {
-                "handover_token": {
-                    "terms": {
-                        "field": "params.handover_token.keyword",
-                        "size": 1000
-                    },
-                    "aggs": {
-                        "top_result": {
-                            "top_hits": {
-                                "size": 1,
-                                "sort": {
-                                    "report_time": "desc"
+                        "aggs": {
+                            "top_result": {
+                                "top_hits": {
+                                    "size": 1,
+                                    "sort": {
+                                        "report_time": "desc"
+                                    }
                                 }
                             }
                         }
                     }
-                }
-            },
-            "sort": [
-                {
-                    "report_time": {
-                        "order": "desc"
+                },
+                "sort": [
+                    {
+                        "report_time": {
+                            "order": "desc"
+                        }
                     }
-                }
-            ]
-        })
+                ]
+            })
 
         failed_msg_pattern = re.compile(r'.*(failed|Failed|found problems|complete|successful).*', re.IGNORECASE)
         for each_handover_bucket in res_error['aggregations']['handover_token']['buckets']:
             for doc in each_handover_bucket['top_result']['hits']['hits']:
                 msg = doc['_source']['message']
                 if not failed_msg_pattern.match(msg):
-                    #found  handover with status running for submitted DB 
+                    # found  handover with status running for submitted DB
                     raise ValueError(
                         f"DB {doc['_source']['params']['database']} already submitted with handover: {doc['_source']['params']['handover_token']} and status: {msg} "
-                    ) 
+                    )
     except Exception as e:
         return {'status': False, 'error': str(e)}
-                  
+
     return {'status': True, 'error': ''}
+
 
 def get_celery_task_id(handover_token: str):
     """[Get celery task id for given handover id]
@@ -146,46 +148,47 @@ def get_celery_task_id(handover_token: str):
 
     Returns:
         [task_id]: [str]
-    """ 
+    """
     try:
         task_id = ''
-        es = Elasticsearch([{'host': es_host, 'port': es_port}])
-        res = es.search(index=es_index, body={
-            "size": 0,
-            "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"params.handover_token.keyword": str(handover_token)}},
-                        {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)", "analyze_wildcard": "true"}},
-                    ]
-                }
-            },
-            "aggs": {
-                "top_result": {
-                    "top_hits": {
-                        "size": 1,
-                        "sort": {
-                            "report_time": "desc"
+        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+            res = es.search(index=es_index, body={
+                "size": 0,
+                "query": {
+                    "bool": {
+                        "must": [
+                            {"term": {"params.handover_token.keyword": str(handover_token)}},
+                            {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)",
+                                              "analyze_wildcard": "true"}},
+                        ]
+                    }
+                },
+                "aggs": {
+                    "top_result": {
+                        "top_hits": {
+                            "size": 1,
+                            "sort": {
+                                "report_time": "desc"
+                            }
                         }
                     }
-                }
-            },
-            "sort": [
-                {
-                    "report_time": {
-                        "order": "desc"
+                },
+                "sort": [
+                    {
+                        "report_time": {
+                            "order": "desc"
+                        }
                     }
-                }
-            ]
-        })
-          
+                ]
+            })
+
         for doc in res['aggregations']['top_result']['hits']['hits']:
             task_id = doc['_source']['params']['task_id']
 
     except Exception as e:
         return {'status': False, 'error': str(e)}
-                  
-    return {'status': True, 'error': '', 'task_id': task_id, 'spec': doc['_source']['params'] }
+
+    return {'status': True, 'error': '', 'task_id': task_id, 'spec': doc['_source']['params']}
 
 
 def log_and_publish(report):
@@ -255,14 +258,14 @@ def drop_current_databases(current_db_list, spec, target_db_delete=None):
 
     Returns:
         [Boolean]: [status of dropdatabase method]
-    """    
+    """
 
     try:
-        
+
         if target_db_delete:
             drop_database(spec['tgt_uri'])
             return True
-            
+
         tgt_uri = spec['tgt_uri']
         staging_uri = spec['staging_uri']
         tgt_url = make_url(tgt_uri)
@@ -312,13 +315,14 @@ def process_handover_payload(spec):
         if db_prefix == 'homo_sapiens' and assembly == '37':
             logger.debug("It's 37 assembly - no metadata update")
             spec['progress_total'] = 2
-        elif db_type in cfg.dispatch_targets.keys() and cfg.HANDOVER_TYPE not in ('rapid' , 'viruses') and \
+        elif db_type in cfg.dispatch_targets.keys() and cfg.HANDOVER_TYPE not in ('rapid', 'viruses') and \
                 any(db_prefix in val for val in cfg.compara_species):
             logger.debug("Adding dispatch step to total")
             spec['progress_total'] = 4
     if release != db_release:
         msg = "Handover failed, %s database release version %s does not match handover service " \
-              "release version %s, update schema version in meta table to current handover version %s" % (src_uri, db_release, release, release)
+              "release version %s, update schema version in meta table to current handover version %s" % (
+                  src_uri, db_release, release, release)
         log_and_publish(make_report('ERROR', msg, spec, src_uri))
         raise ValueError(msg)
     # Check to which staging server the database need to be copied to
@@ -366,7 +370,7 @@ def submit_dc(spec, src_url, db_type):
             division_msg = 'division: %s' % get_division(src_uri, tgt_uri, db_type)
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
-            dc_group = 'corelike,rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else  'corelike'
+            dc_group = 'corelike,rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else 'corelike'
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
                                              db_type, None, dc_group, 'critical', None, handover_token, staging_uri)
         else:
@@ -375,7 +379,7 @@ def submit_dc(spec, src_url, db_type):
             division_msg = 'division: %s' % get_division(src_uri, tgt_uri, db_type)
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
-            dc_group = db_type + ',rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else  db_type
+            dc_group = db_type + ',rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else db_type
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
                                              db_type, None, dc_group, 'critical', None, handover_token, staging_uri)
     except Exception as e:

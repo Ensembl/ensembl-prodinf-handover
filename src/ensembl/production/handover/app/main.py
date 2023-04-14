@@ -29,6 +29,7 @@ from werkzeug.wrappers import Response
 import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
 from ensembl.production.core.exceptions import HTTPRequestError
+from ensembl.production.handover.es import ElasticsearchConnectionManager
 from ensembl.production.handover.celery_app.tasks import handover_database, stop_handover_job, restart_handover_job
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.exceptions import MissingDispatchException
@@ -75,6 +76,9 @@ form_pattern = re.compile("multipart/form-data")
 es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
+es_user = app.config['ES_USER']
+es_password = app.config['ES_PASSWORD']
+es_ssl = app.config['ES_SSL']
 
 
 @app.context_processor
@@ -247,25 +251,24 @@ def handover_status_update():
             handover_token = request.json.get('handover_token')
         else:
             raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
+        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+            res_error = es.search(index=es_index, body={"query": {"bool": {
+                "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
+                         {"term": {"report_type.keyword": "INFO"}},
+                         {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
+                "must_not": [], "should": []}}, "from": 0, "size": 1,
+                "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
 
-        es = Elasticsearch([{'host': es_host, 'port': es_port}])
-        res_error = es.search(index=es_index, body={"query": {"bool": {
-            "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
-                     {"term": {"report_type.keyword": "INFO"}},
-                     {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
-            "must_not": [], "should": []}}, "from": 0, "size": 1,
-            "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
+            if len(res_error['hits']['hits']) == 0:
+                raise HTTPRequestError('No Hits Found for Handover Token : %s' % handover_token)
 
-        if len(res_error['hits']['hits']) == 0:
-            raise HTTPRequestError('No Hits Found for Handover Token : %s' % handover_token)
-
-        # set handover message to success
-        result = res_error['hits']['hits'][0]['_source']
-        h_id = res_error['hits']['hits'][0]['_id']
-        result['report_time'] = str(datetime.datetime.now().isoformat())[:-3]
-        result['message'] = 'Metadata load complete, Handover successful'
-        result['report_type'] = 'INFO'
-        res = es.update(index=es_index, id=h_id, doc_type='report', body={"doc": result})
+            # set handover message to success
+            result = res_error['hits']['hits'][0]['_source']
+            h_id = res_error['hits']['hits'][0]['_id']
+            result['report_time'] = str(datetime.datetime.now().isoformat())[:-3]
+            result['message'] = 'Metadata load complete, Handover successful'
+            result['report_type'] = 'INFO'
+            res = es.update(index=es_index, id=h_id, doc_type='report', body={"doc": result})
     except Exception as e:
         raise HTTPRequestError('%s' % str(e))
 
@@ -330,36 +333,37 @@ def handover_result(handover_token=''):
         return render_template('result.html',
                                handover_token=handover_token)
 
-    es = Elasticsearch([{'host': es_host, 'port': es_port}])
-    handover_detail = []
-    res = es.search(index=es_index, body={
-        "size": 0,
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"params.handover_token.keyword": str(handover_token)}},
-                    {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)", "analyze_wildcard": "true"}},
-                ]
-            }
-        },
-        "aggs": {
-            "top_result": {
-                "top_hits": {
-                    "size": 1,
-                    "sort": {
-                        "report_time": "desc"
+    with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+        handover_detail = []
+        res = es.search(index=es_index, body={
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {"term": {"params.handover_token.keyword": str(handover_token)}},
+                        {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)",
+                                          "analyze_wildcard": "true"}},
+                    ]
+                }
+            },
+            "aggs": {
+                "top_result": {
+                    "top_hits": {
+                        "size": 1,
+                        "sort": {
+                            "report_time": "desc"
+                        }
                     }
                 }
-            }
-        },
-        "sort": [
-            {
-                "report_time": {
-                    "order": "desc"
+            },
+            "sort": [
+                {
+                    "report_time": {
+                        "order": "desc"
+                    }
                 }
-            }
-        ]
-    })
+            ]
+        })
 
     for doc in res['aggregations']['top_result']['hits']['hits']:
         result = {"id": doc['_id']}
@@ -438,61 +442,61 @@ def handover_results():
     if fmt != 'json' and not request.is_json:
         return render_template('list.html')
 
-    es = Elasticsearch([{'host': es_host, 'port': es_port}])
-    res = es.search(index=es_index, body={
-        "size": 0,
-        "query": {
-            "bool": {
-                "must": [
-                    {
-                        "query_string": {
-                            "fields": [
-                                "report_type"
-                            ],
-                            "query": "(INFO|ERROR)",
-                            "analyze_wildcard": "true"
-                        }
-                    },
-                    {
-                        "query_string": {
-                            "fields": [
-                                "params.database"
-                            ],
-                            "query": "/.*_{}(_[0-9]+)?/".format(release)
-                        }
-                    }
-                ]
-            }
-        },
-        "aggs": {
-            "handover_token": {
-                "terms": {
-                    "field": "params.handover_token.keyword",
-                    "size": 1000
-                },
-                "aggs": {
-                    "top_result": {
-                        "top_hits": {
-                            "size": 1,
-                            "sort": {
-                                "report_time": "desc"
+    with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+        res = es.search(index=es_index, body={
+            "size": 0,
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "fields": [
+                                    "report_type"
+                                ],
+                                "query": "(INFO|ERROR)",
+                                "analyze_wildcard": "true"
+                            }
+                        },
+                        {
+                            "query_string": {
+                                "fields": [
+                                    "params.database"
+                                ],
+                                "query": "/.*_{}(_[0-9]+)?/".format(release)
                             }
                         }
+                    ]
+                }
+            },
+            "aggs": {
+                "handover_token": {
+                    "terms": {
+                        "field": "params.handover_token.keyword",
+                        "size": 1000
                     },
-                    "submission_time": {"min": {"field": "report_time"}},
-                    "last_message": {"max": {"field": "report_time"}}
+                    "aggs": {
+                        "top_result": {
+                            "top_hits": {
+                                "size": 1,
+                                "sort": {
+                                    "report_time": "desc"
+                                }
+                            }
+                        },
+                        "submission_time": {"min": {"field": "report_time"}},
+                        "last_message": {"max": {"field": "report_time"}}
+                    }
                 }
-            }
-        },
-        "sort": [
-            {
-                "report_time": {
-                    "order": "desc"
+            },
+            "sort": [
+                {
+                    "report_time": {
+                        "order": "desc"
+                    }
                 }
-            }
-        ]
-    })
-    
+            ]
+        })
+
     list_handovers = []
 
     for each_handover_bucket in res['aggregations']['handover_token']['buckets']:
@@ -578,9 +582,9 @@ def delete_handover(handover_token):
     """
     try:
         app.logger.info('Retrieving handover data with token %s', handover_token)
-        es = Elasticsearch([{'host': es_host, 'port': es_port}])
-        es.delete_by_query(index=es_index, doc_type='report', body={
-            "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}})
+        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+            es.delete_by_query(index=es_index, doc_type='report', body={
+                "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}})
         return jsonify(str(handover_token))
     except NotFoundError as e:
         raise HTTPRequestError('Error while looking for handover token: {} - {}:{}'.format(
@@ -656,7 +660,7 @@ def stop_handover(handover_token=None):
 @app.route('/jobs/restart', methods=['GET'])
 def restart_handover():
     """
-    Endpoint to restart specific handover task  
+    Endpoint to restart specific handover task
     This is using docstring for specifications
     ---
     tags:
@@ -673,7 +677,7 @@ def restart_handover():
         type: string
         required: true
         default: datacheck
-        description: handover task name to restart the job         
+        description: handover task name to restart the job
     operationId: handovers
     consumes:
       - application/json
@@ -712,24 +716,24 @@ def restart_handover():
           id: 15ce20fd-68cd-11e8-8117-005056ab00f0
     """
     try:
-        
+
         handover_token = request.args.get('handover_token', None )
         task_name = request.args.get('task_name', None )
-      
-        
+
+
         if handover_token is None or task_name is None:
           raise ValueError('request arguments handover_token and task_name are required')
-        
+
         if task_name not in app.config.get('ALLOWED_TASK_RESTART', []):
           raise ValueError('request arguments task_name is not in ALLOWED_TASK_RESTART')
-           
+
         res = restart_handover_job(handover_token, task_name)
-        
+
         if not res['status']:
           raise ValueError(res['error'])
-        
+
         return jsonify(res)
-      
+
     except Exception as e:
         return jsonify(error=str(e)), 400
 
