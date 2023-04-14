@@ -93,9 +93,8 @@ def before_endpoint(endpoint):
                 # This function will be called before requests to the specified endpoint, can be used for authentication in future.
                 try:
                   loader = RemoteFileLoader('json')
-                  uri = os.path.join(cfg.production_portal,f"/api/{cfg.allowed_divisions}/dbtypes")
-                  response = loader.r_open("https://run.mocky.io/v3/9031edf1-4d8c-40f3-8f97-07b85c70bba8")
-                  #TODO: replace above mock api with : response = loader.r_open(uri) # expected output : {"allowed_database_types": "rnaseq"}
+                  uri = os.path.join(cfg.production_portal,f"?division={cfg.HANDOVER_TYPE}")
+                  response = loader.r_open(uri) # expected output : {"allowed_database_types": [rnaseq]}
                   allowed_database_types = response['allowed_database_types']
                   dbname = request.form.get('database') if request.form.get('database') else request.json['database']
                   db_prefix, db_type, assembly = parse_db_infos(dbname)
