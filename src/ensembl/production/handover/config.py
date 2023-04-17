@@ -39,7 +39,8 @@ class ComparaDispatchConfig:
 
 def get_app_version():
     try:
-        version = pkg_resources.require("handover")[0].version
+        from importlib.metadata import version
+        version = version("handover")
     except Exception as e:
         with open(Path(__file__).parents[4] / 'VERSION') as f:
             version = f.read()
