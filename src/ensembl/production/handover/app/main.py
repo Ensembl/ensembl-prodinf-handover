@@ -252,7 +252,7 @@ def handover_status_update():
         else:
             raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res_error = es.search(index=es_index, body={"query": {"bool": {
+            res_error = es.client.search(index=es_index, body={"query": {"bool": {
                 "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
                          {"term": {"report_type.keyword": "INFO"}},
                          {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
@@ -268,7 +268,7 @@ def handover_status_update():
             result['report_time'] = str(datetime.datetime.now().isoformat())[:-3]
             result['message'] = 'Metadata load complete, Handover successful'
             result['report_type'] = 'INFO'
-            res = es.update(index=es_index, id=h_id, doc_type='report', body={"doc": result})
+            res = es.client.update(index=es_index, id=h_id, doc_type='report', body={"doc": result})
     except Exception as e:
         raise HTTPRequestError('%s' % str(e))
 
@@ -335,7 +335,7 @@ def handover_result(handover_token=''):
 
     with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
         handover_detail = []
-        res = es.search(index=es_index, body={
+        res = es.client.search(index=es_index, body={
             "size": 0,
             "query": {
                 "bool": {
@@ -443,7 +443,7 @@ def handover_results():
         return render_template('list.html')
 
     with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-        res = es.search(index=es_index, body={
+        res = es.client.search(index=es_index, body={
             "size": 0,
             "query": {
                 "bool": {
@@ -583,7 +583,7 @@ def delete_handover(handover_token):
     try:
         app.logger.info('Retrieving handover data with token %s', handover_token)
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            es.delete_by_query(index=es_index, doc_type='report', body={
+            es.client.delete_by_query(index=es_index, doc_type='report', body={
                 "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}})
         return jsonify(str(handover_token))
     except NotFoundError as e:

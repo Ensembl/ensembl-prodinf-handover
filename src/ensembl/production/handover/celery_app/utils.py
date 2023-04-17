@@ -17,7 +17,7 @@ import uuid
 # es clients
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
-
+from ensembl.production.handover.es import ElasticsearchConnectionManager
 from ensembl.production.core.amqp_publishing import AMQPPublisher
 from ensembl.production.core.clients.datachecks import DatacheckClient
 # clients
@@ -73,7 +73,7 @@ def check_handover_db_resubmit(spec: dict):
     """
     try:
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res_error = es.search(index=es_index, body={
+            res_error = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
                     "bool": {
@@ -152,7 +152,7 @@ def get_celery_task_id(handover_token: str):
     try:
         task_id = ''
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res = es.search(index=es_index, body={
+            res = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
                     "bool": {
