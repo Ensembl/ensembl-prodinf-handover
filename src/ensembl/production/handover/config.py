@@ -117,9 +117,9 @@ class HandoverConfig:
     PORT = os.environ.get('SERVICE_PORT', file_config.get('port'))
     ES_HOST = os.environ.get('ES_HOST', file_config.get('es_host', 'localhost'))
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
-    ES_USER = os.getenv("ES_USER", EnsemblConfig.file_config.get("es_user", "elastic")),
-    ES_PASSWORD = os.getenv("ES_PASSWORD", EnsemblConfig.file_config.get("es_password", "password")),
-    ES_SSL = os.environ.get('ES_SSL', EnsemblConfig.file_config.get('es_ssl', "f")).lower() in ['true', '1']
+    ES_USER = os.getenv("ES_USER", file_config.get("es_user", "elastic")),
+    ES_PASSWORD = os.getenv("ES_PASSWORD", file_config.get("es_password", "password")),
+    ES_SSL = os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower() in ['true', '1']
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
     EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
