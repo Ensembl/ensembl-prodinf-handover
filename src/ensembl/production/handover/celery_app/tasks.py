@@ -59,7 +59,7 @@ blat_species = cfg.BLAT_SPECIES
 logger = logging.getLogger(__name__)
 
 
-def handover_database(spec):
+def handover_database(spec, restart=0):
     """ Method to accept a new database for incorporation into the system
     Argument is a dict with the following keys:
     * src_uri - URI to database to handover (required)
@@ -132,7 +132,6 @@ def restart_handover_job(handover_token, task_name):
         [dict]: [task restart status with handover spec]
     """
     try:
-        
         response = stop_handover_job(handover_token)
         if 'status' in response and not response['status']:
             return response
@@ -140,7 +139,7 @@ def restart_handover_job(handover_token, task_name):
         spec = response['spec'] 
            
         if task_name == 'datacheck':
-            ticket = handover_database(spec)
+            handover_database(spec, restart=1)         
         elif task_name == 'dbcopy':
             res = chain(
                 dbcopy_task.s(spec),

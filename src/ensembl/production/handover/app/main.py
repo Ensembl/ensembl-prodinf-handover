@@ -76,10 +76,9 @@ form_pattern = re.compile("multipart/form-data")
 es_host = app.config['ES_HOST']
 es_port = str(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
-es_user = app.config['ES_USER']
-es_password = app.config['ES_PASSWORD']
+es_user = "".join(app.config['ES_USER'])
+es_password = "".join(app.config['ES_PASSWORD'])
 es_ssl = app.config['ES_SSL']
-
 
 @app.context_processor
 def inject_configs():
@@ -252,7 +251,7 @@ def handover_status_update():
         else:
             raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res_error = es.search(index=es_index, body={"query": {"bool": {
+            res_error = es.client.search(index=es_index, body={"query": {"bool": {
                 "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
                          {"term": {"report_type.keyword": "INFO"}},
                          {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
@@ -335,7 +334,7 @@ def handover_result(handover_token=''):
 
     with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
         handover_detail = []
-        res = es.search(index=es_index, body={
+        res = es.client.search(index=es_index, body={
             "size": 0,
             "query": {
                 "bool": {
@@ -443,7 +442,7 @@ def handover_results():
         return render_template('list.html')
 
     with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-        res = es.search(index=es_index, body={
+        res = es.client.search(index=es_index, body={
             "size": 0,
             "query": {
                 "bool": {
@@ -583,7 +582,7 @@ def delete_handover(handover_token):
     try:
         app.logger.info('Retrieving handover data with token %s', handover_token)
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            es.delete_by_query(index=es_index, doc_type='report', body={
+            es.client.delete_by_query(index=es_index, doc_type='report', body={
                 "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}})
         return jsonify(str(handover_token))
     except NotFoundError as e:

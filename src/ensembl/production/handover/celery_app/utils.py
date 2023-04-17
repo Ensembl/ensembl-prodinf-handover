@@ -28,6 +28,7 @@ from ensembl.production.core.models.compara import check_grch37, get_release_com
 from ensembl.production.core.models.core import get_division, get_release
 from ensembl.production.core.reporting import make_report, ReportFormatter
 from ensembl.production.handover.config import HandoverConfig as cfg
+from ensembl.production.handover.es import ElasticsearchConnectionManager
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,8 @@ event_client = EventClient(cfg.event_uri)
 es_host = cfg.ES_HOST
 es_port = str(cfg.ES_PORT)
 es_index = cfg.ES_INDEX
-es_user = cfg.ES_USER
-es_password = cfg.ES_PASSWORD
+es_user = "".join(cfg.ES_USER)
+es_password = "".join(cfg.ES_PASSWORD)
 es_ssl = cfg.ES_SSL
 
 
@@ -73,7 +74,7 @@ def check_handover_db_resubmit(spec: dict):
     """
     try:
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res_error = es.search(index=es_index, body={
+            res_error = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
                     "bool": {
@@ -152,7 +153,7 @@ def get_celery_task_id(handover_token: str):
     try:
         task_id = ''
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res = es.search(index=es_index, body={
+            res = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
                     "bool": {

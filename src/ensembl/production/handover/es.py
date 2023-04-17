@@ -37,7 +37,7 @@ class ElasticsearchConnectionManager:
                                     http_auth=(self.user, self.password))
         if not self.client.ping():
             raise (
-                f"Cannot connect to Elasticsearch server. User: {dcg.ES_USER}, Host: {dcg.ES_HOST}, Port: {dcg.ES_PORT}"
+                f"Cannot connect to Elasticsearch server. User: {self.user}, Host: {self.host}, Port: {self.port}"
             )
         return self
 
