@@ -4,7 +4,7 @@ celery~=5.0.5
 elasticsearch>=6.8.1,<7.0.0
 email_validator
 Flask~=2.0.3
-flasgger
+git+https://github.com/flasgger/flasgger.git@05e1af4c723c8d975fc37cd88c6af41387dd12e3#egg=flasgger
 Flask-Cors
 flask_wtf
 gunicorn

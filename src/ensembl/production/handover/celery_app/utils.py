@@ -14,6 +14,7 @@ import json
 import logging
 import re
 import uuid
+import warnings
 # es clients
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
@@ -28,9 +29,11 @@ from ensembl.production.core.models.compara import check_grch37, get_release_com
 from ensembl.production.core.models.core import get_division, get_release
 from ensembl.production.core.reporting import make_report, ReportFormatter
 from ensembl.production.handover.config import HandoverConfig as cfg
+from sqlalchemy.exc import MovedIn20Warning
+# TODO remove the day we move to SQLAlchemy > 2.0
+warnings.filterwarnings("ignore", category=MovedIn20Warning)
 
 logger = logging.getLogger(__name__)
-
 release = int(cfg.RELEASE)
 handover_formatter = ReportFormatter('handover')
 publisher = AMQPPublisher(cfg.report_server,
