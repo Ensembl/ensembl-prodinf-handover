@@ -12,7 +12,8 @@ COPY --chown=appuser:appuser . /home/appuser/handover
 #Install dependencies
 RUN python -m venv /home/appuser/handover/venv
 ENV PATH="/home/appuser/handover/venv/bin:$PATH"
-RUN pip install -r requirements.txt
+RUN pip install wheel
+RUN pip install --upgrade pip
 RUN pip install .
 
 EXPOSE 5000
