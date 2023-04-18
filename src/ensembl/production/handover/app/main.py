@@ -29,7 +29,7 @@ from werkzeug.wrappers import Response
 import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
 from ensembl.production.core.exceptions import HTTPRequestError
-from ensembl.production.handover.es import ElasticsearchConnectionManager
+from ensembl.production.core.es import ElasticsearchConnectionManager
 from ensembl.production.handover.celery_app.tasks import handover_database, stop_handover_job, restart_handover_job
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.exceptions import MissingDispatchException

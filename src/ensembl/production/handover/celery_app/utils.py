@@ -17,7 +17,7 @@ import uuid
 # es clients
 from sqlalchemy.engine.url import make_url
 from sqlalchemy_utils.functions import database_exists, drop_database
-from ensembl.production.handover.es import ElasticsearchConnectionManager
+from ensembl.production.core.es import ElasticsearchConnectionManager
 from ensembl.production.core.amqp_publishing import AMQPPublisher
 from ensembl.production.core.clients.datachecks import DatacheckClient
 # clients

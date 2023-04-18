@@ -1,9 +1,9 @@
-ensembl-prodinf-core~=2.0.1
+ensembl-prodinf-core~=2.0.5a2
 Bootstrap-Flask
 celery~=5.0.5
 elasticsearch>=6.8.1,<7.0.0
 email_validator
-Flask
+Flask~=2.0.3
 flasgger
 Flask-Cors
 flask_wtf
@@ -11,7 +11,6 @@ gunicorn
 mysqlclient
 requests
 SQLAlchemy
-sqlalchemy_utils==0.37.0
 wtforms
 Jinja2
-git+https://github.com/Ensembl/ensembl-py.git#egg=ensembl-py
+git+https://github.com/Ensembl/ensembl-py.git@1.0.0dev2#egg=ensembl-py
