@@ -43,7 +43,7 @@ email-validator==2.0.0.post1
     # via -r requirements.in
 ensembl-hive @ git+https://github.com/Ensembl/ensembl-hive.git@main
     # via ensembl-py
-ensembl-prodinf-core==2.0.5a2
+ensembl-prodinf-core==2.0.5
     # via -r requirements.in
 ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@1.0.0dev2
     # via -r requirements.in
