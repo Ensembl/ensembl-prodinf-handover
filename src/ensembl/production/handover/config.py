@@ -26,15 +26,27 @@ class ComparaDispatchConfig:
 
     @classmethod
     def load_config(cls, version):
-        loader = RemoteFileLoader('json')
+        compara_version = version if version != 0 else 'main'
         compara_species = []
         for division in cls.divisions:
-            uri = f'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{version}/conf/{division}/allowed_species.json'
             try:
-                compara_species.extend(loader.r_open(uri))
+                compara_species.extend(cls.load_division(compara_version, division))
             except requests.HTTPError:
-                warnings.warn(UserWarning(f"Unable to load {division} compara from {uri}"))
+                warnings.warn(UserWarning(f"Unable to load {division} compara for {compara_version}"))
+                try:
+                    compara_species.extend(cls.load_division('main', division))
+                except requests.HTTPError:
+                    raise RuntimeError(f'Unable to load any configuration for {division}')
         return compara_species
+
+    @classmethod
+    def load_division(cls, version, division):
+        loader = RemoteFileLoader('json')
+        if version != 'main':
+            uri = f'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{version}/conf/{division}/allowed_species.json'
+        else:
+            uri = f'https://raw.githubusercontent.com/Ensembl/ensembl-compara/{version}/conf/{division}/allowed_species.json'
+        return loader.r_open(uri)
 
 
 def get_app_version():
@@ -122,8 +134,8 @@ class HandoverConfig:
     ES_PASSWORD = os.getenv("ES_PASSWORD", file_config.get("es_password", ""))
     ES_SSL = os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower() in ['true', '1']
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
-    RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
-    EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
+    RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version', '0'))
+    EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version', '0'))
 
     APP_VERSION = get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
