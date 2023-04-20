@@ -34,7 +34,7 @@ from sqlalchemy.exc import MovedIn20Warning
 warnings.filterwarnings("ignore", category=MovedIn20Warning)
 
 logger = logging.getLogger(__name__)
-release = int(cfg.RELEASE)
+release = int(cfg.RELEASE) if cfg.RELEASE else 0
 handover_formatter = ReportFormatter('handover')
 publisher = AMQPPublisher(cfg.report_server,
                           cfg.report_exchange,

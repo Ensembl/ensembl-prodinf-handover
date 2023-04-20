@@ -48,11 +48,8 @@ from ensembl.production.handover.celery_app.utils import process_handover_payloa
 from ensembl.production.handover.config import HandoverConfig as cfg
 
 retry_wait = app.conf.get('retry_wait', 60)
-release = int(cfg.RELEASE)
 
-
-if release is None:
-    raise RuntimeError("Can't figure out expected release, can't start, please review config files")
+release = int(cfg.RELEASE) if cfg.RELEASE else 0
 
 blat_species = cfg.BLAT_SPECIES
 
