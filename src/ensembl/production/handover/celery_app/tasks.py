@@ -335,15 +335,18 @@ def metadata_update_task(self, spec):
                 result['output']['events'][0].get('genome', None):
             # Loop over all genome and see if one is set for the division
             to_dispatch = False
+            genome = None
             for genome in result['output']['events']:
                 to_dispatch = genome['genome'] in cfg.compara_species
                 if to_dispatch:
                     break
-            if to_dispatch:
+            if to_dispatch and genome:
                 spec['genome'] = genome
                 spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
                 spec['progress_total'] = 4
                 log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
+            elif not genome:
+                log_and_publish(make_report('ERROR', 'Handover failed (Database dispatch failed, no related genome)', spec, tgt_uri))
             else:
                 log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
                 self.request.chain = None
