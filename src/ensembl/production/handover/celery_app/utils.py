@@ -48,10 +48,10 @@ db_types_list = [i for i in cfg.allowed_database_types.split(",")]
 allowed_divisions_list = [i for i in cfg.allowed_divisions.split(",")]
 
 # app clients
-dc_client = DatacheckClient(cfg.dc_uri)
-db_copy_client = DbCopyRestClient(cfg.copy_uri)
-metadata_client = MetadataClient(cfg.meta_uri)
-event_client = EventClient(cfg.event_uri)
+dc_client = DatacheckClient(cfg.dc_client_uri)
+db_copy_client = DbCopyRestClient(cfg.copy_client_uri)
+metadata_client = MetadataClient(cfg.meta_client_uri)
+event_client = EventClient(cfg.event_client_uri)
 
 # es Details
 es_host = cfg.ES_HOST
