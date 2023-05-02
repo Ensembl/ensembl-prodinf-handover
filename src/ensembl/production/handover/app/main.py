@@ -45,8 +45,7 @@ app = Flask(__name__,
             template_folder=template_path,
             static_url_path='/static/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
-formatter = logging.Formatter(
-    "[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
+formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
 handler = app_logging.default_handler()
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
@@ -144,7 +143,7 @@ def handover_form():
         if request.method == 'POST':
 
             if form.validate() and not request.form.get('handover_submit'):
-                spec = request.form.to_dict(flat=True)
+                spec = request.form.to_dict()
                 spec['src_uri'] = spec['src_uri'] + spec['database']
                 app.logger.debug('Submitting handover request %s', spec)
                 ticket = handover_database(spec)
