@@ -48,11 +48,8 @@ from ensembl.production.handover.celery_app.utils import process_handover_payloa
 from ensembl.production.handover.config import HandoverConfig as cfg
 
 retry_wait = app.conf.get('retry_wait', 60)
-release = int(cfg.RELEASE)
 
-
-if release is None:
-    raise RuntimeError("Can't figure out expected release, can't start, please review config files")
+release = int(cfg.RELEASE) if cfg.RELEASE else 0
 
 blat_species = cfg.BLAT_SPECIES
 
@@ -335,15 +332,18 @@ def metadata_update_task(self, spec):
                 result['output']['events'][0].get('genome', None):
             # Loop over all genome and see if one is set for the division
             to_dispatch = False
+            genome = None
             for genome in result['output']['events']:
                 to_dispatch = genome['genome'] in cfg.compara_species
                 if to_dispatch:
                     break
-            if to_dispatch:
+            if to_dispatch and genome:
                 spec['genome'] = genome
                 spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
                 spec['progress_total'] = 4
                 log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
+            elif not genome:
+                log_and_publish(make_report('ERROR', 'Handover failed (Database dispatch failed, no related genome)', spec, tgt_uri))
             else:
                 log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
                 self.request.chain = None

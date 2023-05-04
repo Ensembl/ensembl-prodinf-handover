@@ -12,9 +12,9 @@
 #    limitations under the License.
 
 import os
-import warnings
-import requests
 import pkg_resources
+import requests
+import warnings
 from pathlib import Path
 
 from ensembl.production.core.config import load_config_yaml
@@ -26,24 +26,35 @@ class ComparaDispatchConfig:
 
     @classmethod
     def load_config(cls, version):
-        loader = RemoteFileLoader('json')
         compara_species = []
         for division in cls.divisions:
-            uri = f'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{version}/conf/{division}/allowed_species.json'
             try:
-                compara_species.extend(loader.r_open(uri))
+                compara_species.extend(cls.load_division(version, division))
             except requests.HTTPError:
-                warnings.warn(UserWarning(f"Unable to load {division} compara from {uri}"))
+                raise RuntimeError(f'Unable to load any configuration for {division}')
         return compara_species
-    
+
+    @classmethod
+    def load_division(cls, version, division):
+        loader = RemoteFileLoader('json')
+        release_uri = f'https://raw.githubusercontent.com/Ensembl/ensembl-compara/release/{version}/conf/{division}/allowed_species.json'
+        main_uri = f'https://raw.githubusercontent.com/Ensembl/ensembl-compara/main/conf/{division}/allowed_species.json'
+        try:
+            return loader.r_open(release_uri)
+        except requests.HTTPError as e:
+            warnings.warn(UserWarning(f"Loading {division} compara from main: {e}"))
+            return loader.r_open(main_uri)
+
+
 def get_app_version():
     try:
-        version = pkg_resources.require("handover")[0].version
+        from importlib.metadata import version
+        version = version("handover")
     except Exception as e:
         with open(Path(__file__).parents[4] / 'VERSION') as f:
             version = f.read()
     return version
-        
+
 
 class HandoverConfig:
     config_file_path = os.environ.get('HANDOVER_CORE_CONFIG_PATH')
@@ -116,11 +127,14 @@ class HandoverConfig:
     PORT = os.environ.get('SERVICE_PORT', file_config.get('port'))
     ES_HOST = os.environ.get('ES_HOST', file_config.get('es_host', 'localhost'))
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
+    ES_USER = os.getenv("ES_USER", file_config.get("es_user", ""))
+    ES_PASSWORD = os.getenv("ES_PASSWORD", file_config.get("es_password", ""))
+    ES_SSL = os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower() in ['true', '1']
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
     EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
-    
-    APP_VERSION =  get_app_version()
+
+    APP_VERSION = get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
     BLAT_SPECIES = ['homo_sapiens',
@@ -138,10 +152,10 @@ class HandoverConfig:
                     'ovis_aries',
                     'oreochromis_niloticus',
                     'gadus_morhua']
-    
-    ALLOWED_TASK_RESTART = os.environ.get('ALLOWED_TASK_RESTART', file_config.get('allowed_tasks_restart', 'datacheck,copyjob,metadata')).split(',')
-    
-    
+
+    ALLOWED_TASK_RESTART = os.environ.get('ALLOWED_TASK_RESTART',
+                                          file_config.get('allowed_tasks_restart', 'datacheck,copyjob,metadata')).split(
+        ',')
 
 
 class HandoverCeleryConfig:
@@ -159,13 +173,13 @@ class HandoverCeleryConfig:
                                         file_config.get('from_email_address', 'ensprod@ebi.ac.uk'))
     retry_wait = int(os.environ.get("RETRY_WAIT",
                                     file_config.get('retry_wait', 60)))
-    
+
     task_queue_ha_policy = os.environ.get("TASK_QUEUE_HA_POLICY",
-                                        file_config.get('task_queue_ha_policy', 'all'))
+                                          file_config.get('task_queue_ha_policy', 'all'))
     task_default_queue = os.environ.get("TASK_DEFAULT_QUEUE",
                                         file_config.get('task_default_queue', 'handover'))
     worker_prefetch_multiplier = int(os.environ.get("WORKER_PREFETCH_MULTIPLIER",
-                                        file_config.get('worker_prefetch_multiplier', 1)))
+                                                    file_config.get('worker_prefetch_multiplier', 1)))
     task_routes = {
         os.environ.get("ROUTING_KEY",
                        file_config.get('routing_key', 'ensembl.production.handover.celery_app.tasks.*')): {

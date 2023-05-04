@@ -1,6 +1,7 @@
 include LICENSE
 include NOTICE
 include VERSION
+include requirements.txt
 include src/ensembl/production/handover/templates/*
 include src/ensembl/production/handover/static/css/*
 include src/ensembl/production/handover/static/js/*

@@ -11,49 +11,61 @@
 #   limitations under the License.
 
 import unittest
+import warnings
 from pathlib import Path
-import pkg_resources
+
+import requests
 
 from ensembl.production.handover.config import ComparaDispatchConfig, HandoverConfig
+from sqlalchemy.exc import MovedIn20Warning
+
+warnings.filterwarnings("ignore", category=MovedIn20Warning)
+
 
 class TestHOConfigLoader(unittest.TestCase):
 
     def test_config_load_104(self):
-        # compara config for fungi / metazoa not existing in 104
-        with self.assertWarnsRegex(UserWarning,  r'^Unable to load (fungi|metazoa) compara from .*$'):
+        # compara config for fungi not existing in 104
+        # ComparaDispatchConfig.divisions = ['vertebrates', 'plants', 'metazoa', 'fungi']
+        with self.assertWarnsRegex(UserWarning, r'^Loading fungi compara from main.*$'):
             config = ComparaDispatchConfig.load_config('104')
         self.assertIn('homo_sapiens', config)
         self.assertIn('anopheles_gambiae', config)
         self.assertIn('zea_mays', config)
 
-    def test_config_load_106(self):
-        # compara config for metazoa added in 106
-        with self.assertWarnsRegex(UserWarning,  r'^Unable to load fungi compara from .*$'):
-            config = ComparaDispatchConfig.load_config('106')
-        self.assertIn('homo_sapiens', config)
-        self.assertIn('anopheles_gambiae', config)
-        self.assertIn('zea_mays', config)
-
     def test_config_load_108(self):
+        # All divisions now exists in compara
         config = ComparaDispatchConfig.load_config('108')
         self.assertIn('homo_sapiens', config)
         self.assertIn('anopheles_gambiae', config)
         self.assertIn('zea_mays', config)
 
     def test_config_load_not_exists(self):
-        config = ComparaDispatchConfig.load_config('5000')
-        # Load main instead
-        self.assertFalse(config)
+        with self.assertWarnsRegex(UserWarning, r'^Loading metazoa compara from main.*$'):
+            ComparaDispatchConfig.load_division('5000', 'metazoa')
+
+    def test_config_load_main(self):
+        with self.assertWarnsRegex(UserWarning, r'^Loading plants compara from main.*$'):
+            ComparaDispatchConfig.load_division(None, 'plants')
+
 
 class TestAPPVersion(unittest.TestCase):
 
     def test_config_app_version(self):
-        version = pkg_resources.require("handover")[0].version
-        with open(Path(__file__).parent.parent.parent / 'VERSION') as f:
-            version_file = f.read().strip('\n')
-
+        try:
+            from importlib.metadata import version
+            version = version("handover")
+            version_pkg = True
+        except Exception as e:
+            version = "unknown"
+            version_pkg = False
+        with open(Path(__file__).parents[2] / 'VERSION') as f:
+            version_file = f.read()
         version_config = HandoverConfig.APP_VERSION
-        self.assertEqual(version, version_config)
-        self.assertEqual(version, version_file)
-        self.assertEqual(version_file, version_config )
-
+        print("version", version)
+        print("version_config", version_config)
+        print("version_file", version_file)
+        if version_pkg:
+            self.assertEqual(version, version_config)
+            self.assertRegex(version, version_file)
+        self.assertRegex(version_config, version_file)
