@@ -11,14 +11,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
-import pkg_resources
-import requests
 import warnings
 from pathlib import Path
 
+import requests
+
 from ensembl.production.core.config import load_config_yaml
 from ensembl.utils.rloader import RemoteFileLoader
+from flask.logging import default_handler
+
+logger = logging.getLogger(__name__)
+logger.addHandler(default_handler)
 
 
 class ComparaDispatchConfig:
@@ -67,8 +72,8 @@ class HandoverConfig:
     dc_uri = os.environ.get("DC_URI", file_config.get('dc_uri', "http://localhost:5001/datacheck"))
 
     copy_client_uri = os.environ.get("COPY_CLIENT_URI",
-                              file_config.get('copy_client_uri',
-                                              "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
+                                     file_config.get('copy_client_uri',
+                                                     "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
                                               "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
