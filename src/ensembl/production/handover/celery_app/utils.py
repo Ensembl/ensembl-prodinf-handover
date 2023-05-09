@@ -30,6 +30,7 @@ from ensembl.production.core.models.core import get_division, get_release
 from ensembl.production.core.reporting import make_report, ReportFormatter
 from ensembl.production.handover.config import HandoverConfig as cfg
 from sqlalchemy.exc import MovedIn20Warning
+
 # TODO remove the day we move to SQLAlchemy > 2.0
 warnings.filterwarnings("ignore", category=MovedIn20Warning)
 
@@ -60,6 +61,20 @@ es_index = cfg.ES_INDEX
 es_user = cfg.ES_USER
 es_password = cfg.ES_PASSWORD
 es_ssl = cfg.ES_SSL
+
+
+def qualified_name(db_uri):
+
+    import re
+    db_url = make_url(db_uri)
+    if re.search('[a-z-]?(.ebi.ac.uk|.org)', db_url.host) or db_url.host in ('localhost', 'mysql'):
+        return db_uri
+    else:
+        host = f'{db_url.host}.ebi.ac.uk'
+        if db_url.password:
+            return f"{db_url.drivername}://{db_url.username}:{db_url.password}@{host}:{db_url.port}/{db_url.database}"
+        else:
+            return f"{db_url.drivername}://{db_url.username}@{host}:{db_url.port}/{db_url.database}"
 
 
 def check_handover_db_resubmit(spec: dict):
@@ -294,11 +309,12 @@ def process_handover_payload(spec):
     # create unique identifier
     spec['handover_token'] = str(uuid.uuid1())
     spec['progress_total'] = 3
-    if not database_exists(src_uri):
+    if not database_exists(qualified_name(src_uri)):
         msg = "Handover failed, %s does not exist" % src_uri
         log_and_publish(make_report('ERROR', msg, spec, src_uri))
         raise ValueError("%s does not exist" % src_uri)
     src_url = make_url(src_uri)
+
     # Scan database name and retrieve species or compara name, database type, release number and assembly version
     db_prefix, db_type, assembly = parse_db_infos(src_url.database)
     # Check if the given database can be handed over

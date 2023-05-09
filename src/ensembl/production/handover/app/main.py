@@ -153,7 +153,8 @@ def handover_form():
                 for error_key, error in form.errors.items():
                     flash(f"{error_key}: {error}")
     except Exception as e:
-        flash(str(e))
+        app.logger.exception(f"Handover error {e}")
+        flash(f"Something went wrong: {e}")
     return render_template(
         'submit.html',
         form=form
@@ -218,27 +219,26 @@ def handovers():
           {src_uri: "mysql://user@server:port/saccharomyces_cerevisiae_core_91_4", contact: "joe.blogg@ebi.ac.uk", comment: "handover new Panda OF"}
     """
     try:
-      
-      if not cfg.compara_species:
-          # Empty list of compara
-          raise MissingDispatchException
-      # get form data
-      if form_pattern.match(request.headers['Content-Type']):
-          spec = request.form.to_dict(flat=True)
-      elif json_pattern.match(request.headers['Content-Type']):
-          spec = request.json
-      else:
-          raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
+        if not cfg.compara_species:
+            # Empty list of compara
+            raise MissingDispatchException
+            # get form data
+        if form_pattern.match(request.headers['Content-Type']):
+            spec = request.form.to_dict(flat=True)
+        elif json_pattern.match(request.headers['Content-Type']):
+            spec = request.json
+        else:
+            raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
 
-      if 'src_uri' not in spec or 'contact' not in spec or 'comment' not in spec:
-          raise HTTPRequestError("Handover specification incomplete - please specify src_uri, contact and comment")
+        if 'src_uri' not in spec or 'contact' not in spec or 'comment' not in spec:
+            raise HTTPRequestError("Handover specification incomplete - please specify src_uri, contact and comment")
 
-      app.logger.debug('Submitting handover request %s', spec)
-      ticket = handover_database(spec)
-      app.logger.info('Ticket: %s', ticket)
+        app.logger.debug('Submitting handover request %s', spec)
+        ticket = handover_database(spec)
+        app.logger.info('Ticket: %s', ticket)
+
     except Exception as e:
-      raise HTTPRequestError(str(e), 400)
-    
+        raise HTTPRequestError(str(e), 400)
     return jsonify(ticket)
 
 
@@ -642,14 +642,14 @@ def stop_handover(handover_token=None):
           id: 15ce20fd-68cd-11e8-8117-005056ab00f0
     """
     try:
-        
-        handover_token = request.args.get('handover_token', handover_token )
+
+        handover_token = request.args.get('handover_token', handover_token)
         if handover_token is None:
-          raise ValueError('required handover_token')
-          
+            raise ValueError('required handover_token')
+
         status = stop_handover_job(handover_token)
         return status
-      
+
     except NotFoundError as e:
         raise HTTPRequestError('Error while looking for handover token: {} - {}:{}'.format(
             handover_token, e.error, e.info['error']['reason']), 404)
@@ -715,28 +715,24 @@ def restart_handover():
     """
     try:
 
-        handover_token = request.args.get('handover_token', None )
-        task_name = request.args.get('task_name', None )
-
+        handover_token = request.args.get('handover_token', None)
+        task_name = request.args.get('task_name', None)
 
         if handover_token is None or task_name is None:
-          raise ValueError('request arguments handover_token and task_name are required')
+            raise ValueError('request arguments handover_token and task_name are required')
 
         if task_name not in app.config.get('ALLOWED_TASK_RESTART', []):
-          raise ValueError('request arguments task_name is not in ALLOWED_TASK_RESTART')
+            raise ValueError('request arguments task_name is not in ALLOWED_TASK_RESTART')
 
         res = restart_handover_job(handover_token, task_name)
 
         if not res['status']:
-          raise ValueError(res['error'])
+            raise ValueError(res['error'])
 
         return jsonify(res)
 
     except Exception as e:
         return jsonify(error=str(e)), 400
-
-
-
 
 
 @app.errorhandler(TransportError)
