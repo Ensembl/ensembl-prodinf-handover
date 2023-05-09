@@ -218,7 +218,7 @@ def dbcopy_task(self, spec):
         # submit copy job for first retry
         if not self.request.retries:
             spec['copy_job_id'] = submit_copy(spec)
-            copy_in_progress_msg = f"Copying in progress, please see: <a href='${cfg.copy_web_uri}{spec['copy_job_id']}' target='_parent'>{spec['copy_job_id']}</a>"
+            copy_in_progress_msg = f"Copying in progress, please see: <a href='{cfg.copy_web_uri}{spec['copy_job_id']}' target='_parent'>{spec['copy_job_id']}</a>"
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
 
         # retrieve copy job status

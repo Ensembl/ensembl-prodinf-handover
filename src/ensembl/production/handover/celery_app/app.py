@@ -16,7 +16,7 @@ import logging
 from celery import Celery
 
 app = Celery('ensembl_handover_celery',
-             include=['ensembl.production.handover.celery_app.tasks'])
+             include=['tasks'])
 
 # Load the externalised config module from PYTHONPATH
 try:
