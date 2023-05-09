@@ -48,10 +48,10 @@ db_types_list = [i for i in cfg.allowed_database_types.split(",")]
 allowed_divisions_list = [i for i in cfg.allowed_divisions.split(",")]
 
 # app clients
-dc_client = DatacheckClient(cfg.dc_uri)
-db_copy_client = DbCopyRestClient(cfg.copy_uri)
-metadata_client = MetadataClient(cfg.meta_uri)
-event_client = EventClient(cfg.event_uri)
+dc_client = DatacheckClient(cfg.dc_client_uri)
+db_copy_client = DbCopyRestClient(cfg.copy_client_uri)
+metadata_client = MetadataClient(cfg.meta_client_uri)
+event_client = EventClient(cfg.event_client_uri)
 
 # es Details
 es_host = cfg.ES_HOST
@@ -226,7 +226,7 @@ def parse_db_infos(database):
 
 
 def check_staging_server(spec, db_type, db_prefix, assembly):
-    """Find which staging server should be use. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
+    """Find which staging server should be used. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
     if 'bacteria' in db_prefix:
         staging_uri = cfg.secondary_staging_uri
         live_uri = cfg.secondary_live_uri
@@ -407,7 +407,8 @@ def submit_copy(spec):
 
         # submit a copy job
         copy_job_id = db_copy_client.submit_job(src_host, src_incl_db, None, None, None,
-                                                tgt_host, tgt_db_name, False, False, False, cfg.production_email,
+                                                tgt_host, tgt_db_name, False, False, False,
+                                                cfg.production_email,
                                                 cfg.copy_job_user)
 
     except Exception as e:

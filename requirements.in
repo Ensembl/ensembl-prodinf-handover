@@ -1,4 +1,4 @@
-ensembl-prodinf-core>=2.0.5
+ensembl-prodinf-core==2.0.6a1
 Bootstrap-Flask
 celery~=5.0.5
 elasticsearch>=6.8.1,<7.0.0

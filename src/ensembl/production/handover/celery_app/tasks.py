@@ -129,13 +129,13 @@ def restart_handover_job(handover_token, task_name):
         [dict]: [task restart status with handover spec]
     """
     try:
-        
+
         response = stop_handover_job(handover_token)
         if 'status' in response and not response['status']:
             return response
-        
-        spec = response['spec'] 
-           
+
+        spec = response['spec']
+
         if task_name == 'datacheck':
             ticket = handover_database(spec)
         elif task_name == 'dbcopy':
@@ -150,13 +150,12 @@ def restart_handover_job(handover_token, task_name):
                 dispatch_db_task.s(),
             )()
         else:
-            raise ValueError(f"No task {task_name} defined")                             
-                 
+            raise ValueError(f"No task {task_name} defined")
+
         return {'status': True, 'error': f"", 'spec': spec}
-        
+
     except Exception as e:
         return {'status': False, 'error': f"{str(e)}"}
-
 
 
 @app.task(bind=True, default_retry_delay=retry_wait)
@@ -165,7 +164,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
     self.max_retries = None
     src_uri = spec['src_uri']
     spec['task_id'] = self.request.id
-    progress_msg = 'Datachecks in progress, please see: %sjobs/%s' % (cfg.dc_uri, dc_job_id)
+    progress_msg = f"Datachecks in progress"
     log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
     try:
         result = dc_client.retrieve_job(dc_job_id)
@@ -185,8 +184,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
         raise self.retry()
     elif result['status'] == 'failed':
         self.request.chain = None
-        prob_msg = 'Datachecks found problems, Handover failed, you can download the output here: %sdownload_datacheck_outputs/%s' % (
-            cfg.dc_uri, dc_job_id)
+        prob_msg = f'Datachecks found problems, Handover failed, you can download the output here: {cfg.dc_uri}download_datacheck_outputs/{dc_job_id}'
         log_and_publish(make_report('INFO', prob_msg, spec, src_uri))
         msg = """Running datachecks on %s completed but found problems. You can download the output here %s""" % (
             src_uri, cfg.dc_uri + "download_datacheck_outputs/" + str(dc_job_id))
@@ -194,8 +192,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
                    smtp_server=cfg.smtp_server)
     elif result['status'] == 'dc-run-error':
         self.request.chain = None
-        msg = """Datachecks didn't run successfully, Handover failed. Please see %s""" % (
-                    cfg.dc_uri + "jobs/" + str(dc_job_id))
+        msg = f"Datachecks didn't run successfully, Handover failed. Please see <a href='{cfg.dc_uri}jobs/{dc_job_id}'>here</a>"
         log_and_publish(make_report('INFO', msg, spec, src_uri))
         send_email(to_address=spec['contact'], subject='Datacheck run issue', body=msg, smtp_server=cfg.smtp_server)
     else:
@@ -221,7 +218,7 @@ def dbcopy_task(self, spec):
         # submit copy job for first retry
         if not self.request.retries:
             spec['copy_job_id'] = submit_copy(spec)
-            copy_in_progress_msg = 'Copying in progress, please see: %s%s' % (cfg.copy_web_uri, spec['copy_job_id'])
+            copy_in_progress_msg = f"Copying in progress, please see: <a href='${cfg.copy_web_uri}{spec['copy_job_id']}' target='_parent'>{spec['copy_job_id']}</a>"
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
 
         # retrieve copy job status
@@ -239,10 +236,9 @@ def dbcopy_task(self, spec):
 
     if status == 'Failed':
         self.request.chain = None
-        copy_failed_msg = 'Copy failed, please see: %s%s' % (cfg.copy_web_uri, spec['copy_job_id'])
+        copy_failed_msg = f"Copy failed, please see: <a href='{cfg.copy_web_uri}{spec['copy_job_id']}'>{spec['copy_job_id']}</a>"
         log_and_publish(make_report('INFO', copy_failed_msg, spec, src_uri))
-        msg = """Copying %s to %s failed. Please see %s""" % (
-        src_uri, spec['tgt_uri'], cfg.copy_web_uri + str(spec['copy_job_id']))
+        msg = f"Copying {src_uri} to {spec['tgt_uri']} failed. Please see <a href='{cfg.copy_web_uri}{spec['copy_job_id']}' target='_parent'>{spec['copy_job_id']}</a>"
         send_email(to_address=spec['contact'], subject='Database copy failed', body=msg, smtp_server=cfg.smtp_server)
     elif 'GRCh37' in spec:
         self.request.chain = None
@@ -268,8 +264,7 @@ def metadata_update_task(self, spec):
         # submit metadata update job for first retry
         if not self.request.retries:
             spec['metadata_job_id'] = submit_metadata_update(spec)
-            loading_msg = 'Loading into metadata database, please see: %sjobs/%s' % (
-            cfg.meta_uri, spec['metadata_job_id'])
+            loading_msg = f"Loading into metadata database, please see: <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}'>{spec['metadata_job_id']}</a>"
             log_and_publish(make_report('INFO', loading_msg, spec, tgt_uri))
 
         # retrieve metadata update job status
@@ -294,16 +289,16 @@ def metadata_update_task(self, spec):
         db_drop_status = drop_current_databases([], spec, target_db_delete=True)
         db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
         log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
-        failed_msg = 'Metadata load failed, please see %sjobs/%s?format=failures' % (
-        cfg.meta_uri, spec['metadata_job_id'])
+        failed_msg = "Metadata load failed, please see <a href='%sjobs/%s?format=failures' target='_blank'>here</a>" % (
+            cfg.meta_uri, spec['metadata_job_id'])
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
-        msg = """
-                Metadata load of %s failed.
-                Please see %s
-        """ % (tgt_uri, cfg.meta_uri + 'jobs/' + str(spec['metadata_job_id']) + '?format=failures')
+        msg = f"""
+                Metadata load of {tgt_uri} failed.
+                Please see <a href='{cfg.meta_uri}jobs{spec['metadata_job_id']}?format=failures' target='_parent'>{spec['metadata_job_id']}</a>"
+        """
         send_email(to_address=spec['contact'],
-                   subject='Metadata load failed, please see: ' + cfg.meta_uri + 'jobs/' + str(
-                       spec['metadata_job_id']) + '?format=failures', body=msg, smtp_server=cfg.smtp_server)
+                   subject=f"Metadata load failed, please see: {cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures",
+                   body=msg, smtp_server=cfg.smtp_server)
     else:
         # Cleaning up old assembly or old genebuild databases for Wormbase when database suffix has changed
         if 'events' in result['output'] and result['output']['events']:
@@ -343,7 +338,9 @@ def metadata_update_task(self, spec):
                 spec['progress_total'] = 4
                 log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
             elif not genome:
-                log_and_publish(make_report('ERROR', 'Handover failed (Database dispatch failed, no related genome)', spec, tgt_uri))
+                log_and_publish(
+                    make_report('ERROR', 'Handover failed (Database dispatch failed, no related genome)', spec,
+                                tgt_uri))
             else:
                 log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
                 self.request.chain = None
@@ -368,8 +365,7 @@ def dispatch_db_task(self, spec):
         # submit dispatch job for first retry
         if not self.request.retries:
             spec['dispatch_job_id'] = submit_copy(spec)
-            copy_in_progress_msg = 'Dispatching in progress, please see: %s%s' % (
-            cfg.copy_web_uri, spec['dispatch_job_id'])
+            copy_in_progress_msg = f"Dispatching in progress, please see: <a href='{cfg.copy_web_uri}{spec['dispatch_job_id']}' target='_parent'>{spec['dispatch_job_id']}</a>"
             log_and_publish(make_report('INFO', copy_in_progress_msg, spec, src_uri))
 
         # retrieve dispatch job status
@@ -391,8 +387,7 @@ def dispatch_db_task(self, spec):
         self.request.chain = None
         copy_failed_msg = 'Database dispatch failed, please see: %s%s' % (cfg.copy_web_uri, spec['dispatch_job_id'])
         log_and_publish(make_report('INFO', copy_failed_msg, spec, src_uri))
-        msg = """Dispatch %s to %s failed. Please see %s""" % (
-        src_uri, spec['tgt_uri'], cfg.copy_web_uri + str(spec['dispatch_job_id']))
+        msg = f"Dispatch {src_uri} to {spec['tgt_uri']} failed. Please see <a href='{cfg.copy_web_uri}{spec['dispatch_job_id']}' target='_parent'>{spec['dispatch_job_id']}</a>"
         send_email(to_address=spec['contact'], subject='Database dispatch failed', body=msg,
                    smtp_server=cfg.smtp_server)
     else:

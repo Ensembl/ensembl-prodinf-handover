@@ -45,8 +45,7 @@ app = Flask(__name__,
             template_folder=template_path,
             static_url_path='/static/handovers/')
 app.config.from_object('ensembl.production.handover.config.HandoverConfig')
-formatter = logging.Formatter(
-    "[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
+formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
 handler = app_logging.default_handler()
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
@@ -74,7 +73,7 @@ bootstrap = Bootstrap4(app)
 json_pattern = re.compile("application/json")
 form_pattern = re.compile("multipart/form-data")
 es_host = app.config['ES_HOST']
-es_port = str(app.config['ES_PORT'])
+es_port = int(app.config['ES_PORT'])
 es_index = app.config['ES_INDEX']
 es_user = app.config['ES_USER']
 es_password = app.config['ES_PASSWORD']
@@ -144,7 +143,7 @@ def handover_form():
         if request.method == 'POST':
 
             if form.validate() and not request.form.get('handover_submit'):
-                spec = request.form.to_dict(flat=True)
+                spec = request.form.to_dict()
                 spec['src_uri'] = spec['src_uri'] + spec['database']
                 app.logger.debug('Submitting handover request %s', spec)
                 ticket = handover_database(spec)
@@ -328,7 +327,6 @@ def handover_result(handover_token=''):
     fmt = request.args.get('format', None)
     # TODO Move this into core (potential usage on every flask app)
     # renter bootstrap table
-    app.logger.info("Request Headers %s", request.headers)
     if fmt != 'json' and not request.is_json:
         return render_template('result.html',
                                handover_token=handover_token)

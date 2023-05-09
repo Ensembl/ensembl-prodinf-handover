@@ -22,7 +22,7 @@ class TestHandover(unittest.TestCase):
     def test_valid_handover_valid(self):
         release = '101'
         valid_uris = [
-            'mysql://ensro@mysql-ens-vertannot-staging:4573/ensembl_compara_fungi_48_101',
+            'mysql://ensro@mysql-ens-vertannot-staging.ebi.ac.uk:4573/ensembl_compara_fungi_48_101',
             'mysql://ensro@mysql-ens-vertannot-staging:4573/ensembl_compara_metazoa_48_101',
             'mysql://ensro@mysql-ens-vertannot-staging:4573/ensembl_compara_pan_homology_48_101',
             'mysql://ensro@mysql-ens-vertannot-staging:4573/ensembl_compara_plants_48_101',
