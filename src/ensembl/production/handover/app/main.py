@@ -327,7 +327,6 @@ def handover_result(handover_token=''):
     fmt = request.args.get('format', None)
     # TODO Move this into core (potential usage on every flask app)
     # renter bootstrap table
-    app.logger.info("Request Headers %s", request.headers)
     if fmt != 'json' and not request.is_json:
         return render_template('result.html',
                                handover_token=handover_token)

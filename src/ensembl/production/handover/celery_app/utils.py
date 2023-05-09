@@ -226,7 +226,7 @@ def parse_db_infos(database):
 
 
 def check_staging_server(spec, db_type, db_prefix, assembly):
-    """Find which staging server should be use. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
+    """Find which staging server should be used. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
     if 'bacteria' in db_prefix:
         staging_uri = cfg.secondary_staging_uri
         live_uri = cfg.secondary_live_uri
@@ -407,7 +407,8 @@ def submit_copy(spec):
 
         # submit a copy job
         copy_job_id = db_copy_client.submit_job(src_host, src_incl_db, None, None, None,
-                                                tgt_host, tgt_db_name, False, False, False, cfg.production_email,
+                                                tgt_host, tgt_db_name, False, False, False,
+                                                cfg.production_email,
                                                 cfg.copy_job_user)
 
     except Exception as e:
