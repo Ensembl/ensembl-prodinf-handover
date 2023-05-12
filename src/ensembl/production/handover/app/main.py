@@ -16,7 +16,7 @@ import os
 import re
 
 import requests
-from elasticsearch import Elasticsearch, TransportError, NotFoundError
+from elasticsearch import TransportError, NotFoundError
 from flasgger import Swagger
 from flask import Flask, request, jsonify, render_template, redirect, flash, url_for
 from flask_bootstrap import Bootstrap4
@@ -28,8 +28,8 @@ from werkzeug.wrappers import Response
 
 import ensembl.production.handover.exceptions
 from ensembl.production.core import app_logging
-from ensembl.production.core.exceptions import HTTPRequestError
 from ensembl.production.core.es import ElasticsearchConnectionManager
+from ensembl.production.core.exceptions import HTTPRequestError
 from ensembl.production.handover.celery_app.tasks import handover_database, stop_handover_job, restart_handover_job
 from ensembl.production.handover.config import HandoverConfig as cfg
 from ensembl.production.handover.exceptions import MissingDispatchException
