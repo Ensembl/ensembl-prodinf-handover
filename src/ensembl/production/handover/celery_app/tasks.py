@@ -236,7 +236,7 @@ def dbcopy_task(self, spec):
 
     if status == 'Failed':
         self.request.chain = None
-        copy_failed_msg = f"Copy failed, please see: <a href='{cfg.copy_web_uri}{spec['copy_job_id']}'>{spec['copy_job_id']}</a>"
+        copy_failed_msg = f"Copy failed, please see: <a href='{cfg.copy_web_uri}{spec['copy_job_id']}' target='_parent'>{spec['copy_job_id']}</a>"
         log_and_publish(make_report('INFO', copy_failed_msg, spec, src_uri))
         msg = f"Copying {src_uri} to {spec['tgt_uri']} failed. Please see <a href='{cfg.copy_web_uri}{spec['copy_job_id']}' target='_parent'>{spec['copy_job_id']}</a>"
         send_email(to_address=spec['contact'], subject='Database copy failed', body=msg, smtp_server=cfg.smtp_server)
@@ -264,7 +264,7 @@ def metadata_update_task(self, spec):
         # submit metadata update job for first retry
         if not self.request.retries:
             spec['metadata_job_id'] = submit_metadata_update(spec)
-            loading_msg = f"Loading into metadata database, please see: <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}'>{spec['metadata_job_id']}</a>"
+            loading_msg = f"Loading into metadata database, please see: <a target='_blank' href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}'>{spec['metadata_job_id']}</a>"
             log_and_publish(make_report('INFO', loading_msg, spec, tgt_uri))
 
         # retrieve metadata update job status
@@ -289,15 +289,14 @@ def metadata_update_task(self, spec):
         db_drop_status = drop_current_databases([], spec, target_db_delete=True)
         db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
         log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
-        failed_msg = "Metadata load failed, please see <a href='%sjobs/%s?format=failures' target='_blank'>here</a>" % (
-            cfg.meta_uri, spec['metadata_job_id'])
+        failed_msg = f"Metadata load failed, please see <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures' target='_blank'>here</a>"
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
         msg = f"""
                 Metadata load of {tgt_uri} failed.
-                Please see <a href='{cfg.meta_uri}jobs{spec['metadata_job_id']}?format=failures' target='_parent'>{spec['metadata_job_id']}</a>"
+                Please see <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures' target='_blank'>here</a>"
         """
         send_email(to_address=spec['contact'],
-                   subject=f"Metadata load failed, please see: {cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures",
+                   subject=f"Metadata load failed, please see: <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures target='_blank'>here</a>",
                    body=msg, smtp_server=cfg.smtp_server)
     else:
         # Cleaning up old assembly or old genebuild databases for Wormbase when database suffix has changed
