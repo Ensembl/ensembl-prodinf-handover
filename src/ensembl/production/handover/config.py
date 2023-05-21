@@ -11,14 +11,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
+import logging
 import os
-import pkg_resources
-import requests
 import warnings
 from pathlib import Path
 
+import requests
+
 from ensembl.production.core.config import load_config_yaml
 from ensembl.utils.rloader import RemoteFileLoader
+from flask.logging import default_handler
+
+logger = logging.getLogger(__name__)
+logger.addHandler(default_handler)
 
 
 class ComparaDispatchConfig:
@@ -63,8 +68,12 @@ class HandoverConfig:
     # core config
     SECRET_KEY = os.environ.get('SECRET_KEY',
                                 file_config.get('secret_key', os.urandom(32)))
-    dc_uri = os.environ.get("DC_URI",
-                            file_config.get('dc_uri', "http://localhost:5001/datacheck"))
+    dc_client_uri = os.environ.get("DC_CLIENT_URI", file_config.get('dc_client_uri', "http://localhost:5001/datacheck"))
+    dc_uri = os.environ.get("DC_URI", file_config.get('dc_uri', "http://localhost:5001/datacheck"))
+
+    copy_client_uri = os.environ.get("COPY_CLIENT_URI",
+                                     file_config.get('copy_client_uri',
+                                                     "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
                                               "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
@@ -75,45 +84,31 @@ class HandoverConfig:
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
                                                   "http://services.test.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
-    meta_uri = os.environ.get("META_URI",
-                              file_config.get('meta_uri',
-                                              "http://localhost:5002/"))
-    event_uri = os.environ.get("EVENT_URI",
-                               file_config.get('event_uri',
-                                               'http://localhost:5003/'))
+    meta_client_uri = os.environ.get("META_CLIENT_URI", file_config.get('meta_client_uri', "http://localhost:5002/"))
+    meta_uri = os.environ.get("META_URI", file_config.get('meta_uri', "http://localhost:5002/"))
+    event_client_uri = os.environ.get("EVENT_CLIENT_URI", file_config.get('event_client_uri', 'http://localhost:5003/'))
+    event_uri = os.environ.get("EVENT_URI", file_config.get('event_uri', 'http://localhost:5003/'))
+
     staging_uri = os.environ.get("STAGING_URI",
-                                 file_config.get('staging_uri',
-                                                 "mysql://ensro@mysql-ens-general-dev-1:4484/"))
-    secondary_staging_uri = os.environ.get("SECONDARY_STAGING_URI",
-                                           file_config.get('secondary_staging_uri',
-                                                           "mysql://ensro@mysql-ens-general-dev-1:4484/"))
-    live_uri = os.environ.get("LIVE_URI",
-                              file_config.get('live_uri',
-                                              "mysql://user@127.0.0.1:3306/"))
-    secondary_live_uri = os.environ.get("SECONDARY_LIVE_URI",
-                                        file_config.get('secondary_live_uri',
-                                                        "mysql://ensembl@127.0.0.1:3306/"))
-    smtp_server = os.environ.get("SMTP_SERVER",
-                                 file_config.get('smtp_server', 'smtp.ebi.ac.uk'))
-    report_server = os.environ.get("REPORT_SERVER",
-                                   file_config.get('report_server',
-                                                   "amqp://guest:guest@ensrabbitmq:5672/%2F"))
+                                 file_config.get('staging_uri', "mysql://ensro@mysql-ens-general-dev-1:4484/"))
+    secondary_staging_uri = os.environ.get("SECONDARY_STAGING_URI", file_config.get('secondary_staging_uri',
+                                                                                    "mysql://ensro@mysql-ens-general-dev-1:4484/"))
+    live_uri = os.environ.get("LIVE_URI", file_config.get('live_uri', "mysql://user@127.0.0.1:3306/"))
+    secondary_live_uri = os.environ.get("SECONDARY_LIVE_URI", file_config.get('secondary_live_uri',
+                                                                              "mysql://ensembl@127.0.0.1:3306/"))
+    smtp_server = os.environ.get("SMTP_SERVER", file_config.get('smtp_server', 'smtp.ebi.ac.uk'))
+    report_server = os.environ.get("REPORT_SERVER", file_config.get('report_server',
+                                                                    "amqp://guest:guest@ensrabbitmq:5672/%2F"))
     report_exchange = os.environ.get("REPORT_EXCHANGE",
                                      file_config.get('report_exchange', 'report_exchange'))
-    report_exchange_type = os.environ.get("REPORT_EXCHANGE_TYPE",
-                                          file_config.get('report_exchange_type', 'topic'))
-    data_files_path = os.environ.get("DATA_FILE_PATH",
-                                     file_config.get('data_files_path', '/data_files/'))
+    report_exchange_type = os.environ.get("REPORT_EXCHANGE_TYPE", file_config.get('report_exchange_type', 'topic'))
+    data_files_path = os.environ.get("DATA_FILE_PATH", file_config.get('data_files_path', '/data_files/'))
     allowed_database_types = os.environ.get("ALLOWED_DATABASE_TYPES",
                                             file_config.get('allowed_database_types',
                                                             'core,rnaseq,cdna,otherfeatures,variation,'
                                                             'funcgen,compara,ancestral'))
-    production_email = os.environ.get("PRODUCTION_EMAIL",
-                                      file_config.get('production_email',
-                                                      'ensprod@ebi.ac.uk'))
-    allowed_divisions = os.environ.get("ALLOWED_DIVISIONS",
-                                       file_config.get('allowed_divisions',
-                                                       'vertebrates'))
+    production_email = os.environ.get("PRODUCTION_EMAIL", file_config.get('production_email', 'ensprod@ebi.ac.uk'))
+    allowed_divisions = os.environ.get("ALLOWED_DIVISIONS", file_config.get('allowed_divisions', 'vertebrates'))
 
     dispatch_targets = file_config.get('dispatch_targets', {})
     copy_job_user = file_config.get('copy_job_user', 'ensprod')

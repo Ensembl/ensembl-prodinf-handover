@@ -39,11 +39,11 @@ dnspython==2.3.0
     # via email-validator
 elasticsearch==6.8.2
     # via -r requirements.in
-email-validator==2.0.0.post1
+email-validator==2.0.0.post2
     # via -r requirements.in
 ensembl-hive @ git+https://github.com/Ensembl/ensembl-hive.git@main
     # via ensembl-py
-ensembl-prodinf-core==2.0.5
+ensembl-prodinf-core==2.0.6a1
     # via -r requirements.in
 ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@1.0.0dev2
     # via -r requirements.in
@@ -122,7 +122,7 @@ pyyaml==6.0
     #   ensembl-prodinf-core
     #   ensembl-py
     #   flasgger
-requests==2.28.2
+requests==2.29.0
     # via
     #   -r requirements.in
     #   ensembl-prodinf-core
@@ -133,7 +133,7 @@ six==1.15.0
     #   ensembl-prodinf-core
     #   flasgger
     #   flask-cors
-sqlalchemy==1.4.47
+sqlalchemy==1.4.48
     # via
     #   -r requirements.in
     #   ensembl-prodinf-core
@@ -155,7 +155,7 @@ vine==5.0.0
     #   celery
 wcwidth==0.2.6
     # via prompt-toolkit
-werkzeug==2.2.3
+werkzeug==2.3.3
     # via flask
 wtforms==3.0.1
     # via

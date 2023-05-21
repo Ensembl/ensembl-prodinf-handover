@@ -17,7 +17,7 @@ from wtforms.validators import Email, InputRequired, Regexp
 class HandoverSubmissionForm(Form):
     src_uri = StringField('Database server uri: ',
                           validators=[InputRequired(),
-                                      Regexp(r'mysql://\w+(:\w+)?@[\w-]+:\d{4}/?',
+                                      Regexp(r'mysql://\w+(:\w+)?@[\w.-]+:\d{4}/?',
                                              message="Server URI must follow this pattern  mysql://user(:pass)@server:port/")],
                           render_kw={
                               "placeholder": "Enter Server URI, e.g: mysql://ensro@mysql-ens-general-dev-1:4484/"})

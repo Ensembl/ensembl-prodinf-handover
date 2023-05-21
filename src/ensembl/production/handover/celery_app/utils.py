@@ -30,6 +30,7 @@ from ensembl.production.core.models.core import get_division, get_release
 from ensembl.production.core.reporting import make_report, ReportFormatter
 from ensembl.production.handover.config import HandoverConfig as cfg
 from sqlalchemy.exc import MovedIn20Warning
+
 # TODO remove the day we move to SQLAlchemy > 2.0
 warnings.filterwarnings("ignore", category=MovedIn20Warning)
 
@@ -48,10 +49,10 @@ db_types_list = [i for i in cfg.allowed_database_types.split(",")]
 allowed_divisions_list = [i for i in cfg.allowed_divisions.split(",")]
 
 # app clients
-dc_client = DatacheckClient(cfg.dc_uri)
-db_copy_client = DbCopyRestClient(cfg.copy_uri)
-metadata_client = MetadataClient(cfg.meta_uri)
-event_client = EventClient(cfg.event_uri)
+dc_client = DatacheckClient(cfg.dc_client_uri)
+db_copy_client = DbCopyRestClient(cfg.copy_client_uri)
+metadata_client = MetadataClient(cfg.meta_client_uri)
+event_client = EventClient(cfg.event_client_uri)
 
 # es Details
 es_host = cfg.ES_HOST
@@ -60,6 +61,20 @@ es_index = cfg.ES_INDEX
 es_user = cfg.ES_USER
 es_password = cfg.ES_PASSWORD
 es_ssl = cfg.ES_SSL
+
+
+def qualified_name(db_uri):
+
+    import re
+    db_url = make_url(db_uri)
+    if re.search('[a-z-]?(.ebi.ac.uk|.org)', db_url.host) or db_url.host in ('localhost', 'mysql'):
+        return db_uri
+    else:
+        host = f'{db_url.host}.ebi.ac.uk'
+        if db_url.password:
+            return f"{db_url.drivername}://{db_url.username}:{db_url.password}@{host}:{db_url.port}/{db_url.database}"
+        else:
+            return f"{db_url.drivername}://{db_url.username}@{host}:{db_url.port}/{db_url.database}"
 
 
 def check_handover_db_resubmit(spec: dict):
@@ -226,7 +241,8 @@ def parse_db_infos(database):
 
 
 def check_staging_server(spec, db_type, db_prefix, assembly):
-    """Find which staging server should be use. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
+    """Find which staging server should be used. secondary_staging for GRCh37 and Bacteria, staging for the rest"""
+    qualified_uri = qualified_name(spec['src_uri'])
     if 'bacteria' in db_prefix:
         staging_uri = cfg.secondary_staging_uri
         live_uri = cfg.secondary_live_uri
@@ -235,7 +251,7 @@ def check_staging_server(spec, db_type, db_prefix, assembly):
         live_uri = cfg.secondary_live_uri
         spec['GRCh37'] = 1
         spec['progress_total'] = 2
-    elif db_type == 'compara' and check_grch37(spec['src_uri'], 'homo_sapiens'):
+    elif db_type == 'compara' and check_grch37(qualified_uri, 'homo_sapiens'):
         staging_uri = cfg.secondary_staging_uri
         live_uri = cfg.secondary_live_uri
         spec['GRCh37'] = 1
@@ -294,11 +310,13 @@ def process_handover_payload(spec):
     # create unique identifier
     spec['handover_token'] = str(uuid.uuid1())
     spec['progress_total'] = 3
-    if not database_exists(src_uri):
+    qualified_uri = qualified_name(src_uri)
+    if not database_exists(qualified_uri):
         msg = "Handover failed, %s does not exist" % src_uri
         log_and_publish(make_report('ERROR', msg, spec, src_uri))
         raise ValueError("%s does not exist" % src_uri)
     src_url = make_url(src_uri)
+
     # Scan database name and retrieve species or compara name, database type, release number and assembly version
     db_prefix, db_type, assembly = parse_db_infos(src_url.database)
     # Check if the given database can be handed over
@@ -309,11 +327,11 @@ def process_handover_payload(spec):
         raise ValueError(msg)
     # Check if the database release match the handover service
     if db_type == 'compara':
-        if check_grch37(spec['src_uri'], 'homo_sapiens'):
+        if check_grch37(qualified_uri, 'homo_sapiens'):
             spec['progress_total'] = 2
-        db_release = get_release_compara(src_uri)
+        db_release = get_release_compara(qualified_uri)
     else:
-        db_release = get_release(src_uri)
+        db_release = get_release(qualified_uri)
         logger.debug("Db_release %s %s", db_type, db_release)
         if db_prefix == 'homo_sapiens' and assembly == '37':
             logger.debug("It's 37 assembly - no metadata update")
@@ -336,7 +354,7 @@ def process_handover_payload(spec):
     if db_type in ['compara', 'ancestral']:
         db_division = db_prefix
     else:
-        db_division = get_division(src_uri, spec['tgt_uri'], db_type)
+        db_division = get_division(qualified_uri, spec['tgt_uri'], db_type)
 
     if db_division not in allowed_divisions_list:
         raise ValueError(
@@ -356,6 +374,7 @@ def submit_dc(spec, src_url, db_type):
     try:
         src_uri = spec['src_uri']
         tgt_uri = spec['tgt_uri']
+        qualified_uri = qualified_name(src_uri)
         staging_uri = spec['staging_uri']
         handover_token = spec['handover_token']
         server_url = 'mysql://%s@%s:%s/' % (src_url.username, src_url.host, src_url.port)
@@ -370,7 +389,7 @@ def submit_dc(spec, src_url, db_type):
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
                                              'core', None, 'ancestral', 'critical', None, handover_token, staging_uri)
         elif db_type in ['rnaseq', 'cdna', 'otherfeatures']:
-            division_msg = 'division: %s' % get_division(src_uri, tgt_uri, db_type)
+            division_msg = 'division: %s' % get_division(qualified_uri, tgt_uri, db_type)
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_group = 'corelike,rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else 'corelike'
@@ -379,7 +398,7 @@ def submit_dc(spec, src_url, db_type):
         else:
             db_msg = 'src_uri: %s dbtype %s server_url %s' % (src_uri, db_type, server_url)
             log_and_publish(make_report('DEBUG', db_msg, spec, src_uri))
-            division_msg = 'division: %s' % get_division(src_uri, tgt_uri, db_type)
+            division_msg = 'division: %s' % get_division(qualified_uri, tgt_uri, db_type)
             log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_group = db_type + ',rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else db_type
@@ -407,7 +426,8 @@ def submit_copy(spec):
 
         # submit a copy job
         copy_job_id = db_copy_client.submit_job(src_host, src_incl_db, None, None, None,
-                                                tgt_host, tgt_db_name, False, False, False, cfg.production_email,
+                                                tgt_host, tgt_db_name, False, False, False,
+                                                cfg.production_email,
                                                 cfg.copy_job_user)
 
     except Exception as e:
