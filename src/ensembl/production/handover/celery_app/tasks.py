@@ -192,7 +192,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
                    smtp_server=cfg.smtp_server)
     elif result['status'] == 'dc-run-error':
         self.request.chain = None
-        msg = f"Datachecks didn't run successfully, Handover failed. Please see <a href='{cfg.dc_uri}jobs/{dc_job_id}'>here</a>"
+        msg = f"Datachecks didn't run successfully, Handover failed. Please see <a target='_blank' href='{cfg.dc_uri}jobs/{dc_job_id}'>here</a>"
         log_and_publish(make_report('INFO', msg, spec, src_uri))
         send_email(to_address=spec['contact'], subject='Datacheck run issue', body=msg, smtp_server=cfg.smtp_server)
     else:
@@ -264,7 +264,7 @@ def metadata_update_task(self, spec):
         # submit metadata update job for first retry
         if not self.request.retries:
             spec['metadata_job_id'] = submit_metadata_update(spec)
-            loading_msg = f"Loading into metadata database, please see: <a target='_blank' href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}'>{spec['metadata_job_id']}</a>"
+            loading_msg = f"Loading into metadata database, please see: <a target='_blank' href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}'>here</a>"
             log_and_publish(make_report('INFO', loading_msg, spec, tgt_uri))
 
         # retrieve metadata update job status
