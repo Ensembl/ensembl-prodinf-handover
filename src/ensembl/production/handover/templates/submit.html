@@ -20,7 +20,7 @@
       </div>
     </div>
     <div class="card border-2 shadow my-5 h-border">
-      <legend class=" h-buttons">&nbsp; Handover {{config['HANDOVER_TYPE']}}&nbsp; Allowed DB Types:&nbsp;{{config['ALLOWED_DATABASE_TYPES']}}&nbsp;</legend> 
+      <legend class=" h-buttons">&nbsp; Handover {{config['HANDOVER_TYPE']}}&nbsp;</legend> 
     <div class="row">
         <div class="col-12">
             <form action="" method="post" enctype="multipart/form-data" >
@@ -80,7 +80,8 @@
                 </fieldset>            
                 <div class="form-group row">
                   <div class="col-sm-12 mt-2">
-                    <div class="col-sm-12">{{ form.submit( class='btn h-buttons', style='float:right;' ) }}</div>
+                    <div class="col-sm-12">
+                      <span class="alert alert-warning" role="alert"><strong>Note:</strong> Allowed DB's to submit : <strong>{{ALLOWED_DATABASE_TYPES}}</strong></span>{{ form.submit( class='btn h-buttons', style='float:right;' ) }}</div>
                       <!--<button style='float:right;'  class="btn btn-primary bg-{{config['background']}}" type="button" >Submit</button>-->
                   </div>
                 </div>            
