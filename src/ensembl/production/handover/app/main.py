@@ -158,7 +158,8 @@ def handover_form():
     return render_template(
         'submit.html',
         form=form,
-        ALLOWED_DATABASE_TYPES=cfg.allowed_database_types if cfg.allowed_database_types else "None - Handover closed"
+        ALLOWED_DATABASE_TYPES=cfg.allowed_database_types if cfg.allowed_database_types else "None - Handover closed",
+        disable_submission=cfg.allowed_database_types == ''
     )
 
 
