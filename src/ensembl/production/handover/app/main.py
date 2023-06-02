@@ -157,7 +157,9 @@ def handover_form():
         flash(f"Something went wrong: {e}")
     return render_template(
         'submit.html',
-        form=form
+        form=form,
+        ALLOWED_DATABASE_TYPES=cfg.allowed_database_types if cfg.allowed_database_types else "None - Handover closed",
+        disable_submission=cfg.allowed_database_types == ''
     )
 
 

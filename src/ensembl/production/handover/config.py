@@ -96,7 +96,7 @@ class HandoverConfig:
     live_uri = os.environ.get("LIVE_URI", file_config.get('live_uri', "mysql://user@127.0.0.1:3306/"))
     secondary_live_uri = os.environ.get("SECONDARY_LIVE_URI", file_config.get('secondary_live_uri',
                                                                               "mysql://ensembl@127.0.0.1:3306/"))
-    smtp_server = os.environ.get("SMTP_SERVER", file_config.get('smtp_server', 'smtp.ebi.ac.uk'))
+    smtp_server = os.environ.get("SMTP_HOST", file_config.get('smtp_host', 'smtp.ebi.ac.uk'))
     report_server = os.environ.get("REPORT_SERVER", file_config.get('report_server',
                                                                     "amqp://guest:guest@ensrabbitmq:5672/%2F"))
     report_exchange = os.environ.get("REPORT_EXCHANGE",
@@ -104,9 +104,7 @@ class HandoverConfig:
     report_exchange_type = os.environ.get("REPORT_EXCHANGE_TYPE", file_config.get('report_exchange_type', 'topic'))
     data_files_path = os.environ.get("DATA_FILE_PATH", file_config.get('data_files_path', '/data_files/'))
     allowed_database_types = os.environ.get("ALLOWED_DATABASE_TYPES",
-                                            file_config.get('allowed_database_types',
-                                                            'core,rnaseq,cdna,otherfeatures,variation,'
-                                                            'funcgen,compara,ancestral'))
+                                            file_config.get('allowed_database_types', ''))
     production_email = os.environ.get("PRODUCTION_EMAIL", file_config.get('production_email', 'ensprod@ebi.ac.uk'))
     allowed_divisions = os.environ.get("ALLOWED_DIVISIONS", file_config.get('allowed_divisions', 'vertebrates'))
 

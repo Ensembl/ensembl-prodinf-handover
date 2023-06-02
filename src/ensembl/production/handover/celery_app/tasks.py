@@ -184,16 +184,15 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
         raise self.retry()
     elif result['status'] == 'failed':
         self.request.chain = None
-        prob_msg = f'Datachecks found problems, Handover failed, you can download the output here: {cfg.dc_uri}download_datacheck_outputs/{dc_job_id}'
-        log_and_publish(make_report('INFO', prob_msg, spec, src_uri))
-        msg = """Running datachecks on %s completed but found problems. You can download the output here %s""" % (
-            src_uri, cfg.dc_uri + "download_datacheck_outputs/" + str(dc_job_id))
+        prob_msg = f'Datachecks found problems, Handover failed, you can download the output here: <a target="_blank" href="{cfg.dc_uri}download_datacheck_outputs/{dc_job_id}">here</a>'
+        log_and_publish(make_report('ERROR', prob_msg, spec, src_uri))
+        msg = f"""Running datachecks on %s completed but found problems. You can download the output here <a target="_blank" href="{cfg.dc_uri}download_datacheck_outputs/{dc_job_id}">here</a>"""
         send_email(to_address=spec['contact'], subject='Datacheck found problems', body=msg,
                    smtp_server=cfg.smtp_server)
     elif result['status'] == 'dc-run-error':
         self.request.chain = None
         msg = f"Datachecks didn't run successfully, Handover failed. Please see <a target='_blank' href='{cfg.dc_uri}jobs/{dc_job_id}'>here</a>"
-        log_and_publish(make_report('INFO', msg, spec, src_uri))
+        log_and_publish(make_report('ERROR', msg, spec, src_uri))
         send_email(to_address=spec['contact'], subject='Datacheck run issue', body=msg, smtp_server=cfg.smtp_server)
     else:
         if spec.get('job_progress', None):
