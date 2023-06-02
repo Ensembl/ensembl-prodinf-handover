@@ -104,9 +104,7 @@ class HandoverConfig:
     report_exchange_type = os.environ.get("REPORT_EXCHANGE_TYPE", file_config.get('report_exchange_type', 'topic'))
     data_files_path = os.environ.get("DATA_FILE_PATH", file_config.get('data_files_path', '/data_files/'))
     allowed_database_types = os.environ.get("ALLOWED_DATABASE_TYPES",
-                                            file_config.get('allowed_database_types',
-                                                            'core,rnaseq,cdna,otherfeatures,variation,'
-                                                            'funcgen,compara,ancestral'))
+                                            file_config.get('allowed_database_types', ''))
     production_email = os.environ.get("PRODUCTION_EMAIL", file_config.get('production_email', 'ensprod@ebi.ac.uk'))
     allowed_divisions = os.environ.get("ALLOWED_DIVISIONS", file_config.get('allowed_divisions', 'vertebrates'))
 
