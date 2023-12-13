@@ -13,4 +13,4 @@ requests
 SQLAlchemy
 wtforms
 Jinja2
-git+https://github.com/Ensembl/ensembl-py.git@1.0.0dev2#egg=ensembl-py
+git+https://github.com/Ensembl/ensembl-py.git@1.2.2#egg=ensembl-py

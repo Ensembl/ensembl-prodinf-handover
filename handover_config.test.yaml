@@ -15,3 +15,6 @@ dispatch_targets:
 retry_wait: 30
 celery_broker_url: "pyamqp://localhost:31772/production"
 result_backend: "rpc://localhost:31772/production"
+dispatch_all: true
+dispatch_target:
+ core: mysql://ensembl@localhost:3306

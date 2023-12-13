@@ -314,28 +314,31 @@ def metadata_update_task(self, spec):
                                body=msg)
 
         spec['progress_complete'] = 3
-        # log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
         log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
-
-        dispatch_to = cfg.dispatch_targets.get(spec['db_type'], None)
-
-        if dispatch_to is not None and \
-                cfg.HANDOVER_TYPE != 'rapid' and cfg.HANDOVER_TYPE != 'viruses' and \
-                len(result['output']['events']) > 0 and \
-                result['output']['events'][0].get('genome', None):
+        # get dispatch target for db_type
+        db_type_dispatch_target = cfg.dispatch_targets.get(spec['db_type'], "")
+        db_type_dispatch_target = (db_type_dispatch_target != "")
+        if (db_type_dispatch_target and len(result['output']['events']) > 0
+                and result['output']['events'][0].get('genome', None)):
             # Loop over all genome and see if one is set for the division
             to_dispatch = False
-            genome = None
-            for genome in result['output']['events']:
-                to_dispatch = genome['genome'] in cfg.compara_species
+            genome_info = None
+            for genome_info in result['output']['events']:
+                to_dispatch = genome_info['genome'] in cfg.compara_species or cfg.dispatch_all
                 if to_dispatch:
                     break
-            if to_dispatch and genome:
-                spec['genome'] = genome
-                spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
-                spec['progress_total'] = 4
-                log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
-            elif not genome:
+            if to_dispatch and genome_info:
+                spec['genome'] = genome_info
+                # get dispatch target host, default to core one if not defined for DB type
+                spec['tgt_uri'] = cfg.dispatch_targets.get(spec['db_type'], cfg.dispatch_targets.get('core', None))
+                if spec['tgt_uri'] is not None:
+                    spec['progress_total'] = 4
+                    log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
+                else:
+                    spec['progress_total'] = 3
+                    log_and_publish(
+                        make_report('WARNING', 'Handover Can\'t find a proper target to dispatch to', spec, tgt_uri))
+            elif not genome_info:
                 log_and_publish(
                     make_report('ERROR', 'Handover failed (Database dispatch failed, no related genome)', spec,
                                 tgt_uri))

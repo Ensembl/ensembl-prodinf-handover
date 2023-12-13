@@ -107,13 +107,12 @@ class HandoverConfig:
                                             file_config.get('allowed_database_types', ''))
     production_email = os.environ.get("PRODUCTION_EMAIL", file_config.get('production_email', 'ensprod@ebi.ac.uk'))
     allowed_divisions = os.environ.get("ALLOWED_DIVISIONS", file_config.get('allowed_divisions', 'vertebrates'))
-
+    dispatch_all = file_config.get('dispatch_all', False)
     dispatch_targets = file_config.get('dispatch_targets', {})
     copy_job_user = file_config.get('copy_job_user', 'ensprod')
 
     # handover layout
-    HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type',
-                                                                    'vertebrates'))
+    HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type', 'vertebrates'))
 
     # es config
     HOST = os.environ.get('SERVICE_HOST', file_config.get('host', '0.0.0.0'))
