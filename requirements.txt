@@ -160,8 +160,9 @@ sqlalchemy-utils==0.38.3
     #   ensembl-py
 tomli==2.0.1
     # via pytest
-urllib3==2.1.0
+urllib3==1.26.6
     # via
+    #   -r requirements.in
     #   elasticsearch
     #   requests
 vine==5.1.0
