@@ -170,8 +170,10 @@ vine==5.1.0
     #   celery
 wcwidth==0.2.12
     # via prompt-toolkit
-werkzeug==3.0.1
-    # via flask
+werkzeug==2.3.8
+    # via
+    #   -r requirements.in
+    #   flask
 wtforms==3.1.1
     # via
     #   -r requirements.in

@@ -14,3 +14,4 @@ SQLAlchemy
 wtforms
 Jinja2
 git+https://github.com/Ensembl/ensembl-py.git@1.2.2#egg=ensembl-py
+werkzeug==2.3.8
