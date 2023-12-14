@@ -25,8 +25,17 @@ from flask.logging import default_handler
 logger = logging.getLogger(__name__)
 logger.addHandler(default_handler)
 
-def parse_boolean_var(var: str):
-    return not ((var.lower() in ("f", "false", "no", "none")) or (not var))
+
+def parse_boolean_var(var):
+    if isinstance(var, bool):
+        return var
+    elif isinstance(var, str):
+        return not ((var.lower() in ("f", "false", "no", "none")) or (not var))
+    else:
+        # default to false, something is wrong.
+        warnings.warn(f"Var {var} couldn't be parsed to boolean")
+        return False
+
 
 class ComparaDispatchConfig:
     divisions = {'vertebrates', 'plants', 'metazoa', 'fungi', 'protists'}
@@ -178,5 +187,6 @@ class HandoverCeleryConfig:
         os.environ.get("ROUTING_KEY",
                        file_config.get('routing_key', 'ensembl.production.handover.celery_app.tasks.*')): {
             'queue': os.environ.get("QUEUE",
-                                    file_config.get('queue', 'handover'))}
+                                    file_config.get('queue', 'handover'))
+        }
     }
