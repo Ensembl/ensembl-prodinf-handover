@@ -25,6 +25,8 @@ from flask.logging import default_handler
 logger = logging.getLogger(__name__)
 logger.addHandler(default_handler)
 
+def parse_boolean_var(var: str):
+    return not ((var.lower() in ("f", "false", "no", "none")) or (not var))
 
 class ComparaDispatchConfig:
     divisions = {'vertebrates', 'plants', 'metazoa', 'fungi', 'protists'}
@@ -107,7 +109,7 @@ class HandoverConfig:
                                             file_config.get('allowed_database_types', ''))
     production_email = os.environ.get("PRODUCTION_EMAIL", file_config.get('production_email', 'ensprod@ebi.ac.uk'))
     allowed_divisions = os.environ.get("ALLOWED_DIVISIONS", file_config.get('allowed_divisions', 'vertebrates'))
-    dispatch_all = file_config.get('dispatch_all', False)
+    dispatch_all = parse_boolean_var(file_config.get('dispatch_all', 'False'))
     dispatch_targets = file_config.get('dispatch_targets', {})
     copy_job_user = file_config.get('copy_job_user', 'ensprod')
 
@@ -121,7 +123,7 @@ class HandoverConfig:
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_USER = os.getenv("ES_USER", file_config.get("es_user", ""))
     ES_PASSWORD = os.getenv("ES_PASSWORD", file_config.get("es_password", ""))
-    ES_SSL = os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower() in ['true', '1']
+    ES_SSL = parse_boolean_var(os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower())
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
     EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))

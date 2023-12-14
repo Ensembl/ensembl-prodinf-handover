@@ -167,13 +167,15 @@ class ParseDbInfosTest(unittest.TestCase):
 
     def test_handover_payload(self):
         from ensembl.production.handover.celery_app.utils import qualified_name
-        src_uri = ["mysql://ensro@mysql-host-1:4685/homo_sapiens_core_105_38",
-                   "mysql://ensembl@mysql-host-1.ebi.ac.uk:3306/homo_sapiens_core_105_38",
-                   "mysql://ensembl:ensembl@ensembldb.org:3306/homo_sapiens_core_105_38"
-                   ]
-        qualified_src_uri = ["mysql://ensro@mysql-host-1.ebi.ac.uk:4685/homo_sapiens_core_105_38",
-                             "mysql://ensembl@mysql-host-1.ebi.ac.uk:3306/homo_sapiens_core_105_38",
-                             "mysql://ensembl:ensembl@ensembldb.org:3306/homo_sapiens_core_105_38"
-                             ]
+        src_uri = [
+            "mysql://ensro@mysql-host-1:4685/homo_sapiens_core_105_38",
+            "mysql://ensembl@mysql-host-1.ebi.ac.uk:3306/homo_sapiens_core_105_38",
+            "mysql://ensembl:ensembl@ensembldb.org:3306/homo_sapiens_core_105_38"
+        ]
+        qualified_src_uri = [
+            "mysql://ensro@mysql-host-1.ebi.ac.uk:4685/homo_sapiens_core_105_38",
+            "mysql://ensembl@mysql-host-1.ebi.ac.uk:3306/homo_sapiens_core_105_38",
+            "mysql://ensembl:ensembl@ensembldb.org:3306/homo_sapiens_core_105_38"
+        ]
         for src, qualified in zip(src_uri, qualified_src_uri):
             self.assertEqual(qualified, qualified_name(src))

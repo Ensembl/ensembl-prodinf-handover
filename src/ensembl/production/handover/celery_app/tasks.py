@@ -316,18 +316,17 @@ def metadata_update_task(self, spec):
         spec['progress_complete'] = 3
         log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
         # get dispatch target for db_type
-        db_type_dispatch_target = cfg.dispatch_targets.get(spec['db_type'], "")
-        db_type_dispatch_target = (db_type_dispatch_target != "")
+        db_type_dispatch_target = (cfg.dispatch_targets.get(spec['db_type'], "") != "")
         if (db_type_dispatch_target and len(result['output']['events']) > 0
                 and result['output']['events'][0].get('genome', None)):
             # Loop over all genome and see if one is set for the division
-            to_dispatch = False
+            need_dispatch = False
             genome_info = None
             for genome_info in result['output']['events']:
-                to_dispatch = genome_info['genome'] in cfg.compara_species or cfg.dispatch_all
-                if to_dispatch:
+                need_dispatch = genome_info['genome'] in cfg.compara_species or cfg.dispatch_all
+                if need_dispatch:
                     break
-            if to_dispatch and genome_info:
+            if need_dispatch and genome_info:
                 spec['genome'] = genome_info
                 # get dispatch target host, default to core one if not defined for DB type
                 spec['tgt_uri'] = cfg.dispatch_targets.get(spec['db_type'], cfg.dispatch_targets.get('core', None))
