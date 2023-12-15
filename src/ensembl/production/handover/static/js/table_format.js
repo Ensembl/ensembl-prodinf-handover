@@ -3,7 +3,7 @@
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-        http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,12 @@ function row_details(id) {
 }
 
 function FormatHandover(index, row) {
-    return `<a rel="noopener noreferrer" href="${script_name}/jobs/${row.handover_token}">${row.handover_token}</a>`;
+    return `<a rel="noopener noreferrer" href="/${script_name}/jobs/${row.handover_token}">${row.handover_token}</a>`;
 }
 
 function detailFormatter(index, row) {
     $.ajax({
-        url: `${script_name}/jobs/${row.handover_token}?format=json`,
+        url: `/api/${script_name}/jobs/${row.handover_token}?format=json`,
         headers: {'Content-Type': 'application/json'},
         success: function (result) {
             HandoverBaseInfo(result[0]);
@@ -175,7 +175,7 @@ function statusFormat(value, row) {
 
 function urlify(text) {
 
-    var url = new RegExp('(.+)http://(.+)');
+    var url = new RegExp('(.+)https://(.+)');
     var urlRegex = /(https?:\/\/[^\s]+)/g;
     if (url.test(text)) {
         return text.replace(urlRegex, function (url) {

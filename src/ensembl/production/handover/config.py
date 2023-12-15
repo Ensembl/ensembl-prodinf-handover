@@ -4,7 +4,7 @@
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
+#        https://www.apache.org/licenses/LICENSE-2.0
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -84,21 +84,21 @@ class HandoverConfig:
 
     copy_client_uri = os.environ.get("COPY_CLIENT_URI",
                                      file_config.get('copy_client_uri',
-                                                     "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
+                                                     "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
-                                              "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
+                                              "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
                                        file_config.get('copy_uri_dropdown',
-                                                       "http://services.test.ensembl-production.ebi.ac.uk/"))
+                                                       "https://services.test.ensembl-production.ebi.ac.uk/"))
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
-                                                  "http://services.test.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
+                                                  "https://services.test.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
     meta_client_uri = os.environ.get("META_CLIENT_URI", file_config.get('meta_client_uri', "http://localhost:5002/"))
     meta_uri = os.environ.get("META_URI", file_config.get('meta_uri', "http://localhost:5002/"))
     event_client_uri = os.environ.get("EVENT_CLIENT_URI", file_config.get('event_client_uri', 'http://localhost:5003/'))
-    event_uri = os.environ.get("EVENT_URI", file_config.get('event_uri', 'http://localhost:5003/'))
+    event_uri = os.environ.get("EVENT_URI", file_config.get('event_uri', 'https://localhost:5003/'))
 
     staging_uri = os.environ.get("STAGING_URI",
                                  file_config.get('staging_uri', "mysql://ensro@mysql-ens-general-dev-1:4484/"))

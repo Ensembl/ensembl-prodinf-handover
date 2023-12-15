@@ -2,7 +2,8 @@
 {% block styles %}
 {{ super() }}
 <link type="text/css"  rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table.min.css') }}"/>
-<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+      integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
@@ -101,7 +102,7 @@
     var $completed = $('.customfilter')
     $table.bootstrapTable('refreshOptions', {
       theadClasses: "h-buttons",
-       url: `${script_name}/jobs?format=json`
+       url: `/${script_name}/jobs?format=json`
     });
 
     $table.bootstrapTable('expandAllRows');
@@ -119,7 +120,7 @@
       //delete list of handovers_token
       $.each(handovers_token, function( index, value ) {
         $.ajax({
-          url: `${script_name}/jobs/${value}`,
+          url: `/${script_name}/jobs/${value}`,
           type: 'DELETE',
           success: function(){
             $table.bootstrapTable('remove', {
@@ -176,7 +177,7 @@
       } 
       //delete handover
        $.ajax({
-         url: `${script_name}/jobs`,
+         url: `/${script_name}/jobs`,
          type: 'POST',
          data: JSON.stringify({'src_uri' : row[0].src_uri, 'contact' : row[0].contact, 
             'source': 'Handover', 'comment' : row[0].comment }),
