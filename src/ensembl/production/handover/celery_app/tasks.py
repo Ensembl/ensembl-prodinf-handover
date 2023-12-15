@@ -288,8 +288,8 @@ def metadata_update_task(self, spec):
         log_and_publish(make_report('INFO', drop_msg, spec, tgt_uri))
 
         db_drop_status = drop_current_databases([], spec, target_db_delete=True)
-        db_drop_message = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
-        log_and_publish(make_report('INFO', db_drop_message, spec, tgt_uri))
+        db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
+        log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
         failed_msg = f"Metadata load failed, please see <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures' target='_blank'>here</a>"
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
         msg = f"""

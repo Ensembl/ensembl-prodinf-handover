@@ -354,7 +354,7 @@ def process_handover_payload(spec):
     if db_type in ['compara', 'ancestral']:
         db_division = db_prefix
     else:
-        db_division = get_division(qualified_uri, spec['tgt_uri'], db_type)
+        db_division = get_division(qualified_uri, qualified_name(spec['tgt_uri']), db_type)
 
     if db_division not in allowed_divisions_list:
         raise ValueError(
