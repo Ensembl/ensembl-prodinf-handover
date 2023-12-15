@@ -288,8 +288,8 @@ def metadata_update_task(self, spec):
         log_and_publish(make_report('INFO', drop_msg, spec, tgt_uri))
 
         db_drop_status = drop_current_databases([], spec, target_db_delete=True)
-        db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
-        log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
+        db_drop_message = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
+        log_and_publish(make_report('INFO', db_drop_message, spec, tgt_uri))
         failed_msg = f"Metadata load failed, please see <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures' target='_blank'>here</a>"
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
         msg = f"""
@@ -322,10 +322,10 @@ def metadata_update_task(self, spec):
         if (db_type_dispatch_target and len(result['output']['events']) > 0
                 and result['output']['events'][0].get('genome', None)):
             # Loop over all genome and see if one is set for the division
-            need_dispatch = False
+            need_dispatch = False or cfg.dispatch_all
             genome_info = None
             for genome_info in result['output']['events']:
-                need_dispatch = genome_info['genome'] in cfg.compara_species or cfg.dispatch_all
+                need_dispatch = genome_info['genome'] in cfg.compara_species
                 if need_dispatch:
                     break
             if need_dispatch and genome_info:
@@ -334,7 +334,7 @@ def metadata_update_task(self, spec):
                 spec['tgt_uri'] = cfg.dispatch_targets.get(spec['db_type'], cfg.dispatch_targets.get('core', None))
                 if spec['tgt_uri'] is not None:
                     spec['progress_total'] = 4
-                    log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
+                    log_and_publish(make_report('INFO', f"Dispatching Database to target hosts: {spec['tgt_uri']}"))
                 else:
                     spec['progress_total'] = 3
                     log_and_publish(
