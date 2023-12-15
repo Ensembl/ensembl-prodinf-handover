@@ -55,7 +55,7 @@ function HandoverBaseInfo(handover_details) {
     const problems = new RegExp('^(.+)problems(.+)$');
     const meta_data_failed = new RegExp('^Metadata(.+)failed(.+)');
 
-    let job_status = urlify(handover_details.message);
+    let job_status = handover_details.message;
 
     if (meta_data_failed.test(handover_details.message)) {
         $('#status').show();

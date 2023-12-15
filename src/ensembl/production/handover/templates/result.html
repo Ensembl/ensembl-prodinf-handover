@@ -77,7 +77,7 @@
                 const handover_token = $('#handoverjob').val();
                 console.log(handover_token);
                 $.ajax({
-                    url: '${script_name}/jobs/status',
+                    url: "/api/${script_name}/jobs/status",
                     dataType: 'json',
                     headers: {
                         "Content-Type": "application/json"
@@ -127,7 +127,7 @@
                         src_uri = src_uri.slice(0, src_uri.length - 1).join("/") + "/";
 
                         const form = $(`</div hidden style="display:none">
-                           <form hidden action="${script_name}/jobs/submit" method="POST">
+                           <form hidden action="/${script_name}/jobs/submit" method="POST">
                             <input type="text" name="src_uri" value="${src_uri}" hidden />
                              <input type="text" name="database" value="${db}" hidden/>
                              <input type="text" name="contact" value="${data.contact}" hidden />
