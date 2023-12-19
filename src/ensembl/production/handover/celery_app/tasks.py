@@ -135,16 +135,20 @@ def restart_handover_job(handover_token, task_name):
             return response
 
         spec = response['spec']
-
+        spec['progress_complete'] = 0
         if task_name == 'datacheck':
             ticket = handover_database(spec)
         elif task_name == 'dbcopy':
+            spec['progress_complete'] = 2
+            spec.pop('job_progress', None)
             res = chain(
                 dbcopy_task.s(spec),
                 metadata_update_task.s(),
                 dispatch_db_task.s(),
             )()
         elif task_name == 'metadata':
+            spec['progress_complete'] = 3
+            spec.pop('job_progress', None)
             res = chain(
                 metadata_update_task.s(spec),
                 dispatch_db_task.s(),
