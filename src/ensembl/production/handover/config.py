@@ -84,7 +84,8 @@ class HandoverConfig:
 
     copy_client_uri = os.environ.get("COPY_CLIENT_URI",
                                      file_config.get('copy_client_uri',
-                                                     "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
+                                                     "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy"
+                                                     "/requestjob"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
                                               "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
@@ -94,7 +95,8 @@ class HandoverConfig:
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
-                                                  "https://services.test.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
+                                                  "https://services.test.ensembl-production.ebi.ac.uk/admin"
+                                                  "/ensembl_dbcopy/requestjob/"))
     meta_client_uri = os.environ.get("META_CLIENT_URI", file_config.get('meta_client_uri', "http://localhost:5002/"))
     meta_uri = os.environ.get("META_URI", file_config.get('meta_uri', "http://localhost:5002/"))
     event_client_uri = os.environ.get("EVENT_CLIENT_URI", file_config.get('event_client_uri', 'http://localhost:5003/'))
@@ -102,8 +104,9 @@ class HandoverConfig:
 
     staging_uri = os.environ.get("STAGING_URI",
                                  file_config.get('staging_uri', "mysql://ensro@mysql-ens-general-dev-1:4484/"))
-    secondary_staging_uri = os.environ.get("SECONDARY_STAGING_URI", file_config.get('secondary_staging_uri',
-                                                                                    "mysql://ensro@mysql-ens-general-dev-1:4484/"))
+    secondary_staging_uri = os.environ.get("SECONDARY_STAGING_URI",
+                                           file_config.get('secondary_staging_uri',
+                                                           "mysql://ensro@mysql-ens-general-dev-1:4484/"))
     live_uri = os.environ.get("LIVE_URI", file_config.get('live_uri', "mysql://user@127.0.0.1:3306/"))
     secondary_live_uri = os.environ.get("SECONDARY_LIVE_URI", file_config.get('secondary_live_uri',
                                                                               "mysql://ensembl@127.0.0.1:3306/"))
@@ -122,8 +125,7 @@ class HandoverConfig:
     dispatch_targets = file_config.get('dispatch_targets', {})
     copy_job_user = file_config.get('copy_job_user', 'ensprod')
 
-    # handover layout
-    HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type', 'vertebrates'))
+    HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type', 'production'))
 
     # es config
     HOST = os.environ.get('SERVICE_HOST', file_config.get('host', '0.0.0.0'))
@@ -140,21 +142,23 @@ class HandoverConfig:
     APP_VERSION = get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
 
-    BLAT_SPECIES = ['homo_sapiens',
-                    'mus_musculus',
-                    'danio_rerio',
-                    'rattus_norvegicus',
-                    'gallus_gallus',
-                    'canis_lupus_familiaris',
-                    'bos_taurus',
-                    'oryctolagus_cuniculus',
-                    'oryzias_latipes',
-                    'sus_scrofa',
-                    'meleagris_gallopavo',
-                    'anas_platyrhynchos_platyrhynchos',
-                    'ovis_aries',
-                    'oreochromis_niloticus',
-                    'gadus_morhua']
+    BLAT_SPECIES = [
+        'homo_sapiens',
+        'mus_musculus',
+        'danio_rerio',
+        'rattus_norvegicus',
+        'gallus_gallus',
+        'canis_lupus_familiaris',
+        'bos_taurus',
+        'oryctolagus_cuniculus',
+        'oryzias_latipes',
+        'sus_scrofa',
+        'meleagris_gallopavo',
+        'anas_platyrhynchos_platyrhynchos',
+        'ovis_aries',
+        'oreochromis_niloticus',
+        'gadus_morhua'
+    ]
 
     ALLOWED_TASK_RESTART = os.environ.get('ALLOWED_TASK_RESTART',
                                           file_config.get('allowed_tasks_restart', 'datacheck,copyjob,metadata')).split(
@@ -185,7 +189,8 @@ class HandoverCeleryConfig:
                                                     file_config.get('worker_prefetch_multiplier', 1)))
     task_routes = {
         os.environ.get("ROUTING_KEY",
-                       file_config.get('routing_key', 'ensembl.production.handover.celery_app.tasks.*')): {
+                       file_config.get('routing_key',
+                                       'ensembl.production.handover.celery_app.tasks.*')): {
             'queue': os.environ.get("QUEUE",
                                     file_config.get('queue', 'handover'))
         }

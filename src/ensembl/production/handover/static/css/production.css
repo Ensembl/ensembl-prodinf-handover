@@ -1,7 +1,7 @@
 /* set nav bar background*/
 /*Base css*/
 .hnav {
-    background-color: #17a2b8;
+    background-color: #dc3545;
 }
 
 .ui-autocomplete {
@@ -58,54 +58,26 @@
     padding: 2px;
     width: 5px;
     margin: 0;
-    background: #d6f3f3;
+    background: #dda8e6;
     color: #1a1a19;
     display: block;
-    border: 2px solid #17a2b8 !important;
+    border: 2px solid #dc3545 !important;
     float: unset;
 }
 
 .ui-menu .ui-menu-item-wrapper:hover {
-    color: #303030;
-    background-color: #aee2eb !important;
-    border: rgb(2, 46, 9) 1px solid;
+    color: #e2d9d9;
+    background-color: #dc3545 !important;
+    border: #8052b6 solid;
 }
 
 /*set button colors*/
-.h-buttons, .bg-secondary {
-    background-color: #17a2b8;
+.h-buttons, .bg-secondary{
+    background-color: #dc3545;
     color: white;
 }
 
 .h-border {
-    border-color: #17a2b8 !important;
+    border-color: #dc3545 !important;
 }
 
-.progress {
-    position: relative;
-    height: 30px;
-    border: ridge #ccc;
-    border-width: 1px;
-}
-
-.progress > .progress-type {
-    position: absolute;
-    left: 0px;
-    font-weight: 800;
-    padding: 5px 35px 7px 15px;
-    color: rgb(105, 61, 61);
-    background-color: rgba(25, 25, 25, 0);
-}
-
-.progress > .progress-completed {
-    position: absolute;
-    right: 0px;
-    font-weight: 800;
-    padding: 3px 10px 2px;
-}
-
-.card {
-    background-color: #fff;
-    box-shadow: 2px 4px 15px 0px rgb(0, 108, 170);
-    z-index: 0
-}

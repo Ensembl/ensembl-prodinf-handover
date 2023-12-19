@@ -102,7 +102,7 @@
     var $completed = $('.customfilter')
     $table.bootstrapTable('refreshOptions', {
       theadClasses: "h-buttons",
-       url: `/${script_name}/jobs?format=json`
+       url: `${script_name}/jobs?format=json`
     });
 
     $table.bootstrapTable('expandAllRows');
@@ -120,7 +120,7 @@
       //delete list of handovers_token
       $.each(handovers_token, function( index, value ) {
         $.ajax({
-          url: `/${script_name}/jobs/${value}`,
+          url: `${script_name}/jobs/${value}`,
           type: 'DELETE',
           success: function(){
             $table.bootstrapTable('remove', {
@@ -177,7 +177,7 @@
       } 
       //delete handover
        $.ajax({
-         url: `/${script_name}/jobs`,
+         url: `${script_name}/jobs`,
          type: 'POST',
          data: JSON.stringify({'src_uri' : row[0].src_uri, 'contact' : row[0].contact, 
             'source': 'Handover', 'comment' : row[0].comment }),

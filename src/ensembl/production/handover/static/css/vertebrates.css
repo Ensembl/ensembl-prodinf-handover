@@ -72,8 +72,8 @@
 }
 
 /*set button colors*/
-.h-buttons {
-    background-color: #17a2b8;
+.h-buttons, .bg-secondary{
+    background-color: #17a2b8!important;
     color: white;
 }
 

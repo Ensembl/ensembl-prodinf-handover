@@ -90,7 +90,7 @@ def check_handover_db_resubmit(spec: dict):
         [bool]: [Status boolean]
     """
     try:
-        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+        with ElasticsearchConnectionManager(es_host, int(es_port), es_user, es_password, es_ssl) as es:
             res_error = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
@@ -169,7 +169,7 @@ def get_celery_task_id(handover_token: str):
     """
     try:
         task_id = ''
-        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+        with ElasticsearchConnectionManager(es_host, int(es_port), es_user, es_password, es_ssl) as es:
             res = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {

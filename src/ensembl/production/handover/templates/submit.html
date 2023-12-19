@@ -1,112 +1,113 @@
 {% extends "base.html" %}
 {% block styles %}
-{{ super() }}
+    {{ super() }}
 
 {% endblock %}
 {% block content %}
-{{ super() }}
-<div class="container mt-4">
-    <div class="row">
-      <div class="col-10">
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-danger m-2" role="alert">
-              <p>{{ message }}</p>
+    {{ super() }}
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-10">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <div class="alert alert-danger m-2" role="alert">
+                            {% for message in messages %}
+                                <p>{{ message }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
             </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
-    </div>
-    <div class="card border-2 shadow my-5 h-border">
-      <legend class=" h-buttons">&nbsp; Handover {{config['HANDOVER_TYPE']}}&nbsp;</legend> 
-    <div class="row">
-        <div class="col-12">
-            <form action="" method="post" enctype="multipart/form-data" >
-                {{ form.csrf }}         
-                <fieldset class="m-2">       
-                  <div class="form-group row mt-4 ">
-                    {{ form.src_uri.label( class='col-sm-2 col-form-label' ) }}
-                    <div class="col-sm-10">{{ form.src_uri( class='form-control' ) }}
-                      {% if form.src_uri.errors %}
-                        <div class="alert alert-danger m-2" role="alert">
-                          {% for error in form.src_uri.errors %}
-                            {{ error }}
-                          {% endfor %}
+        </div>
+        <div class="card border-2 shadow my-5 h-border">
+            <legend class=" h-buttons">&nbsp; Handover {{ config['HANDOVER_TYPE'] }}&nbsp;</legend>
+            <div class="row">
+                <div class="col-12">
+                    <form action="" method="post" enctype="multipart/form-data">
+                        {{ form.csrf }}
+                        <fieldset class="m-2">
+                            <div class="form-group row mt-4 ">
+                                {{ form.src_uri.label( class='col-sm-2 col-form-label' ) }}
+                                <div class="col-sm-10">{{ form.src_uri( class='form-control' ) }}
+                                    {% if form.src_uri.errors %}
+                                        <div class="alert alert-danger m-2" role="alert">
+                                            {% for error in form.src_uri.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                            </div>
+                            <div class="form-group row mt-4">
+                                {{ form.database.label( class='col-sm-2 col-form-label' ) }}
+                                <div class="col-sm-10">{{ form.database( class='form-control',  ) }}
+                                    {% if form.database.errors %}
+                                        <div class="alert alert-danger m-2" role="alert">
+                                            {% for error in form.database.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group row mt-4">
+                                {{ form.contact.label( class='col-sm-2 col-form-label' ) }}
+                                <div class="col-sm-10">{{ form.contact( class='form-control' ) }}
+                                    {% if form.contact.errors %}
+                                        <div class="alert alert-danger m-2" role="alert">
+                                            {% for error in form.contact.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="form-group row mt-4">
+                                {{ form.comment.label( class='col-sm-2 col-form-label' ) }}
+                                <div class="col-sm-10">{{ form.comment( class='form-control'  ) }}
+                                    {% if form.comment.errors %}
+                                        <div class="alert alert-danger m-2" role="alert">
+                                            {% for error in form.comment.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <!-- hidden value -->
+                                {{ form.source( class='form-control'  ) }}
+                            </div>
+                        </fieldset>
+                        <div class="form-group row">
+                            <div class="col-sm-12 mt-2">
+                                <div class="col-sm-12">
+                                    <span class="alert alert-warning"
+                                          role="alert">Allowed DB's: <strong>{{ ALLOWED_DATABASE_TYPES }}</strong></span>
+                                    {{ form.submit( class='btn h-buttons', style='float:right;', disabled=disable_submission ) }}
+                                </div>
+                            </div>
                         </div>
-                      {% endif %} 
-                    </div>
- 
-                  </div>
-                  <div class="form-group row mt-4">
-                    {{ form.database.label( class='col-sm-2 col-form-label' ) }}
-                    <div class="col-sm-10">{{ form.database( class='form-control',  ) }}
-                      {% if form.database.errors %}
-                        <div class="alert alert-danger m-2" role="alert">
-                          {% for error in form.database.errors %}
-                            {{ error }}
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                  </div>
-                  <div class="form-group row mt-4">
-                    {{ form.contact.label( class='col-sm-2 col-form-label' ) }}
-                    <div class="col-sm-10">{{ form.contact( class='form-control' ) }}
-                      {% if form.contact.errors %}
-                        <div class="alert alert-danger m-2" role="alert">
-                          {% for error in form.contact.errors %}
-                            {{ error }}
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                  </div>
-                  <div class="form-group row mt-4">
-                    {{ form.comment.label( class='col-sm-2 col-form-label' ) }}
-                    <div class="col-sm-10">{{ form.comment( class='form-control'  ) }}
-                      {% if form.comment.errors %}
-                        <div class="alert alert-danger m-2" role="alert">
-                          {% for error in form.comment.errors %}
-                            {{ error }}
-                          {% endfor %}
-                        </div>
-                      {% endif %}
-                    </div>
-                    <!-- hidden value -->
-                    {{ form.source( class='form-control'  ) }}
-                  </div>                 
-                </fieldset>            
-                <div class="form-group row">
-                  <div class="col-sm-12 mt-2">
-                    <div class="col-sm-12">
-                      <span class="alert alert-warning" role="alert">Allowed DB's: <strong>{{ALLOWED_DATABASE_TYPES}}</strong></span>
-                        {{ form.submit( class='btn h-buttons', style='float:right;', disabled=disable_submission ) }}</div>
-                      <!--<button style='float:right;'  class="btn btn-primary bg-{{config['background']}}" type="button" >Submit</button>-->
-                  </div>
-                </div>            
-              </form>
-            </div>      
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 {% endblock %}
 {% block scripts %}
-{{ super() }}
-<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
-<script type="text/javascript">
-  var copy_url = "{{copy_uri}}"; // set copy url for dropdown list
-  $(function () {
-    $('form').on('submit', function(e){
-        $("#submit").val("please wait..");
-        $("#submit").prop('disabled', true);
-        $("#submit").addClass("fa-spinner fa-spin");
-       
-    });
-  });      
-</script>
-<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {{ super() }}
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script type="text/javascript">
+        var copy_url = "{{copy_uri}}"; // set copy url for dropdown list
+        $(function () {
+            $('form').on('submit', function (e) {
+                $("#submit").val("please wait..");
+                $("#submit").prop('disabled', true);
+                $("#submit").addClass("fa-spinner fa-spin");
+
+            });
+        });
+    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 
 
 {% endblock %}

@@ -49,6 +49,8 @@ formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelna
 handler = app_logging.default_handler()
 handler.setFormatter(formatter)
 app.logger.addHandler(handler)
+app.url_map.strict_slashes = False
+
 app.config['SWAGGER'] = {
     'title': 'Ensembl %s Handover Service' % app.config['HANDOVER_TYPE'],
     'uiversion': 3,
@@ -56,7 +58,7 @@ app.config['SWAGGER'] = {
     'ui_params': {
         'defaultModelsExpandDepth': -1
     },
-    'favicon': '/img/production.png'
+    'favicon': f'{cfg.script_name}/img/production.png'
 }
 if app.env == 'development':
     # ENV dev (assumed run from builtin server, so update script_name at wsgi level)
@@ -82,8 +84,10 @@ es_ssl = app.config['ES_SSL']
 
 @app.context_processor
 def inject_configs():
-    return dict(script_name=re.sub(r'^/', '', cfg.script_name),
-                copy_uri=cfg.copy_uri)
+    app.logger.info(f"Script name {cfg.script_name}")
+    return dict(script_name=cfg.script_name,
+                copy_uri=cfg.copy_uri,
+                css_url=f"/css/{cfg.HANDOVER_TYPE}.css")
 
 
 @app.route('/', methods=['GET'])
@@ -375,7 +379,6 @@ def handover_result(handover_token=''):
                 }
             ]
         })
-
     for doc in res['aggregations']['top_result']['hits']['hits']:
         result = {"id": doc['_id']}
         params = doc['_source']['params']
@@ -509,7 +512,7 @@ def handover_results():
         })
 
     list_handovers = []
-
+    app.logger.info(f"Results {res}")
     for each_handover_bucket in res['aggregations']['handover_token']['buckets']:
         for doc in each_handover_bucket['top_result']['hits']['hits']:
             result = {"id": doc['_id']}
@@ -539,7 +542,7 @@ def valid_handover(doc, release):
     return False
 
 
-@app.route('/jobs/<string:handover_token>/', methods=['DELETE'])
+@app.route('/jobs/<string:handover_token>', methods=['DELETE'])
 def delete_handover(handover_token):
     """
     Endpoint to delete all the reports linked to a handover_token
@@ -754,7 +757,7 @@ def restart_handover():
 @app.errorhandler(TransportError)
 def handle_elastisearch_error(e):
     app.logger.error(str(e))
-    message = 'Elasticsearch Error [%s] %s: %s' % (e.status_code, e.error, e.info['error']['reason'])
+    message = 'Elasticsearch Error [%s] %s: %s' % (e.status_code, e.error, e)
     return jsonify(error=message), e.status_code
 
 
