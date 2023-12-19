@@ -89,7 +89,7 @@ def inject_configs():
     app.logger.info(f"Script name {cfg.script_name}")
     return dict(script_name=cfg.script_name,
                 copy_uri=cfg.copy_uri,
-                css_url=f"/css/{cfg.HANDOVER_TYPE}.css")
+                css_url=f"css/{cfg.HANDOVER_TYPE}.css")
 
 
 @app.route('/', methods=['GET'])
