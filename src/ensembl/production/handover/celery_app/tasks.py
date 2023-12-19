@@ -112,7 +112,7 @@ def stop_handover_job(handover_token):
         task = AsyncResult(task_id)
         if task.state not in ['FAILURE', 'REVOKED']:
             task.revoke(terminate=True)
-            log_and_publish(make_report('ERROR', f"Handover failed, Job Revoked", spec, ""))
+            log_and_publish(make_report('INFO', f"Handover failed, Job Revoked", spec, ""))
     except Exception as e:
         return {'status': False, 'error': f"{str(e)}", 'spec': spec}
 

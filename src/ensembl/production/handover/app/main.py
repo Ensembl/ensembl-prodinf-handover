@@ -603,6 +603,7 @@ def delete_handover(handover_token):
                 "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}
             })
             app.logger.info(str(result))
+        stop_handover_job(handover_token)
         app.logger.info('Delete query success for %s', handover_token)
         return jsonify(str(handover_token))
     except NotFoundError as e:
