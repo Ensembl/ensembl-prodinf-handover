@@ -46,7 +46,7 @@ species_pattern = re.compile(
 compara_pattern = re.compile(r'^ensembl_compara(_(?P<division>[a-z]+|pan)(_homology)?)?(_(\d+))?(_\d+)$')
 ancestral_pattern = re.compile(r'^ensembl_ancestral(_(?P<division>[a-z]+))?(_(\d+))?(_\d+)$')
 db_types_list = [i for i in cfg.allowed_database_types.split(",")]
-allowed_divisions_list = [i for i in cfg.allowed_divisitotalons.split(",")]
+allowed_divisions_list = [i for i in cfg.allowed_divisions.split(",")]
 
 # app clients
 dc_client = DatacheckClient(cfg.dc_client_uri)
