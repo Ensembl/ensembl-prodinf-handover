@@ -24,7 +24,7 @@ from flask.logging import default_handler
 
 logger = logging.getLogger(__name__)
 logger.addHandler(default_handler)
-
+logger.setLevel(logging.INFO)
 
 def parse_boolean_var(var):
     if isinstance(var, bool):
@@ -141,7 +141,7 @@ class HandoverConfig:
 
     APP_VERSION = get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
-
+    log_level = os.environ.get('LOG_LEVEL', file_config.get('log_level', logging.DEBUG))
     BLAT_SPECIES = [
         'homo_sapiens',
         'mus_musculus',
@@ -195,3 +195,4 @@ class HandoverCeleryConfig:
                                     file_config.get('queue', 'handover'))
         }
     }
+    log_level = os.environ.get('LOG_LEVEL', file_config.get('log_level', 'WARNING'))

@@ -64,7 +64,6 @@ es_ssl = cfg.ES_SSL
 
 
 def qualified_name(db_uri):
-
     import re
     db_url = make_url(db_uri)
     if re.search('[a-z-]?(.ebi.ac.uk|.org)', db_url.host) or db_url.host in ('localhost', 'mysql'):
@@ -176,8 +175,12 @@ def get_celery_task_id(handover_token: str):
                     "bool": {
                         "must": [
                             {"term": {"params.handover_token.keyword": str(handover_token)}},
-                            {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)",
-                                              "analyze_wildcard": "true"}},
+                            {
+                                "query_string": {
+                                    "fields": ["report_type"], "query": "(INFO|ERROR)",
+                                    "analyze_wildcard": "true"
+                                }
+                            },
                         ]
                     }
                 },
@@ -327,17 +330,16 @@ def process_handover_payload(spec):
         raise ValueError(msg)
     # Check if the database release match the handover service
     if db_type == 'compara':
-        if check_grch37(qualified_uri, 'homo_sapiens'):
-            spec['progress_total'] = 2
+        if check_grch37(qualified_uri, 'homo_sapiens') and cfg.HANDOVER_TYPE != 'grch37':
+            raise ValueError("Please use the dedicated handover for Grch37 databases. Contact Production team")
         db_release = get_release_compara(qualified_uri)
     else:
         db_release = get_release(qualified_uri)
         logger.debug("Db_release %s %s", db_type, db_release)
-        if db_prefix == 'homo_sapiens' and assembly == '37':
-            logger.debug("It's 37 assembly - no metadata update")
-            spec['progress_total'] = 2
-        elif (db_type in cfg.dispatch_targets.keys() and \
-                any(db_prefix in val for val in cfg.compara_species)) or cfg.dispatch_all:
+        if db_prefix == 'homo_sapiens' and assembly == '37' and cfg.HANDOVER_TYPE != 'grch37':
+            raise ValueError("Please use the dedicated handover for Grch37 databases. Contact Production team")
+        elif (db_type in cfg.dispatch_targets.keys() and any(
+                db_prefix in val for val in cfg.compara_species)) or cfg.dispatch_all:
             logger.debug("Adding dispatch step to total")
             spec['progress_total'] = 4
     if release != db_release:
@@ -364,6 +366,7 @@ def process_handover_payload(spec):
     spec['db_division'] = db_division
     spec['db_type'] = db_type
     msg = "Handling %s" % spec
+    logger.info("Handover Specs %s", spec)
     log_and_publish(make_report('INFO', msg, spec, src_uri))
     return spec, src_url, db_type
 
