@@ -48,7 +48,9 @@ app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
 handler = app_logging.default_handler()
 handler.setFormatter(formatter)
+handler.setLevel(cfg.log_level)
 app.logger.addHandler(handler)
+app.logger.error(handler.level)
 app.url_map.strict_slashes = False
 
 app.config['SWAGGER'] = {

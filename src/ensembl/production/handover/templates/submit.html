@@ -6,21 +6,17 @@
 {% block content %}
     {{ super() }}
     <div class="container mt-4">
-        <div class="row">
-            <div class="col-10">
-                {% with messages = get_flashed_messages() %}
-                    {% if messages %}
-                        <div class="alert alert-danger m-2" role="alert">
-                            {% for message in messages %}
-                                <p>{{ message }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-            </div>
-        </div>
         <div class="card border-2 shadow my-5 h-border">
             <legend class=" h-buttons">&nbsp; Handover {{ config['HANDOVER_TYPE'] }}&nbsp;</legend>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="alert alert-danger m-2" role="alert">
+                        {% for message in messages %}
+                            <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
             <div class="row">
                 <div class="col-12">
                     <form action="" method="post" enctype="multipart/form-data">
@@ -81,7 +77,7 @@
                         <div class="form-group row">
                             <div class="col-sm-12 mt-2">
                                 <div class="col-sm-12">
-                                    <span class="alert alert-warning"
+                                    <span class="alert alert-info"
                                           role="alert">Allowed DB's: <strong>{{ ALLOWED_DATABASE_TYPES }}</strong></span>
                                     {{ form.submit( class='btn h-buttons', style='float:right;', disabled=disable_submission ) }}
                                 </div>

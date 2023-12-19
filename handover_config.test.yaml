@@ -1,20 +1,26 @@
 ---
-debug: false
+debug: true
 service_port: 7004
 service_host: 0.0.0.0
-es_host: localhost
-es_port: 9200
-es_index: reports_vertebrates
+es_host: es.ensembl-production.ebi.ac.uk
+es_port: 80
+es_index: reports_production
+es_user: ensprod
+es_ssl: "true"
+es_password: "3p8Fq07#45HT"
 ens_version: 110
-eg_version: 57
-dc_uri: http://localhost:5000/api/vertebrates/datachecks/
-
-dispatch_targets:
- core: 'localhost'
-
+eg_version: 58
+dc_uri: https://services.ensembl-production.ebi.ac.uk/api/production/datachecks/
+handover_type: 'production'
 retry_wait: 30
-celery_broker_url: "pyamqp://localhost:31772/production"
-result_backend: "rpc://localhost:31772/production"
-dispatch_all: true
+report_server: 'amqp://msg.test.ensembl-production.ebi.ac.uk'
+celery_broker_url: 'amqp://msg.test.ensembl-production.ebi.ac.uk/production'
+celery_result_backend: 'rpc://msg.test.ensembl-production.ebi.ac.uk/production'
+dispatch_all: True
 dispatch_target:
  core: mysql://ensembl@localhost:3306
+### CORE HANDOVER: "core,rnaseq,cdna,otherfeatures" (tag [ENS_VERSION].0.0)
+### NON CORE HANDOVER: "variation,funcgen,compara,ancestral" (tag [ENS_VERSION].1.0)
+### CLOSE HANDOVER: "" (tag [ENS_VERSION].2.0)
+allowed_database_types: "core,rnaseq,cdna,otherfeatures,variation,funcgen,compara,ancestral"
+log_level: "DEBUG"
