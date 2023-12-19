@@ -72,7 +72,7 @@
 }
 
 /*set button colors*/
-.h-buttons, .bg-secondary{
+.h-buttons, .table.result > .bg-secondary {
     background-color: #8552c0;
     color: white;
 }

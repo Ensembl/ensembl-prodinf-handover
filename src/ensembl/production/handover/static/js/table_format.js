@@ -85,10 +85,12 @@ function HandoverBaseInfo(handover_details) {
         }
         job_status_css ="alert alert-info";
         job_status =
-            `<div>
+            `<div class="job_status">
                 ${job_status}
+                </div>
+                <div class="job_progress">
                 ${job_progress}
-              </div>`;
+            </div>`;
         ho_progress =
             `<tr>
                 <td class="bg-secondary">Progress</td>
@@ -109,7 +111,7 @@ function HandoverBaseInfo(handover_details) {
                 <div class="card m-1" style="justify-content: center;">
                     <div class="card-header">Details</div>
                     <div class="card-body">
-                        <table class="table ">
+                        <table class="bootstrap-table table-striped table result">
                         <tbody>
                           <tr>
                             <td class="bg-secondary">DB</td>
@@ -123,11 +125,11 @@ function HandoverBaseInfo(handover_details) {
                             <td class="bg-secondary">Email</td>
                             <td>${handover_details.contact}</td>
                           </tr>
+                          ${ho_progress}
                           <tr>
                             <td class="bg-secondary">Status</td>
-                            <td class="${job_status_css}">${job_status}</td>
+                            <td><div class="${job_status_css}">${job_status}</div></td>
                           </tr>
-                          ${ho_progress}
                         </tbody>
                         </table>
                     </div>
