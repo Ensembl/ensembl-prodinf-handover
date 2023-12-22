@@ -14,10 +14,10 @@
 import logging
 
 from celery import Celery
+from ensembl.production.handover.config import HandoverCeleryConfig
+import ensembl.production.handover.celery_app.tasks
 
 try:
-    from ensembl.production.handover.config import HandoverCeleryConfig
-    import ensembl.production.handover.celery_app.tasks
     app = Celery('ensembl_handover_celery',
                  include=['ensembl.production.handover.celery_app.tasks'])
     app.config_from_object(HandoverCeleryConfig)

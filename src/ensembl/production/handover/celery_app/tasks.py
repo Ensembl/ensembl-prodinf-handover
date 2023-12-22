@@ -185,7 +185,7 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
     if result['status'] in ['incomplete', 'running', 'submitted']:
         # log_and_publish(make_report('DEBUG', 'Datacheck Job incomplete, checking again later', spec, src_uri))
         log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
-        raise self.retry()
+        self.retry()
     elif result['status'] == 'failed':
         self.request.chain = None
         prob_msg = (f'Datachecks found problems, Handover failed, you can download the output here: <a target="_blank" '
@@ -237,7 +237,7 @@ def dbcopy_task(self, spec):
     if status in ['Scheduled', 'Running', 'Submitted']:
         dbg_msg = 'Submitted DB for copying'
         log_and_publish(make_report('DEBUG', dbg_msg, spec, spec['src_uri']))
-        raise self.retry()
+        self.retry()
 
     if status == 'Failed':
         self.request.chain = None
@@ -284,7 +284,7 @@ def metadata_update_task(self, spec):
     if result['status'] in ['incomplete', 'running', 'submitted']:
         incomplete_msg = 'Metadata load Job incomplete, checking again later'
         log_and_publish(make_report('DEBUG', incomplete_msg, spec, tgt_uri))
-        raise self.retry()
+        self.retry()
 
     if result['status'] == 'failed':
         self.request.chain = None
@@ -329,7 +329,7 @@ def metadata_update_task(self, spec):
             need_dispatch = False or cfg.dispatch_all
             genome_info = None
             for genome_info in result['output']['events']:
-                need_dispatch = genome_info['genome'] in cfg.compara_species
+                need_dispatch = genome_info['genome'] in cfg.compara_species or cfg.dispatch_all
                 if need_dispatch:
                     break
             if need_dispatch and genome_info:
@@ -387,7 +387,7 @@ def dispatch_db_task(self, spec):
     if status in ['Scheduled', 'Running', 'Submitted']:
         incomplete_msg = 'Database dispatch in progress, please see: %s%s' % (cfg.copy_web_uri, spec['dispatch_job_id'])
         log_and_publish(make_report('DEBUG', incomplete_msg, spec, src_uri))
-        raise self.retry()
+        self.retry()
 
     if status == 'Failed':
         self.request.chain = None

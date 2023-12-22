@@ -335,12 +335,12 @@ def process_handover_payload(spec):
         db_release = get_release_compara(qualified_uri)
     else:
         db_release = get_release(qualified_uri)
-        logger.debug("Db_release %s %s", db_type, db_release)
+        logger.info("Db_release %s %s", db_type, db_release)
         if db_prefix == 'homo_sapiens' and assembly == '37' and cfg.HANDOVER_TYPE != 'grch37':
             raise ValueError("Please use the dedicated handover for Grch37 databases. Contact Production team")
         elif (db_type in cfg.dispatch_targets.keys() and any(
                 db_prefix in val for val in cfg.compara_species)) or cfg.dispatch_all:
-            logger.debug("Adding dispatch step to total")
+            logger.info("Adding dispatch step to total")
             spec['progress_total'] = 4
     if release != db_release:
         msg = "Handover failed, %s database release version %s does not match handover service " \
