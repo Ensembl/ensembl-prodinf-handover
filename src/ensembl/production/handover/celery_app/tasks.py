@@ -322,7 +322,7 @@ def metadata_update_task(self, spec):
         spec['progress_complete'] = 3
         log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
         # get dispatch target for db_type
-        db_type_dispatch_target = (cfg.dispatch_targets.get(spec['db_type'], "") != "")
+        db_type_dispatch_target = (cfg.dispatch_targets.get(spec['db_type'], "") != "") or cfg.dispatch_all
         if (db_type_dispatch_target and len(result['output']['events']) > 0
                 and result['output']['events'][0].get('genome', None)):
             # Loop over all genome and see if one is set for the division
