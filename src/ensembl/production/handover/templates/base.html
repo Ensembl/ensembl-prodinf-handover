@@ -1,4 +1,4 @@
-{% from 'bootstrap/nav.html' import render_nav_item %}
+{% from 'bootstrap4/nav.html' import render_nav_item %}
 
 <!doctype html>
 <html lang="en">
@@ -11,24 +11,11 @@
         {% block styles %}
             <!-- Bootstrap CSS -->
             {{ bootstrap.load_css() }}
+            <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
+            <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename=css_url) }}">
 
-            {% if config['HANDOVER_TYPE'] == 'vertebrates' %}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/vertebrates.css') }}">
-            {% elif config['HANDOVER_TYPE'] == 'plants' %}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/plants.css') }}">
-            {% elif config['HANDOVER_TYPE'] == 'metazoa' %}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/metazoa.css') }}">
-            {% elif config['HANDOVER_TYPE'] == 'microbes' or  config['HANDOVER_TYPE'] == 'bacteria'%}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/microbes.css') }}">
-            {% elif config['HANDOVER_TYPE'] == 'viruses' %}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/viruses.css') }}">
-            {% elif config['HANDOVER_TYPE'] == 'rapid' %}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/rapid.css') }}">
-            {% else %}
-                <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/main.css') }}">
-            {% endif %}
-            
         {% endblock %}
+        <link rel="shortcut icon" href="{{ url_for('static', filename='img/production.png') }}">
 
         <title>Production Handover App</title>
         {% endblock %}

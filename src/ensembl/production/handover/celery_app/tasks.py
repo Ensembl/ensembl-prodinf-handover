@@ -3,7 +3,7 @@
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
+#        https://www.apache.org/licenses/LICENSE-2.0
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -112,7 +112,7 @@ def stop_handover_job(handover_token):
         task = AsyncResult(task_id)
         if task.state not in ['FAILURE', 'REVOKED']:
             task.revoke(terminate=True)
-            log_and_publish(make_report('ERROR', f"Handover failed, Job Revoked", spec, ""))
+            log_and_publish(make_report('INFO', f"Handover failed, Job Revoked", spec, ""))
     except Exception as e:
         return {'status': False, 'error': f"{str(e)}", 'spec': spec}
 
@@ -135,16 +135,20 @@ def restart_handover_job(handover_token, task_name):
             return response
 
         spec = response['spec']
-
+        spec['progress_complete'] = 0
         if task_name == 'datacheck':
             ticket = handover_database(spec)
         elif task_name == 'dbcopy':
+            spec['progress_complete'] = 2
+            spec.pop('job_progress', None)
             res = chain(
                 dbcopy_task.s(spec),
                 metadata_update_task.s(),
                 dispatch_db_task.s(),
             )()
         elif task_name == 'metadata':
+            spec['progress_complete'] = 3
+            spec.pop('job_progress', None)
             res = chain(
                 metadata_update_task.s(spec),
                 dispatch_db_task.s(),
@@ -181,12 +185,14 @@ def datacheck_task(self, spec, dc_job_id, src_uri):
     if result['status'] in ['incomplete', 'running', 'submitted']:
         # log_and_publish(make_report('DEBUG', 'Datacheck Job incomplete, checking again later', spec, src_uri))
         log_and_publish(make_report('INFO', progress_msg, spec, src_uri))
-        raise self.retry()
+        self.retry()
     elif result['status'] == 'failed':
         self.request.chain = None
-        prob_msg = f'Datachecks found problems, Handover failed, you can download the output here: <a target="_blank" href="{cfg.dc_uri}download_datacheck_outputs/{dc_job_id}">here</a>'
+        prob_msg = (f'Datachecks found problems, Handover failed, you can download the output here: <a target="_blank" '
+                    f'href="{cfg.dc_uri}download_datacheck_outputs/{dc_job_id}">here</a>')
         log_and_publish(make_report('ERROR', prob_msg, spec, src_uri))
-        msg = f"""Running datachecks on %s completed but found problems. You can download the output here <a target="_blank" href="{cfg.dc_uri}download_datacheck_outputs/{dc_job_id}">here</a>"""
+        msg = f"""Running datachecks on %s completed but found problems. You can download the output here <a 
+        target="_blank" href="{cfg.dc_uri}download_datacheck_outputs/{dc_job_id}">here</a>"""
         send_email(to_address=spec['contact'], subject='Datacheck found problems', body=msg,
                    smtp_server=cfg.smtp_server)
     elif result['status'] == 'dc-run-error':
@@ -231,7 +237,7 @@ def dbcopy_task(self, spec):
     if status in ['Scheduled', 'Running', 'Submitted']:
         dbg_msg = 'Submitted DB for copying'
         log_and_publish(make_report('DEBUG', dbg_msg, spec, spec['src_uri']))
-        raise self.retry()
+        self.retry()
 
     if status == 'Failed':
         self.request.chain = None
@@ -278,7 +284,7 @@ def metadata_update_task(self, spec):
     if result['status'] in ['incomplete', 'running', 'submitted']:
         incomplete_msg = 'Metadata load Job incomplete, checking again later'
         log_and_publish(make_report('DEBUG', incomplete_msg, spec, tgt_uri))
-        raise self.retry()
+        self.retry()
 
     if result['status'] == 'failed':
         self.request.chain = None
@@ -286,8 +292,8 @@ def metadata_update_task(self, spec):
         log_and_publish(make_report('INFO', drop_msg, spec, tgt_uri))
 
         db_drop_status = drop_current_databases([], spec, target_db_delete=True)
-        db_drop_messg = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
-        log_and_publish(make_report('INFO', db_drop_messg, spec, tgt_uri))
+        db_drop_message = "Target db dropped successfully" if db_drop_status else "Failed to drop target db"
+        log_and_publish(make_report('INFO', db_drop_message, spec, tgt_uri))
         failed_msg = f"Metadata load failed, please see <a href='{cfg.meta_uri}jobs/{spec['metadata_job_id']}?format=failures' target='_blank'>here</a>"
         log_and_publish(make_report('INFO', failed_msg, spec, tgt_uri))
         msg = f"""
@@ -314,28 +320,30 @@ def metadata_update_task(self, spec):
                                body=msg)
 
         spec['progress_complete'] = 3
-        # log_and_publish(make_report('INFO', 'Metadata load complete', spec, tgt_uri))
         log_and_publish(make_report('INFO', 'Metadata load complete, Handover successful', spec, tgt_uri))
-
-        dispatch_to = cfg.dispatch_targets.get(spec['db_type'], None)
-
-        if dispatch_to is not None and \
-                cfg.HANDOVER_TYPE != 'rapid' and cfg.HANDOVER_TYPE != 'viruses' and \
-                len(result['output']['events']) > 0 and \
-                result['output']['events'][0].get('genome', None):
+        # get dispatch target for db_type
+        db_type_dispatch_target = (cfg.dispatch_targets.get(spec['db_type'], "") != "") or cfg.dispatch_all
+        if (db_type_dispatch_target and len(result['output']['events']) > 0
+                and result['output']['events'][0].get('genome', None)):
             # Loop over all genome and see if one is set for the division
-            to_dispatch = False
-            genome = None
-            for genome in result['output']['events']:
-                to_dispatch = genome['genome'] in cfg.compara_species
-                if to_dispatch:
+            need_dispatch = False or cfg.dispatch_all
+            genome_info = None
+            for genome_info in result['output']['events']:
+                need_dispatch = genome_info['genome'] in cfg.compara_species or cfg.dispatch_all
+                if need_dispatch:
                     break
-            if to_dispatch and genome:
-                spec['genome'] = genome
-                spec['tgt_uri'] = cfg.dispatch_targets[spec['db_type']]
-                spec['progress_total'] = 4
-                log_and_publish(make_report('INFO', 'Dispatching Database to compara hosts'))
-            elif not genome:
+            if need_dispatch and genome_info:
+                spec['genome'] = genome_info
+                # get dispatch target host, default to core one if not defined for DB type
+                spec['tgt_uri'] = cfg.dispatch_targets.get(spec['db_type'], cfg.dispatch_targets.get('core', None))
+                if spec['tgt_uri'] is not None:
+                    spec['progress_total'] = 4
+                    log_and_publish(make_report('INFO', f"Dispatching Database to target hosts: {spec['tgt_uri']}"))
+                else:
+                    spec['progress_total'] = 3
+                    log_and_publish(
+                        make_report('WARNING', 'Handover Can\'t find a proper target to dispatch to', spec, tgt_uri))
+            elif not genome_info:
                 log_and_publish(
                     make_report('ERROR', 'Handover failed (Database dispatch failed, no related genome)', spec,
                                 tgt_uri))
@@ -379,7 +387,7 @@ def dispatch_db_task(self, spec):
     if status in ['Scheduled', 'Running', 'Submitted']:
         incomplete_msg = 'Database dispatch in progress, please see: %s%s' % (cfg.copy_web_uri, spec['dispatch_job_id'])
         log_and_publish(make_report('DEBUG', incomplete_msg, spec, src_uri))
-        raise self.retry()
+        self.retry()
 
     if status == 'Failed':
         self.request.chain = None

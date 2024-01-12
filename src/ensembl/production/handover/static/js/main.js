@@ -11,7 +11,6 @@ $(function () {
         source: function (request, response) {
             $.ajax({
                 url: `${script_name}/jobs/dropdown/src_host`,
-                //url: '/dropdown/src_host',
                 dataType: "json",
                 data: {
                     name: request.term

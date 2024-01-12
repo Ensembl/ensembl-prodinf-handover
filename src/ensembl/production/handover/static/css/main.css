@@ -72,7 +72,7 @@
 }
 
 /*set button colors*/
-.h-buttons {
+.h-buttons, .bg-secondary {
     background-color: #17a2b8;
     color: white;
 }
@@ -109,3 +109,10 @@
     box-shadow: 2px 4px 15px 0px rgb(0, 108, 170);
     z-index: 0
 }
+.table.result {
+    border: 1px solid lightgrey;
+}
+.table.result div.alert {
+    margin-bottom: unset!important;
+}
+

@@ -3,7 +3,7 @@
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
+#        https://www.apache.org/licenses/LICENSE-2.0
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,11 @@ app.config.from_object('ensembl.production.handover.config.HandoverConfig')
 formatter = logging.Formatter("[%(asctime)s] {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s")
 handler = app_logging.default_handler()
 handler.setFormatter(formatter)
+handler.setLevel(cfg.log_level)
 app.logger.addHandler(handler)
+app.logger.error(handler.level)
+app.url_map.strict_slashes = False
+
 app.config['SWAGGER'] = {
     'title': 'Ensembl %s Handover Service' % app.config['HANDOVER_TYPE'],
     'uiversion': 3,
@@ -56,7 +60,7 @@ app.config['SWAGGER'] = {
     'ui_params': {
         'defaultModelsExpandDepth': -1
     },
-    'favicon': '/img/production.png'
+    'favicon': f'{cfg.script_name}/img/production.png'
 }
 if app.env == 'development':
     # ENV dev (assumed run from builtin server, so update script_name at wsgi level)
@@ -82,8 +86,10 @@ es_ssl = app.config['ES_SSL']
 
 @app.context_processor
 def inject_configs():
+    app.logger.info(f"Script name {cfg.script_name}")
     return dict(script_name=cfg.script_name,
-                copy_uri=cfg.copy_uri)
+                copy_uri=cfg.copy_uri,
+                css_url=f"css/{cfg.HANDOVER_TYPE}.css")
 
 
 @app.route('/', methods=['GET'])
@@ -92,8 +98,10 @@ def info():
         # Empty list of compara
         raise MissingDispatchException
 
-    app.config['SWAGGER'] = {'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(),
-                             'uiversion': 2}
+    app.config['SWAGGER'] = {
+        'title': '%s handover REST endpoints' % os.getenv('APP_ENV', '').capitalize(),
+        'uiversion': 2
+    }
     return jsonify(app.config['SWAGGER'])
 
 
@@ -253,12 +261,17 @@ def handover_status_update():
         else:
             raise HTTPRequestError('Could not handle input of type %s' % request.headers['Content-Type'])
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            res_error = es.client.search(index=es_index, body={"query": {"bool": {
-                "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
-                         {"term": {"report_type.keyword": "INFO"}},
-                         {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
-                "must_not": [], "should": []}}, "from": 0, "size": 1,
-                "sort": [{"report_time": {"order": "desc"}}], "aggs": {}})
+            res_error = es.client.search(index=es_index, body={
+                "query": {
+                    "bool": {
+                        "must": [{"term": {"params.handover_token.keyword": str(handover_token)}},
+                                 {"term": {"report_type.keyword": "INFO"}},
+                                 {"query_string": {"fields": ["message"], "query": "*Metadata load failed*"}}],
+                        "must_not": [], "should": []
+                    }
+                }, "from": 0, "size": 1,
+                "sort": [{"report_time": {"order": "desc"}}], "aggs": {}
+            })
 
             if len(res_error['hits']['hits']) == 0:
                 raise HTTPRequestError('No Hits Found for Handover Token : %s' % handover_token)
@@ -341,8 +354,12 @@ def handover_result(handover_token=''):
                 "bool": {
                     "must": [
                         {"term": {"params.handover_token.keyword": str(handover_token)}},
-                        {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)",
-                                          "analyze_wildcard": "true"}},
+                        {
+                            "query_string": {
+                                "fields": ["report_type"], "query": "(INFO|ERROR)",
+                                "analyze_wildcard": "true"
+                            }
+                        },
                     ]
                 }
             },
@@ -364,20 +381,19 @@ def handover_result(handover_token=''):
                 }
             ]
         })
-
     for doc in res['aggregations']['top_result']['hits']['hits']:
         result = {"id": doc['_id']}
-        if 'job_progress' in doc['_source']['params']:
-            result['job_progress'] = doc['_source']['params']['job_progress']
-
+        params = doc['_source']['params']
+        if 'job_progress' in params:
+            result['job_progress'] = params['job_progress']
         result['message'] = doc['_source']['message']
-        result['comment'] = doc['_source']['params']['comment']
-        result['handover_token'] = doc['_source']['params']['handover_token']
-        result['contact'] = doc['_source']['params']['contact']
-        result['src_uri'] = doc['_source']['params']['src_uri']
-        result['tgt_uri'] = doc['_source']['params']['tgt_uri']
-        result['progress_complete'] = doc['_source']['params']['progress_complete']
-        result['progress_total'] = doc['_source']['params']['progress_total']
+        result['comment'] = params.get('comment', '')
+        result['handover_token'] = params.get('handover_token', '')
+        result['contact'] = params.get('contact', '')
+        result['src_uri'] = params.get('src_uri', '')
+        result['tgt_uri'] = params.get('tgt_uri', '')
+        result['progress_complete'] = params.get('progress_complete', '')
+        result['progress_total'] = params.get('progress_total', '')
         result['report_time'] = doc['_source']['report_time']
         handover_detail.append(result)
 
@@ -498,7 +514,7 @@ def handover_results():
         })
 
     list_handovers = []
-
+    app.logger.info(f"Results {res}")
     for each_handover_bucket in res['aggregations']['handover_token']['buckets']:
         for doc in each_handover_bucket['top_result']['hits']['hits']:
             result = {"id": doc['_id']}
@@ -528,7 +544,7 @@ def valid_handover(doc, release):
     return False
 
 
-@app.route('/jobs/<string:handover_token>/', methods=['DELETE'])
+@app.route('/jobs/<string:handover_token>', methods=['DELETE'])
 def delete_handover(handover_token):
     """
     Endpoint to delete all the reports linked to a handover_token
@@ -583,8 +599,12 @@ def delete_handover(handover_token):
     try:
         app.logger.info('Retrieving handover data with token %s', handover_token)
         with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
-            es.client.delete_by_query(index=es_index, doc_type='report', body={
-                "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}})
+            result = es.client.delete_by_query(index=es_index, doc_type='report', body={
+                "query": {"bool": {"must": [{"term": {"params.handover_token.keyword": str(handover_token)}}]}}
+            })
+            app.logger.info(str(result))
+        stop_handover_job(handover_token)
+        app.logger.info('Delete query success for %s', handover_token)
         return jsonify(str(handover_token))
     except NotFoundError as e:
         raise HTTPRequestError('Error while looking for handover token: {} - {}:{}'.format(
@@ -740,7 +760,7 @@ def restart_handover():
 @app.errorhandler(TransportError)
 def handle_elastisearch_error(e):
     app.logger.error(str(e))
-    message = 'Elasticsearch Error [%s] %s: %s' % (e.status_code, e.error, e.info['error']['reason'])
+    message = 'Elasticsearch Error [%s] %s: %s' % (e.status_code, e.error, e)
     return jsonify(error=message), e.status_code
 
 

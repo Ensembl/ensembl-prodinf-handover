@@ -1,7 +1,7 @@
 /* set nav bar background*/
 /*Base css*/
 .hnav {
-    background-color: #007bff;
+    background-color: #dc3545;
 }
 
 .ui-autocomplete {
@@ -58,25 +58,26 @@
     padding: 2px;
     width: 5px;
     margin: 0;
-    background: #afbaee;
+    background: #dda8e6;
     color: #1a1a19;
     display: block;
-    border: 2px solid #007bff !important;
+    border: 2px solid #dc3545 !important;
     float: unset;
 }
 
 .ui-menu .ui-menu-item-wrapper:hover {
-    color: #f8f5f5;
-    background-color: #9eadf0 !important;
-    border: rgb(9, 49, 61) 1px solid;
+    color: #e2d9d9;
+    background-color: #dc3545 !important;
+    border: #8052b6 solid;
 }
 
 /*set button colors*/
-.h-buttons, .table.result > .bg-secondary {
-    background-color: #007bff;
+.h-buttons, .table.result .bg-secondary {
+    background-color: #dc3545!important;
     color: white;
 }
 
 .h-border {
-    border-color: #007bff !important;
+    border-color: #dc3545 !important;
 }
+

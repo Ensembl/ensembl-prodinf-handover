@@ -1,195 +1,205 @@
 {% extends "base.html" %}
 {% block styles %}
-{{ super() }}
-<link type="text/css"  rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table.min.css') }}"/>
-<link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
+    {{ super() }}
+    <link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-table.min.css') }}"/>
+    <link href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"
+          integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN" crossorigin="anonymous">
 {% endblock %}
 
 {% block content %}
-{{ super() }}
+    {{ super() }}
 
-<div class="m-4">
-    <div class="row table-responsive">
-    <div class="col-12">
-        <div id="toolbar" class="buttons-toolbar select"> 
-        </div>  
-        <div class="titles mb-2">
-            <button id="resubmitbutton" class="btn h-buttons ">Resubmit Job</button>
-            <button id="deletebutton" class="btn h-buttons">Delete Job</button>
-            <button id="exportbutton" class="btn h-buttons"><i class="fa fa-download" aria-hidden="true"></i></button>
-            <button class="btn h-buttons dropdown-toggle " type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-              Status
-            </button>
-            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-              <a class="dropdown-item customfilter" data-value="Complete" >           
+    <div class="m-4">
+        <div class="row table-responsive">
+            <div class="col-12">
+                <div id="toolbar" class="buttons-toolbar select">
+                </div>
+                <div class="titles mb-2">
+                    <button id="resubmitbutton" class="btn h-buttons ">Resubmit Job</button>
+                    <button id="deletebutton" class="btn h-buttons">Delete Job</button>
+                    <button id="exportbutton" class="btn h-buttons"><i class="fa fa-download" aria-hidden="true"></i>
+                    </button>
+                    <button class="btn h-buttons dropdown-toggle " type="button" id="dropdownMenuButton"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Status
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                        <a class="dropdown-item customfilter" data-value="Complete">
                  <span class="badge badge-success">
                   Completed <span class="badge badge-light"></span>
                  </span></a>
-              <a class="dropdown-item customfilter" data-value="Running" >
+                        <a class="dropdown-item customfilter" data-value="Running">
                 <span class="badge badge-warning ">
                   Running <span class="badge badge-light"></span>
                 </span></a>
-              </a>
-              <a class="dropdown-item customfilter" data-value="Fail" >
+                        </a>
+                        <a class="dropdown-item customfilter" data-value="Fail">
                 <span class="badge badge-danger ">
                   Failed <span class="badge badge-light"></span>
                 </span></a>
-                <a class="dropdown-item customfilter"  data-value="All">
+                        <a class="dropdown-item customfilter" data-value="All">
                   <span class="badge badge-primary">
                     ALL <span class="badge badge-light"></span>
                   </span></a>
-              </a>
+                        </a>
+                    </div>
+                    <!--tittle...end-->
+                </div>
+                <table id="table"
+                       class="table table-striped thead-dark table-bordered "
+                       data-show-export="true"
+                       data-filter-control="true"
+                       data-toggle="table"
+                       data-row-style="rowStyle"
+                       data-search="true"
+                       data-show-refresh="true"
+                       data-sortable="true"
+                       data-sort-class="table-active"
+                       data-pagination="true"
+                       data-show-button-text="true"
+                       data-page-size="25"
+                       data-checkbox-header="false"
+                       data-detail-view="true"
+                       data-detail-view-by-click="false"
+                       data-detail-view-icon="true"
+                       data-detail-formatter="detailFormatter"
+                       data-buttons-class="btn h-buttons"
+                       data-buttons-toolbar=".buttons-toolbar"
+                       data-sort-name="report_time"
+                       data-sort-order="desc"
+                       data-show-columns="true">
+                    <thead>
+                    <tr style="cursor: pointer">
+                        <!--<th data-formatter="expandIcon"></th>-->
+                        <th data-field="state" data-checkbox="true">Select</th>
+                        <th data-field="id" data-visible="false" data-sortable="true">ID</th>
+                        <!--<th data-field="input.db_type" data-sortable="true">DB Type</th>-->
+                        <th data-field="handover_token" data-formatter="FormatHandover" data-sortable="true">Handover
+                            token
+                        </th>
+                        <th data-field="handover_submission_time" data-sortable="true">Submission Date</th>
+                        <th data-field="report_time" data-sortable="true">Date</th>
+                        <th data-field="src_uri" data-sortable="true">DB</th>
+                        <th data-field="contact" data-sortable="true">Email</th>
+                        <th data-field="comment" data-sortable="true">Description</th>
+                        <th data-field="current_message" data-sortable="true" data-title="Status"
+                            data-formatter="statusFormat">Status
+                        </th>
+                    </tr>
+                    </thead>
+                </table>
             </div>
-        <!--tittle...end-->    
-        </div>      
-    <table id="table"
-      class="table table-striped thead-dark table-bordered "
-      data-show-export="true"
-      data-filter-control="true"
-      data-toggle="table"
-      data-row-style="rowStyle"
-      data-search="true"
-      data-show-refresh="true"
-      data-sortable="true"
-      data-sort-class="table-active"
-      data-pagination="true"
-      data-show-button-text="true"
-      data-page-size="25"
-      data-checkbox-header="false"
-      data-detail-view="true"
-      data-detail-view-by-click="false"
-      data-detail-view-icon="true"
-      data-detail-formatter="detailFormatter"
-      data-buttons-class="btn h-buttons"
-      data-buttons-toolbar=".buttons-toolbar"
-      data-sort-name="report_time" 
-      data-sort-order="desc"
-      data-show-columns="true">
-      <thead>
-        <tr style="cursor: pointer">
-          <!--<th data-formatter="expandIcon"></th>-->
-          <th data-field="state" data-checkbox="true">Select</th>
-          <th data-field="id" data-visible="false" data-sortable="true">ID</th>
-          <!--<th data-field="input.db_type" data-sortable="true">DB Type</th>-->
-          <th data-field="handover_token" data-formatter="FormatHandover" data-sortable="true">Handover token</th>
-          <th data-field="handover_submission_time" data-sortable="true">Submission Date</th>
-          <th data-field="report_time" data-sortable="true"   >Date</th>
-          <th data-field="src_uri" data-sortable="true"   >DB</th>
-          <th data-field="contact" data-sortable="true" >Email</th>
-          <th data-field="comment" data-sortable="true" >Description</th>
-          <th data-field="current_message" data-sortable="true" data-title="Status"
-          data-formatter="statusFormat" >Status</th>
-        </tr>
-      </thead>
-    </table>
-    </div>
-    </div>
+        </div>
     </div>
 
 {% endblock %}
 
 {% block scripts %}
-  {{ super() }}
-  <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/table_format.js') }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin/tableExport.min.js"></script>
- <script>
+    {{ super() }}
+    <script src="{{ url_for('static', filename='js/bootstrap-table.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/table_format.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tableexport.jquery.plugin/tableExport.min.js"></script>
+    <script>
 
-  $(document).ready(function(){
+        $(document).ready(function () {
 
-    var $table = $('#table');
-    var $completed = $('.customfilter')
-    $table.bootstrapTable('refreshOptions', {
-      theadClasses: "h-buttons",
-       url: `${script_name}/jobs?format=json`
-    });
+            var $table = $('#table');
+            var $completed = $('.customfilter')
+            $table.bootstrapTable('refreshOptions', {
+                theadClasses: "h-buttons",
+                url: `${script_name}/jobs?format=json`,
+                formatLoadingMessage: function () {
+                    return '<b>Loading list ...</b>';
+                }
+            });
 
-    $table.bootstrapTable('expandAllRows');
-    // delete handover job
-    $('#deletebutton').click(function () {
-      const ids = $.map($table.bootstrapTable('getSelections'), function (row) {
-        return row.id
-      });
-      const handovers_token =  $.map($table.bootstrapTable('getSelections'), function (row) {
-        return row.handover_token
-      });
-      if(  ids.length == 0){
-        return ;
-      } 
-      //delete list of handovers_token
-      $.each(handovers_token, function( index, value ) {
-        $.ajax({
-          url: `${script_name}/jobs/${value}`,
-          type: 'DELETE',
-          success: function(){
-            $table.bootstrapTable('remove', {
-              field: 'id',
-              values: ids[index]
-            }); 
-          },
-          error: function(){
-            alert(`Unable to delete hand over ${value}`);
-          }
+            $table.bootstrapTable('expandAllRows');
+            // delete handover job
+            $('#deletebutton').click(function () {
+                const ids = $.map($table.bootstrapTable('getSelections'), function (row) {
+                    return row.id
+                });
+                const handovers_token = $.map($table.bootstrapTable('getSelections'), function (row) {
+                    return row.handover_token
+                });
+                if (ids.length == 0) {
+                    return;
+                }
+                //delete list of handovers_token
+                $.each(handovers_token, function (index, value) {
+                    $.ajax({
+                        url: `${script_name}/jobs/${value}`,
+                        type: 'DELETE',
+                        success: function () {
+                            $table.bootstrapTable('remove', {
+                                field: 'id',
+                                values: ids[index]
+                            });
+                        },
+                        error: function () {
+                            alert(`Unable to delete hand over ${value}`);
+                        }
+                    });
+                });
+            });
+
+            //filter by status
+            $('.customfilter').click(function () {
+                let value = $(this).attr('data-value');
+                let regex = new RegExp('.*');
+                $table.bootstrapTable('filterBy', {}, {
+                    'filterAlgorithm': (row, filters) => {
+
+                        if (value == 'Complete') {
+                            regex = new RegExp('^(.+)Handover' + '(.+){1}' + 'successful$');
+                        }
+                        if (value == 'Fail') {
+                            regex = new RegExp('^(.+)failed(.+)$');
+                        }
+                        if (value == 'Running') {
+                            regex = new RegExp('.*(progress,)\\s?.+');
+                        }
+                        return regex.test(row.current_message)
+                    }
+                })
+            });
+
+            //export hanodver jobs as csv file
+            $('#exportbutton').click(function () {
+                $('#table').tableExport({
+                    filename: 'handovers.csv',
+                    format: 'csv',
+                    ignoreColumn: [0, 1],
+                    selector: 'tr.selected'
+                });
+            })
+
+            // resubmit handover job
+            $('#resubmitbutton').click(function () {
+                const row = $.map($table.bootstrapTable('getSelections'), function (row) {
+                    return row
+                });
+                if (!row) {
+                    return;
+                }
+                //delete handover
+                $.ajax({
+                    url: `${script_name}/jobs`,
+                    type: 'POST',
+                    data: JSON.stringify({
+                        'src_uri': row[0].src_uri, 'contact': row[0].contact,
+                        'source': 'Handover', 'comment': row[0].comment
+                    }),
+                    contentType: "application/json",
+                    success: function () {
+                        // refresh table
+                        $table.bootstrapTable('refresh')
+                    },
+                    error: function (e) {
+                        alert(`Unable to submit handover : ${e}`);
+                    }
+                });
+            });
         });
-      });
-    });
-
-    //filter by status 
-    $('.customfilter').click(function () {
-      let value = $(this).attr('data-value');
-      let regex = new RegExp('.*');
-     $table.bootstrapTable('filterBy', {
-      }, {
-        'filterAlgorithm': (row, filters) => {
-          
-          if(value=='Complete')  {
-            regex = new RegExp('^(.+)Handover' + '(.+){1}' + 'successful$');  
-          }
-          if(value=='Fail')  {
-             regex = new RegExp('^(.+)failed(.+)$');   
-          }
-          if(value=='Running')  {
-             regex = new RegExp('.*(progress,)\\s?.+');    
-          }
-          return regex.test(row.current_message)
-        }
-      })
-    });
-
-    //export hanodver jobs as csv file
-    $('#exportbutton').click(function () {
-      $('#table').tableExport({
-        filename: 'handovers.csv',
-        format: 'csv',
-        ignoreColumn: [0,1],
-        selector: 'tr.selected'
-      });
-    })
-   
-  // resubmit handover job  
-  $('#resubmitbutton').click(function () {
-      const row = $.map($table.bootstrapTable('getSelections'), function (row) {
-        return row
-      });
-      if( ! row ){
-        return ;
-      } 
-      //delete handover
-       $.ajax({
-         url: `${script_name}/jobs`,
-         type: 'POST',
-         data: JSON.stringify({'src_uri' : row[0].src_uri, 'contact' : row[0].contact, 
-            'source': 'Handover', 'comment' : row[0].comment }),
-         contentType:"application/json",
-         success: function(){
-               // refresh table
-               $table.bootstrapTable('refresh')
-         },
-         error: function(e){
-           alert(`Unable to submit handover : ${e}`);
-         }
-       });
-    });
-});
-</script>
+    </script>
 {% endblock scripts %}

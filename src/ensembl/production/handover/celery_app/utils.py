@@ -3,7 +3,7 @@
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
+#        https://www.apache.org/licenses/LICENSE-2.0
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -64,7 +64,6 @@ es_ssl = cfg.ES_SSL
 
 
 def qualified_name(db_uri):
-
     import re
     db_url = make_url(db_uri)
     if re.search('[a-z-]?(.ebi.ac.uk|.org)', db_url.host) or db_url.host in ('localhost', 'mysql'):
@@ -90,7 +89,7 @@ def check_handover_db_resubmit(spec: dict):
         [bool]: [Status boolean]
     """
     try:
-        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+        with ElasticsearchConnectionManager(es_host, int(es_port), es_user, es_password, es_ssl) as es:
             res_error = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
@@ -169,15 +168,19 @@ def get_celery_task_id(handover_token: str):
     """
     try:
         task_id = ''
-        with ElasticsearchConnectionManager(es_host, es_port, es_user, es_password, es_ssl) as es:
+        with ElasticsearchConnectionManager(es_host, int(es_port), es_user, es_password, es_ssl) as es:
             res = es.client.search(index=es_index, body={
                 "size": 0,
                 "query": {
                     "bool": {
                         "must": [
                             {"term": {"params.handover_token.keyword": str(handover_token)}},
-                            {"query_string": {"fields": ["report_type"], "query": "(INFO|ERROR)",
-                                              "analyze_wildcard": "true"}},
+                            {
+                                "query_string": {
+                                    "fields": ["report_type"], "query": "(INFO|ERROR)",
+                                    "analyze_wildcard": "true"
+                                }
+                            },
                         ]
                     }
                 },
@@ -327,18 +330,17 @@ def process_handover_payload(spec):
         raise ValueError(msg)
     # Check if the database release match the handover service
     if db_type == 'compara':
-        if check_grch37(qualified_uri, 'homo_sapiens'):
-            spec['progress_total'] = 2
+        if check_grch37(qualified_uri, 'homo_sapiens') and cfg.HANDOVER_TYPE != 'grch37':
+            raise ValueError("Please use the dedicated handover for Grch37 databases. Contact Production team")
         db_release = get_release_compara(qualified_uri)
     else:
         db_release = get_release(qualified_uri)
-        logger.debug("Db_release %s %s", db_type, db_release)
-        if db_prefix == 'homo_sapiens' and assembly == '37':
-            logger.debug("It's 37 assembly - no metadata update")
-            spec['progress_total'] = 2
-        elif db_type in cfg.dispatch_targets.keys() and cfg.HANDOVER_TYPE not in ('rapid', 'viruses') and \
-                any(db_prefix in val for val in cfg.compara_species):
-            logger.debug("Adding dispatch step to total")
+        logger.info("Db_release %s %s", db_type, db_release)
+        if db_prefix == 'homo_sapiens' and assembly == '37' and cfg.HANDOVER_TYPE != 'grch37':
+            raise ValueError("Please use the dedicated handover for Grch37 databases. Contact Production team")
+        elif (db_type in cfg.dispatch_targets.keys() and any(
+                db_prefix in val for val in cfg.compara_species)) or cfg.dispatch_all:
+            logger.info("Adding dispatch step to total")
             spec['progress_total'] = 4
     if release != db_release:
         msg = "Handover failed, %s database release version %s does not match handover service " \
@@ -354,7 +356,7 @@ def process_handover_payload(spec):
     if db_type in ['compara', 'ancestral']:
         db_division = db_prefix
     else:
-        db_division = get_division(qualified_uri, spec['tgt_uri'], db_type)
+        db_division = get_division(qualified_uri, qualified_name(spec['tgt_uri']), db_type)
 
     if db_division not in allowed_divisions_list:
         raise ValueError(
@@ -364,6 +366,7 @@ def process_handover_payload(spec):
     spec['db_division'] = db_division
     spec['db_type'] = db_type
     msg = "Handling %s" % spec
+    logger.info("Handover Specs %s", spec)
     log_and_publish(make_report('INFO', msg, spec, src_uri))
     return spec, src_url, db_type
 

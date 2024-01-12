@@ -65,7 +65,7 @@ margin: -1px;
 }
 
 /*set button colors*/
-.h-buttons{
+.h-buttons, .table.result > .bg-secondary {
     background-color: #770f31;
     color: white;
 }

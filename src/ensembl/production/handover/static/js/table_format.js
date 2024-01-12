@@ -3,7 +3,7 @@
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
-        http://www.apache.org/licenses/LICENSE-2.0
+        https://www.apache.org/licenses/LICENSE-2.0
     Unless required by applicable law or agreed to in writing, software
     distributed under the License is distributed on an "AS IS" BASIS,
     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,14 +38,12 @@ function detailFormatter(index, row) {
            </div>`);
         }
     });
-    return `
-          <div class="row n-4" id="${row.handover_token}">
-            <div class="spinner-border text-primary" role="status">
-               <span class="sr-only">Loading...</span> 
-            </div>
-            Loading....
-          </div>
-          `;
+    return `<div class="row n-4" id="${row.handover_token}">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span> 
+                </div>
+               Loading....
+           </div>`;
 }
 
 function HandoverBaseInfo(handover_details) {
@@ -55,83 +53,89 @@ function HandoverBaseInfo(handover_details) {
     const problems = new RegExp('^(.+)problems(.+)$');
     const meta_data_failed = new RegExp('^Metadata(.+)failed(.+)');
 
-    let job_status = urlify(handover_details.message);
-
+    let job_status = handover_details.message;
+    let job_status_css = "";
+    let ho_progress = "";
     if (meta_data_failed.test(handover_details.message)) {
         $('#status').show();
     }
-    if (success.test(handover_details.message)) {
-        job_status = `<div class="alert alert-success" role="alert">${job_status}</div>`;
-    } else if (failure.test(handover_details.message) || problems.test(handover_details.message)) {
-        job_status = `<div class="alert alert-danger" role="alert">${job_status}</div>`;
-    } else {
-        const progress = ((handover_details.progress_complete + 1) / handover_details.progress_total) * 100;
-        let job_progress = '';
+    const progress = ((handover_details.progress_complete + 1) / handover_details.progress_total) * 100;
 
+    if (success.test(handover_details.message)) {
+        job_status_css = "alert alert-success";
+    } else if (failure.test(handover_details.message) || problems.test(handover_details.message)) {
+        job_status_css = "alert alert-danger";
+    } else {
+        let job_progress = '';
         if ('job_progress' in handover_details) {
-            job_progress = `
-        <div class="m-1 align-content-end">
-          <div class="alert alert-block" role="alert">
-            <span class="badge badge-warning">
-              Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
-            </span>
-            <span class="badge badge-success">
-              Completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
-            </span>
-            <span class="badge badge-danger">
-              Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
-            </span>  
-          </div>  
-        </div>
-        `;
+            job_progress =
+                `<div class="m-1 align-content-end">
+                    <div class="alert alert-block" role="alert">
+                        <span class="badge badge-warning">
+                          Running <span class="badge badge-light">${handover_details.job_progress.inprogress}</span>
+                        </span>
+                        <span class="badge badge-success">
+                          Completed <span class="badge badge-light">${handover_details.job_progress.completed}</span>
+                        </span>
+                        <span class="badge badge-danger">
+                          Failed <span class="badge badge-light">${handover_details.job_progress.failed}</span>
+                        </span>  
+                    </div>  
+                </div>`;
         }
-        job_status = `
-      <div class="alert alert-info" role="alert">
-        ${job_status}
-        ${job_progress}
-          <div class="progress">
-            <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" 
-                style="width: ${progress}%"  aria-valuenow="${handover_details.progress_complete}+1" aria-valuemin="0" 
-                aria-valuemax="${handover_details.progress_total}">
-            ${handover_details.progress_complete + 1} / ${handover_details.progress_total} tasks
-            </div>
-          </div>
-      </div>
-      `;
+        job_status_css ="alert alert-info";
+        job_status =
+            `<div class="job_status">
+                ${job_status}
+                </div>
+                <div class="job_progress">
+                ${job_progress}
+            </div>`;
+        ho_progress =
+            `<tr>
+                <td class="bg-secondary">Progress</td>
+                <td>
+                    <div class="progress" style="height: 2rem">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" role="progressbar" 
+                    style="width: ${progress}%"  aria-valuenow="${handover_details.progress_complete}+1" 
+                    aria-valuemin="0" aria-valuemax="${handover_details.progress_total}">
+                    ${handover_details.progress_complete + 1} / ${handover_details.progress_total} tasks
+                        </div>
+                    </div>
+                </td>
+            </tr>`;
     }
-    let base_html = `
-  <div class="row m-2" >
-  <div class="col-12 m-1">
-  <div class="card m-1" style="justify-content: center;">
-    <div class="card-header">
-      Details
-    </div>
-    <div class="card-body">
-    <table class="table ">
-    <tbody>
-      <tr>
-        <td class="bg-secondary">DB</td>
-        <td>${handover_details.src_uri}</td>
-      </tr>
-      <tr>
-        <td class="bg-secondary">Date</td>
-        <td>${handover_details.report_time}</td>
-      </tr>
-      <tr>
-        <td class="bg-secondary">Email</td>
-        <td>${handover_details.contact}</td>
-      </tr>
-      <tr>
-        <td class="bg-secondary">Job status:</td>
-        <td>${job_status}</td>
-      </tr>
-    </tbody>
-    </table>
-    </div>
-  </div>
-  </div>
-  </div>
-  `;
+    let base_html =
+        `<div class="row m-2" >
+            <div class="col-12 m-1">
+                <div class="card m-1" style="justify-content: center;">
+                    <div class="card-header">Details</div>
+                    <div class="card-body">
+                        <table class="bootstrap-table table-striped table result">
+                        <tbody>
+                          <tr>
+                            <td class="bg-secondary">DB</td>
+                            <td>${handover_details.src_uri}</td>
+                          </tr>
+                          <tr>
+                            <td class="bg-secondary">Date</td>
+                            <td>${handover_details.report_time}</td>
+                          </tr>
+                          <tr>
+                            <td class="bg-secondary">Email</td>
+                            <td>${handover_details.contact}</td>
+                          </tr>
+                          ${ho_progress}
+                          <tr>
+                            <td class="bg-secondary">Status</td>
+                            <td><div class="${job_status_css}">${job_status}</div></td>
+                          </tr>
+                        </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>`;
 
     $(`#${handover_details.handover_token}`).html(base_html);
 }
@@ -175,7 +179,7 @@ function statusFormat(value, row) {
 
 function urlify(text) {
 
-    var url = new RegExp('(.+)http://(.+)');
+    var url = new RegExp('(.+)https://(.+)');
     var urlRegex = /(https?:\/\/[^\s]+)/g;
     if (url.test(text)) {
         return text.replace(urlRegex, function (url) {

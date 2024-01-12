@@ -4,7 +4,7 @@
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
 #    You may obtain a copy of the License at
-#        http://www.apache.org/licenses/LICENSE-2.0
+#        https://www.apache.org/licenses/LICENSE-2.0
 #    Unless required by applicable law or agreed to in writing, software
 #    distributed under the License is distributed on an "AS IS" BASIS,
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,17 @@ from flask.logging import default_handler
 
 logger = logging.getLogger(__name__)
 logger.addHandler(default_handler)
+logger.setLevel(logging.INFO)
+
+def parse_boolean_var(var):
+    if isinstance(var, bool):
+        return var
+    elif isinstance(var, str):
+        return not ((var.lower() in ("f", "false", "no", "none")) or (not var))
+    else:
+        # default to false, something is wrong.
+        warnings.warn(f"Var {var} couldn't be parsed to boolean")
+        return False
 
 
 class ComparaDispatchConfig:
@@ -73,26 +84,29 @@ class HandoverConfig:
 
     copy_client_uri = os.environ.get("COPY_CLIENT_URI",
                                      file_config.get('copy_client_uri',
-                                                     "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
+                                                     "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy"
+                                                     "/requestjob"))
     copy_uri = os.environ.get("COPY_URI",
                               file_config.get('copy_uri',
-                                              "http://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
+                                              "https://services.test.ensembl-production.ebi.ac.uk/api/dbcopy/requestjob"))
     copy_uri_dropdown = os.environ.get("COPY_URI_DROPDOWN",
                                        file_config.get('copy_uri_dropdown',
-                                                       "http://services.test.ensembl-production.ebi.ac.uk/"))
+                                                       "https://services.test.ensembl-production.ebi.ac.uk/"))
 
     copy_web_uri = os.environ.get("COPY_WEB_URI",
                                   file_config.get('copy_web_uri',
-                                                  "http://services.test.ensembl-production.ebi.ac.uk/admin/ensembl_dbcopy/requestjob/"))
+                                                  "https://services.test.ensembl-production.ebi.ac.uk/admin"
+                                                  "/ensembl_dbcopy/requestjob/"))
     meta_client_uri = os.environ.get("META_CLIENT_URI", file_config.get('meta_client_uri', "http://localhost:5002/"))
     meta_uri = os.environ.get("META_URI", file_config.get('meta_uri', "http://localhost:5002/"))
     event_client_uri = os.environ.get("EVENT_CLIENT_URI", file_config.get('event_client_uri', 'http://localhost:5003/'))
-    event_uri = os.environ.get("EVENT_URI", file_config.get('event_uri', 'http://localhost:5003/'))
+    event_uri = os.environ.get("EVENT_URI", file_config.get('event_uri', 'https://localhost:5003/'))
 
     staging_uri = os.environ.get("STAGING_URI",
                                  file_config.get('staging_uri', "mysql://ensro@mysql-ens-general-dev-1:4484/"))
-    secondary_staging_uri = os.environ.get("SECONDARY_STAGING_URI", file_config.get('secondary_staging_uri',
-                                                                                    "mysql://ensro@mysql-ens-general-dev-1:4484/"))
+    secondary_staging_uri = os.environ.get("SECONDARY_STAGING_URI",
+                                           file_config.get('secondary_staging_uri',
+                                                           "mysql://ensro@mysql-ens-general-dev-1:4484/"))
     live_uri = os.environ.get("LIVE_URI", file_config.get('live_uri', "mysql://user@127.0.0.1:3306/"))
     secondary_live_uri = os.environ.get("SECONDARY_LIVE_URI", file_config.get('secondary_live_uri',
                                                                               "mysql://ensembl@127.0.0.1:3306/"))
@@ -107,13 +121,11 @@ class HandoverConfig:
                                             file_config.get('allowed_database_types', ''))
     production_email = os.environ.get("PRODUCTION_EMAIL", file_config.get('production_email', 'ensprod@ebi.ac.uk'))
     allowed_divisions = os.environ.get("ALLOWED_DIVISIONS", file_config.get('allowed_divisions', 'vertebrates'))
-
+    dispatch_all = parse_boolean_var(file_config.get('dispatch_all', 'False'))
     dispatch_targets = file_config.get('dispatch_targets', {})
     copy_job_user = file_config.get('copy_job_user', 'ensprod')
 
-    # handover layout
-    HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type',
-                                                                    'vertebrates'))
+    HANDOVER_TYPE = os.environ.get('HANDOVER_TYPE', file_config.get('handover_type', 'production'))
 
     # es config
     HOST = os.environ.get('SERVICE_HOST', file_config.get('host', '0.0.0.0'))
@@ -122,29 +134,31 @@ class HandoverConfig:
     ES_PORT = os.environ.get('ES_PORT', file_config.get('es_port', '9200'))
     ES_USER = os.getenv("ES_USER", file_config.get("es_user", ""))
     ES_PASSWORD = os.getenv("ES_PASSWORD", file_config.get("es_password", ""))
-    ES_SSL = os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower() in ['true', '1']
+    ES_SSL = parse_boolean_var(os.environ.get('ES_SSL', file_config.get('es_ssl', "f")).lower())
     ES_INDEX = os.environ.get('ES_INDEX', file_config.get('es_index', 'reports'))
     RELEASE = os.environ.get('ENS_VERSION', file_config.get('ens_version'))
     EG_VERSION = os.environ.get('EG_VERSION', file_config.get('eg_version'))
 
     APP_VERSION = get_app_version()
     compara_species = ComparaDispatchConfig.load_config(RELEASE)
-
-    BLAT_SPECIES = ['homo_sapiens',
-                    'mus_musculus',
-                    'danio_rerio',
-                    'rattus_norvegicus',
-                    'gallus_gallus',
-                    'canis_lupus_familiaris',
-                    'bos_taurus',
-                    'oryctolagus_cuniculus',
-                    'oryzias_latipes',
-                    'sus_scrofa',
-                    'meleagris_gallopavo',
-                    'anas_platyrhynchos_platyrhynchos',
-                    'ovis_aries',
-                    'oreochromis_niloticus',
-                    'gadus_morhua']
+    log_level = os.environ.get('LOG_LEVEL', file_config.get('log_level', logging.DEBUG))
+    BLAT_SPECIES = [
+        'homo_sapiens',
+        'mus_musculus',
+        'danio_rerio',
+        'rattus_norvegicus',
+        'gallus_gallus',
+        'canis_lupus_familiaris',
+        'bos_taurus',
+        'oryctolagus_cuniculus',
+        'oryzias_latipes',
+        'sus_scrofa',
+        'meleagris_gallopavo',
+        'anas_platyrhynchos_platyrhynchos',
+        'ovis_aries',
+        'oreochromis_niloticus',
+        'gadus_morhua'
+    ]
 
     ALLOWED_TASK_RESTART = os.environ.get('ALLOWED_TASK_RESTART',
                                           file_config.get('allowed_tasks_restart', 'datacheck,copyjob,metadata')).split(
@@ -175,7 +189,10 @@ class HandoverCeleryConfig:
                                                     file_config.get('worker_prefetch_multiplier', 1)))
     task_routes = {
         os.environ.get("ROUTING_KEY",
-                       file_config.get('routing_key', 'ensembl.production.handover.celery_app.tasks.*')): {
+                       file_config.get('routing_key',
+                                       'ensembl.production.handover.celery_app.tasks.*')): {
             'queue': os.environ.get("QUEUE",
-                                    file_config.get('queue', 'handover'))}
+                                    file_config.get('queue', 'handover'))
+        }
     }
+    log_level = os.environ.get('LOG_LEVEL', file_config.get('log_level', 'WARNING'))
