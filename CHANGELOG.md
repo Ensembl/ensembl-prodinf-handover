@@ -1,6 +1,6 @@
 CHANGELOG - Ensembl Prodinf Handover App
 ========================================
-2.0.2
+2.1.0
 -----
 - Added dispatch_all parameter for concurrent handover for RR and MVP
 2.0.1
