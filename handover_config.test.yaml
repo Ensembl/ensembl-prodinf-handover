@@ -10,12 +10,13 @@ es_ssl: "true"
 es_password: "3p8Fq07#45HT"
 ens_version: 110
 eg_version: 58
-dc_uri: https://services.test.ensembl-production.ebi.ac.uk/api/production/datachecks/
+dc_uri: https://services.test.ensembl-production.ebi.ac.uk/production/datachecks/
+dc_client_uri: https://services.test.ensembl-production.ebi.ac.uk/api/production/datachecks/
 handover_type: 'production'
 retry_wait: 30
-report_server: 'amqp://msg.test.ensembl-production.ebi.ac.uk'
-celery_broker_url: 'amqp://msg.test.ensembl-production.ebi.ac.uk/production'
-celery_result_backend: 'rpc://msg.test.ensembl-production.ebi.ac.uk/production'
+report_server: 'amqp://ensprod:ensprod@localhost:5672'
+celery_broker_url: 'amqp://ensprod:ensprod@localhost:5672/production'
+celery_result_backend: 'rpc://ensprod:ensprod@localhost:4369/production'
 dispatch_all: True
 dispatch_target:
  core: mysql://ensembl@localhost:3306

@@ -102,6 +102,7 @@ def stop_handover_job(handover_token):
     Returns:
         [dict]: [task status with handover spec]
     """
+    spec = None
     try:
         status = get_celery_task_id(handover_token)
         if not status['status']:
@@ -114,7 +115,7 @@ def stop_handover_job(handover_token):
             task.revoke(terminate=True)
             log_and_publish(make_report('INFO', f"Handover failed, Job Revoked", spec, ""))
     except Exception as e:
-        return {'status': False, 'error': f"{str(e)}", 'spec': spec}
+        return {'status': False, 'error': f"{str(e)}", 'spec': spec if spec else 'None'}
 
     return status
 
@@ -335,7 +336,7 @@ def metadata_update_task(self, spec):
             if need_dispatch and genome_info:
                 spec['genome'] = genome_info
                 # get dispatch target host, default to core one if not defined for DB type
-                spec['tgt_uri'] = cfg.dispatch_targets.get(spec['db_type'], cfg.dispatch_targets.get('core', None))
+                spec['tgt_uri'] = cfg.dispatch_targets.get(spec['db_type'], None)
                 if spec['tgt_uri'] is not None:
                     spec['progress_total'] = 4
                     log_and_publish(make_report('INFO', f"Dispatching Database to target hosts: {spec['tgt_uri']}"))
