@@ -1,5 +1,11 @@
 CHANGELOG - Ensembl Prodinf Handover App
 ========================================
+2.1.0
+-----
+- Added dispatch_all configuration for RR/MVP concurrent handover configuration
+- Updated app css styles
+- Resolved issue with Handover deletion api calls.
+
 2.0.2
 -----
 - Added dispatch_all parameter for concurrent handover for RR and MVP
