@@ -102,6 +102,7 @@ def stop_handover_job(handover_token):
     Returns:
         [dict]: [task status with handover spec]
     """
+    spec = None
     try:
         status = get_celery_task_id(handover_token)
         if not status['status']:
@@ -114,7 +115,7 @@ def stop_handover_job(handover_token):
             task.revoke(terminate=True)
             log_and_publish(make_report('INFO', f"Handover failed, Job Revoked", spec, ""))
     except Exception as e:
-        return {'status': False, 'error': f"{str(e)}", 'spec': spec}
+        return {'status': False, 'error': f"{str(e)}", 'spec': spec if spec else 'None'}
 
     return status
 
