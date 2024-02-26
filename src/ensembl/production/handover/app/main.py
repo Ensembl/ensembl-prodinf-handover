@@ -50,7 +50,6 @@ handler = app_logging.default_handler()
 handler.setFormatter(formatter)
 handler.setLevel(cfg.log_level)
 app.logger.addHandler(handler)
-app.logger.error(handler.level)
 app.url_map.strict_slashes = False
 
 app.config['SWAGGER'] = {
@@ -168,6 +167,16 @@ def handover_form():
         form=form,
         ALLOWED_DATABASE_TYPES=cfg.allowed_database_types if cfg.allowed_database_types else "None - Handover closed",
         disable_submission=cfg.allowed_database_types == ''
+    )
+
+
+@app.route('/config', methods=['GET'])
+def config():
+    """ Disply all configs vars"""
+    config = {key: value if 'pass' not in key.lower() else 'XXXXXX' for key, value in cfg.__dict__.items() if key[:1] != '_'}
+    return render_template(
+        'config.html',
+        config=config
     )
 
 
