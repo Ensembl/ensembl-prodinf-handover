@@ -67,5 +67,5 @@ class TestAPPVersion(unittest.TestCase):
         print("version_file", version_file)
         if version_pkg:
             self.assertEqual(version, version_config)
-            self.assertRegex(version.replace("\n", ''), version_file)
-        self.assertRegex(version_config.replace("\n", ''), version_file)
+            self.assertRegex(version, version_file)
+        self.assertRegex(version_config, version_file)
