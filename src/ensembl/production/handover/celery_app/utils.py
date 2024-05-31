@@ -392,8 +392,8 @@ def submit_dc(spec, src_url, db_type):
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
                                              'core', None, 'ancestral', 'critical', None, handover_token, staging_uri)
         elif db_type in ['rnaseq', 'cdna', 'otherfeatures']:
-            division_msg = 'division: %s' % get_division(qualified_uri, tgt_uri, db_type)
-            log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
+            #division_msg = 'division: %s' % get_division(qualified_uri, tgt_uri, db_type)
+            #log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_group = 'corelike,rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else 'corelike'
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
@@ -401,8 +401,8 @@ def submit_dc(spec, src_url, db_type):
         else:
             db_msg = 'src_uri: %s dbtype %s server_url %s' % (src_uri, db_type, server_url)
             log_and_publish(make_report('DEBUG', db_msg, spec, src_uri))
-            division_msg = 'division: %s' % get_division(qualified_uri, tgt_uri, db_type)
-            log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
+            #division_msg = 'division: %s' % get_division(qualified_uri, tgt_uri, db_type)
+            #log_and_publish(make_report('DEBUG', division_msg, spec, src_uri))
             log_and_publish(submitting_dc_report)
             dc_group = db_type + ',rapid_release' if cfg.HANDOVER_TYPE == 'rapid' else db_type
             dc_job_id = dc_client.submit_job(server_url, src_url.database, None, None,
