@@ -60,7 +60,7 @@ class TestAPPVersion(unittest.TestCase):
             version = "unknown"
             version_pkg = False
         with open(Path(__file__).parents[2] / 'VERSION') as f:
-            version_file = f.read()
+            version_file = f.read().replace('\n','')
         version_config = HandoverConfig.APP_VERSION
         print("version", version)
         print("version_config", version_config)
