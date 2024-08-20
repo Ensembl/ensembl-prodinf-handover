@@ -1,4 +1,4 @@
-ensembl-prodinf-core==2.0.6a1
+git+https://github.com/Ensembl/ensembl-prodinf-core.git@3.0.0rc1#egg=ensembl-prodinf-core
 Bootstrap-Flask
 celery~=5.0.5
 elasticsearch>=6.8.1,<7.0.0
