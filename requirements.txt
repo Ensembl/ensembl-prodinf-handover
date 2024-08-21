@@ -10,17 +10,19 @@ attrs==24.2.0
     # via
     #   jsonschema
     #   referencing
-billiard==4.2.0
+billiard==3.6.4.0
     # via celery
 bootstrap-flask==2.4.0
     # via -r requirements.in
-celery==5.4.0
+celery==5.0.5
     # via -r requirements.in
 certifi==2020.12.5
-    # via requests
+    # via
+    #   ensembl-prodinf-core
+    #   requests
 charset-normalizer==3.3.2
     # via requests
-click==8.1.7
+click==7.1.2
     # via
     #   celery
     #   click-didyoumean
@@ -33,15 +35,19 @@ click-plugins==1.1.1
     # via celery
 click-repl==0.3.0
     # via celery
+deprecation==2.1.0
+    # via ensembl-prodinf-core
 dnspython==2.6.1
     # via email-validator
 elasticsearch==6.8.2
-    # via -r requirements.in
+    # via
+    #   -r requirements.in
+    #   ensembl-prodinf-core
 email-validator==2.2.0
     # via -r requirements.in
 ensembl-hive @ git+https://github.com/Ensembl/ensembl-hive.git
     # via ensembl-py
-ensembl-prodinf-core @ git+https://github.com/Ensembl/ensembl-prodinf-core.git@3.0.0rc1
+ensembl-prodinf-core==3.0.0
     # via -r requirements.in
 ensembl-py @ git+https://github.com/Ensembl/ensembl-py.git@1.2.2
     # via -r requirements.in
@@ -82,8 +88,10 @@ jsonschema==4.23.0
     # via flasgger
 jsonschema-specifications==2023.12.1
     # via jsonschema
-kombu==5.4.0
-    # via celery
+kombu==5.0.2
+    # via
+    #   celery
+    #   ensembl-prodinf-core
 markupsafe==2.1.5
     # via
     #   jinja2
@@ -97,6 +105,7 @@ mysqlclient==2.1.1
     #   ensembl-py
 packaging==24.1
     # via
+    #   deprecation
     #   gunicorn
     #   pytest
 pluggy==1.5.0
@@ -109,12 +118,13 @@ pytest==8.3.2
     #   pytest-dependency
 pytest-dependency==0.5.1
     # via ensembl-py
-python-dateutil==2.9.0.post0
-    # via celery
 python-dotenv==0.19.2
     # via ensembl-py
+pytz==2024.1
+    # via celery
 pyyaml==6.0.2
     # via
+    #   ensembl-prodinf-core
     #   ensembl-py
     #   flasgger
 referencing==0.35.1
@@ -124,6 +134,7 @@ referencing==0.35.1
 requests==2.32.3
     # via
     #   -r requirements.in
+    #   ensembl-prodinf-core
     #   ensembl-py
 rpds-py==0.20.0
     # via
@@ -131,29 +142,30 @@ rpds-py==0.20.0
     #   referencing
 six==1.15.0
     # via
+    #   ensembl-prodinf-core
     #   flasgger
-    #   python-dateutil
 sqlalchemy==1.4.53
     # via
     #   -r requirements.in
+    #   ensembl-prodinf-core
     #   ensembl-py
     #   sqlalchemy-utils
 sqlalchemy-utils==0.38.3
-    # via ensembl-py
+    # via
+    #   ensembl-prodinf-core
+    #   ensembl-py
 tomli==2.0.1
     # via pytest
-tzdata==2024.1
-    # via celery
-urllib3==1.26.6
+urllib3==1.26.19
     # via
     #   -r requirements.in
     #   elasticsearch
+    #   ensembl-prodinf-core
     #   requests
 vine==5.1.0
     # via
     #   amqp
     #   celery
-    #   kombu
 wcwidth==0.2.13
     # via prompt-toolkit
 werkzeug==2.3.8
