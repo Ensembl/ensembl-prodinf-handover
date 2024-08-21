@@ -1,6 +1,6 @@
-git+https://github.com/Ensembl/ensembl-prodinf-core.git@3.0.0rc1#egg=ensembl-prodinf-core
+git+https://github.com/Ensembl/ensembl-prodinf-core.git@3.0.0rc1
 Bootstrap-Flask
-celery~=5.0.5
+celery>=5.2.0
 elasticsearch>=6.8.1,<7.0.0
 email_validator
 Flask~=2.0.3
